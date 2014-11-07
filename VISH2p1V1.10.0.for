@@ -154,6 +154,8 @@ C *******************************J.Liu changes*******************************
 
       Integer InitialURead
       Common/LDInitial/ InitialURead  ! IintURead =1 read initial velocity profile
+      Logical ::  Output_avg  
+      Common/OutputMore/ Output_avg      
 C *******************************J.Liu changes end***************************
 
       call prepareInputFun() ! this is the initialization function in InputFun.for
@@ -223,6 +225,7 @@ C------- Parameters for initial profile from Laudan matching--------------------
       Read(1,*) Cha
       Read(1,*) InitialURead  
       CLOSE(1)
+      Output_avg = .TRUE.          ! TRUE: output averaged ed, pi_munu at each time step      
 C ***************************J.Liu changes end***************************
 C===========================================================================
 
@@ -242,7 +245,8 @@ C===========================================================================
      &    "LS=", LS, "R0Bdry", R0Bdry, "VisBeta=", VisBeta,
      &    "DX=", DX, "DY=", DY, "DT_1=", DT_1,
      &    "NDX=", NDX, "NDY=", NDY, "NDT=", NDT,
-     &    "IhydroJetoutput=", IhydroJetoutput
+     &    "IhydroJetoutput=", IhydroJetoutput,
+     &    "InitialURead=", InitialURead
 
 
       ddx=dx
@@ -285,6 +289,14 @@ C======output the chemical potential information at freeze out surface.====
       open(89,File='results/AScource.dat',status='REPLACE')
       open(88,File='results/AScource2.dat',status='REPLACE')
       Open(377, FILE='results/ecc-evolution.dat',STATUS='REPLACE') ! anisotropy moments evolution
+
+***************************J. Liu changes*************************************
+      if (Output_avg) Then
+      Open(3423, FILE='results/avg_points.dat',STATUS='REPLACE')
+      open(3424, FILE='results/pi_avg_evo.dat',STATUS='REPLACE')
+      end if
+
+***************************J. Liu changes end*********************************
 
       !Open(3771,FILE='movie/DPc.dat',STATUS='REPLACE')
       !Close(3771)
@@ -338,9 +350,9 @@ CSHEN======output OSCAR file Header=========================================
 CSHEN======output OSCAR file Header end=====================================
 
 CSHEN======set up output file for hydro evolution history===================
-      if(IhydroJetoutput .eq. 1) then
-         Call setHydroFiles(NX0, NX, DX, 5, NY0, NY, DY, 5, T0, DT, 5)
-      endif
+C       if(IhydroJetoutput .eq. 1) then
+C          Call setHydroFiles(NX0, NX, DX, 5, NY0, NY, DY, 5, T0, DT, 5)
+C       endif
 
       CALL CPU_TIME(cpu_start) !Tic
       Call Mainpro(NX0,NY0,NZ0,NX,NY,NZ,NXPhy0,NYPhy0,
@@ -359,7 +371,12 @@ CSHEN======set up output file for hydro evolution history===================
       if(outputMovie) then 
          close(3773)
       endif
-
+***************************J. Liu changes*************************************
+      if (Output_avg) Then
+      Close(3423)
+      Close(3424)
+      end if   
+***************************J. Liu changes end*********************************
       End
 !-----------------------------------------------------------------------
 
@@ -534,7 +551,8 @@ C-------------------------------------------------------------------------------
       Common /ViscousC / ViscousC,VisBeta, IVisflag ! Related to Shear Viscosity
       Common /ViscousBulk/ Visbulk, BulkTau,IRelaxBulk  ! Related to bulk Viscosity
       Common /sFactor/ sFactor
-
+      Common /event_angle/ event_phi2 ! J.Liu changes. initial phi2 for an event.
+                                      ! read from CML
       Double Precision SEOSL7, PEOSL7, TEOSL7, SEOSL6
       Double Precision ss, ddt1, ddt2, ee1, ee2
       External SEOSL7
@@ -581,6 +599,10 @@ CSHEN===EOS from tables end====================================================
       common /EOSMudatastructure/ EOS_Mu_e0, EOS_Mu_de, EOS_Mu_ne, 
      &                            Inumparticle
 
+      Logical :: Output_avg    ! J.Liu: for CheckPiAll() output
+      common /OutputMore/ Output_avg
+      Integer :: InitialURead
+      common /LDInitial/ InitialURead
       TFLAG = 0
       IMuflag = 0
       Edec1 = Edec
@@ -603,7 +625,7 @@ CSHEN===EOS from tables end====================================================
       Open(111,File='./results/VISH2p1_tec.dat',status='Replace')
        Write(111,'(A,T10,A3,I1,T30,A)')"IEOS", " = ", IEOS, 
      &                                            "!IEOS   type for EOS"
-       Write(111,'(A,T10,A3,F4.2,T30,A)')"Tau0", " = ", T0, 
+       Write(111,'(A,T10,A3,F8.3,T30,A)')"Tau0", " = ", T0, 
      &                                "!tau0   initial time(unit: fm/c)"
        Write(111,'(A,T10,A3,F5.3,T30,A)')"Edec", " = ", EDec, 
      &              "!Edec   Decoupling energy density (unit: GeV/fm^3)"
@@ -621,7 +643,7 @@ CSHEN===EOS from tables end====================================================
      &                        "!relaxation constant for shear viscosity"
        Write(111,'(A,T10,A3,I1,T30,A)')"IVisflag", " = ", IVisflag, 
      &        "!flag for temperature dependent eta/s(T) (=0 for const.)"
-       Write(111,'(A,T10,A3,F5.3,T30,A)')"VisBulk", " = ", VisBulk, 
+       Write(111,'(A,T10,A3,F8.6,T30,A)')"VisBulk", " = ", VisBulk, 
      &                                  "!Bulk viscosity zeta/s(const.)"
        Write(111,'(A,T10,A3,I1,T30,A)')"IRelaxBulk", " = ", IRelaxBulk, 
      &                          "!relaxtion constant for bulk viscosity"
@@ -642,6 +664,10 @@ CSHEN===EOS from tables end====================================================
      &                              "!NTD   freeze out skip step in tau"
        Write(111,'(A,T10,A3,F4.1,T30,A)')"R0Bdry", " = ", R0Bdry, 
      &                                                    "!boundary R0"
+       Write(111,'(A,T10,A3,F4.1,T30,A)')"Phi2", " = ", event_phi2, 
+     &                                                   "!Profile Phi2"
+       Write(111,'(A,T10,A3,I1,T30,A)')"InitialURead","= ",InitialURead,
+     &                      "!InitialURead   Read in initial flows etc."           
       Close(111)
 
 !     Output entropy and energy profiles:
@@ -690,14 +716,15 @@ CSHEN===EOS from tables end====================================================
           CPi12 = Pi12(I,J,1)    
           CPi22 = Pi22(I,J,1)     
           CPi33 = Pi33(I,J,1)    
+          CPPI = PPI(I,J,1)    !output bulk pressure
 
           WRITE(99,'(99E20.8E3)') Time,DA0,DA1,DA2,VZCM,VRCM,
      &                  Ed(I,J,1)*HbarC,BN,
      &                  Temp(I,J,1)*HbarC,BAMU,SMU, PDec2, 
      &                  CPi33*HbarC,
      &                  CPi00*HbarC,CPi01*HbarC,CPi02*HbarC,
-     &                  CPi11*HbarC,CPi12*HbarC,CPi22*HbarC
-          
+     &                  CPi11*HbarC,CPi12*HbarC,CPi22*HbarC,
+     &                  CPPI*HbarC         
           TM = Time
           XM = XX
           YM = YY
@@ -743,9 +770,9 @@ CSHEN=====================================================================
         !If (Ed(I,J,K)<EDec) Cycle ! Sum only inside the freeze-out surface
         XX = I*DX
         YY = J*DY
-        XC = XC + XX*Ed(I,J,K)
-        YC = YC + YY*Ed(I,J,K)
-        TotalE = TotalE + Ed(I,J,K)
+        XC = XC + XX*Ed(I,J,K)*U0(I,J,K)
+        YC = YC + YY*Ed(I,J,K)*U0(I,J,K)
+        TotalE = TotalE + Ed(I,J,K)*U0(I,J,K)
       End Do
       End Do
       End Do
@@ -780,13 +807,13 @@ CSHEN=====================================================================
           RR = sqrt(XX*XX+YY*YY)
 
           ! eccentricity, defined using r^2 as weight function:
-          Weight=Weight+RR*RR*Ed(I,J,K) ! Note that this weight is repeatedly calculated. But since it is much cleaner written this way and it is very fast...
-          XN(NN)=XN(NN)+RR*RR*cos(angle)*Ed(I,J,K)
-          YN(NN)=YN(NN)+RR*RR*sin(angle)*Ed(I,J,K)
+          Weight=Weight+RR*RR*Ed(I,J,K)*U0(I,J,K) ! Note that this weight is repeatedly calculated. But since it is much cleaner written this way and it is very fast...
+          XN(NN)=XN(NN)+RR*RR*cos(angle)*Ed(I,J,K)*U0(I,J,K)
+          YN(NN)=YN(NN)+RR*RR*sin(angle)*Ed(I,J,K)*U0(I,J,K)
           ! eccentricity, defined using r^n as weight function:
-          WeightP = WeightP+RR**NN*Ed(I,J,K)
-          XNP(NN) = XNP(NN)+RR**NN*cos(angle)*Ed(I,J,K)
-          YNP(NN) = YNP(NN)+RR**NN*sin(angle)*Ed(I,J,K)
+          WeightP = WeightP+RR**NN*Ed(I,J,K)*U0(I,J,K)
+          XNP(NN) = XNP(NN)+RR**NN*cos(angle)*Ed(I,J,K)*U0(I,J,K)
+          YNP(NN) = YNP(NN)+RR**NN*sin(angle)*Ed(I,J,K)*U0(I,J,K)
         End Do
         End Do
         End Do
@@ -827,9 +854,9 @@ CSHEN=====================================================================
           RR = sqrt(XX*XX+YY*YY)
 
           ! eccentricity, defined using r^2 as weight function:
-          Weight=Weight+RR**r_power*Ed(I,J,K) ! Note that this weight is repeatedly calculated. But since it is much cleaner written this way and it is very fast...
-          XN(NN)=XN(NN)+RR**r_power*cos(angle)*Ed(I,J,K)
-          YN(NN)=YN(NN)+RR**r_power*sin(angle)*Ed(I,J,K)
+          Weight=Weight+RR**r_power*Ed(I,J,K)*U0(I,J,K) ! Note that this weight is repeatedly calculated. But since it is much cleaner written this way and it is very fast...
+          XN(NN)=XN(NN)+RR**r_power*cos(angle)*Ed(I,J,K)*U0(I,J,K)
+          YN(NN)=YN(NN)+RR**r_power*sin(angle)*Ed(I,J,K)*U0(I,J,K)
         End Do
         End Do
         End Do
@@ -948,9 +975,9 @@ CSHEN=====================================================================
         !If (Ed(I,J,K)<EDec) Cycle ! Sum only inside the freeze-out surface
         XX = I*DX
         YY = J*DY
-        XC = XC + XX*Ed(I,J,K)
-        YC = YC + YY*Ed(I,J,K)
-        TotalE = TotalE + Ed(I,J,K)
+        XC = XC + XX*Ed(I,J,K)*U0(I,J,K)
+        YC = YC + YY*Ed(I,J,K)*U0(I,J,K)
+        TotalE = TotalE + Ed(I,J,K)*U0(I,J,K)
       End Do
       End Do
       End Do
@@ -967,9 +994,9 @@ CSHEN=====================================================================
         !If (Ed(I,J,K)<EDec) Cycle ! Sum only inside the freeze-out surface
         XX = I*DX - XC ! shift to the real center
         YY = J*DY - YC
-        XN(2)=XN(2)+XX*XX*Ed(I,J,K)
-        YN(2)=YN(2)+YY*YY*Ed(I,J,K)
-        Weight=Weight+Ed(I,J,K)
+        XN(2)=XN(2)+XX*XX*Ed(I,J,K)*U0(I,J,K)
+        YN(2)=YN(2)+YY*YY*Ed(I,J,K)*U0(I,J,K)
+        Weight=Weight+Ed(I,J,K)*U0(I,J,K)
       End Do
       End Do
       End Do
@@ -1217,16 +1244,16 @@ CSHEN====END====================================================================
          enddo
       endif
       
-      if(IhydroJetoutput .eq. 1) then
-!        output hydro infos
-!        Units: [ed]=GeV/fm^3, [sd]=fm^-3, [p]=GeV/fm^3, [T]=GeV, [Vx]=[Vy]=1
-!        Units: [Pi]=GeV/fm^3, [PPi]=GeV/fm^3
-         Call writeHydroBlock(ITime-1, Ed*HbarC, Sd, PL*HbarC,
-     &      Temp*HbarC,Vx, Vy, Pi00*HbarC, Pi01*HbarC, Pi02*HbarC, 
-     &      Pi02*HbarC*0.0d0, Pi11*HbarC, Pi12*HbarC, Pi12*HbarC*0.0d0,
-     &      Pi22*HbarC, Pi22*HbarC*0.0d0, Pi33*HbarC, PPI*HbarC)
-!        output hydro infos, end
-      endif
+C       if(IhydroJetoutput .eq. 1) then
+C !        output hydro infos
+C !        Units: [ed]=GeV/fm^3, [sd]=fm^-3, [p]=GeV/fm^3, [T]=GeV, [Vx]=[Vy]=1
+C !        Units: [Pi]=GeV/fm^3, [PPi]=GeV/fm^3
+C          Call writeHydroBlock(ITime-1, Ed*HbarC, Sd, PL*HbarC,
+C      &      Temp*HbarC,Vx, Vy, Pi00*HbarC, Pi01*HbarC, Pi02*HbarC, 
+C      &      Pi02*HbarC*0.0d0, Pi11*HbarC, Pi12*HbarC, Pi12*HbarC*0.0d0,
+C      &      Pi22*HbarC, Pi22*HbarC*0.0d0, Pi33*HbarC, PPI*HbarC)
+C !        output hydro infos, end
+C       endif
 
 CSHEN===========================================================================
 C====output the OSCAR body file from hydro evolution============ ===============
@@ -1306,13 +1333,19 @@ C      NDT = 5
 !     &     FPi00,FPi01,FPi02,FPi33,FPi11,FPi12,FPi22, N,T,X0,Y0,
 !     &     DX,DY,DT,NXPhy,NYPhy,NX0,NX,NY0,NY,NZ0,NZ)
 
+!      Call FreezeoutPro10 (EDEC, IEOS, NDX, NDY, NDT,
+!     &     EPS0,EPS1,V10,V20,V11,V21, NINT, IW,
+!     &     F0Pi00,F0Pi01,F0Pi02,F0Pi33,F0Pi11,F0Pi12,F0Pi22,
+!     &     FPi00,FPi01,FPi02,FPi33,FPi11,FPi12,FPi22, 
+!     &     F0PPI, FPPI,
+!     &     N,T,DX,DY,DT,NXPhy,NYPhy,NX0,NX,NY0,NY)
+
       Call FreezeoutPro10 (EDEC, IEOS, NDX, NDY, NDT,
      &     EPS0,EPS1,V10,V20,V11,V21, NINT, IW,
      &     F0Pi00,F0Pi01,F0Pi02,F0Pi33,F0Pi11,F0Pi12,F0Pi22,
      &     FPi00,FPi01,FPi02,FPi33,FPi11,FPi12,FPi22, 
      &     F0PPI, FPPI,
-     &     N,T,DX,DY,DT,NXPhy,NYPhy,NX0,NX,NY0,NY)
-
+     &     N,T,DX,DY,DT,NXPhy,NYPhy,NX0,NX,NY0,NY) !jia test: add PPI
       print*,'after freezeout'
 
       DO 5400 J=NY0,NY
@@ -2453,13 +2486,14 @@ C=======for temperature dependent \eta/s=======================================
       endif
 CSHEN======end=================================================================
 !------------- for shear pressure -----------
-      If (ViscousC.ge.1D-6) then
+      If (ViscousC.ge.0.000001) then
         VCoefi(i,j,k)=ViscousC*Sd(i,j,k)
         VCBeta(i,j,k)=VisBeta*3.0/dmax1(Sd(i,j,k)*Temp(i,j,k),1e-30)
         VRelaxT(i,j,k)=1.0/dmax1(2.0*VCoefi(i,j,k)*VCBeta(i,j,k),1e-30)
         etaTtp(i,j,k)=(VCoefi(i,j,k)*Temp(i,j,k))*VRelaxT(i,j,k)  ! A(e+p)T/6 !(eta T/tau_Pi) for extra term in full I-S
         etaTtp(i,j,k)=dmax1(etaTtp(i,j,k),1e-30)
         VCoefi(i,j,k)=VCoefi(i,j,k)*ff
+        VRelaxT(i,j,k)=dmin1(VRelaxT(i,j,k), 1.D0/(2.D0*DT))! regulate when \eta/s is small
         VRelaxT(i,j,k)=VRelaxT(i,j,k)*ff
         If (Time > 0.8) Then
         If (etaTtp(i,j,k) .ne. etaTtp(i,j,k)) Then
@@ -2483,10 +2517,11 @@ CSHEN======end=================================================================
       ttemp= Temp(i,j,k)*HbarC ! input function as Temp
       e3pep=(Ed(i,j,k)-3.0*PL(i,j,k))/(Ed(i,j,k)+PL(i,j,k))
 
-      If (VisBulk.ge.1D-6) then
+      If (VisBulk.ge.0.000001) then
         !eta=ViscousC*Sd(i,j,k)
         !VBulk(i,j,k)=VisBulk*BulkAdSH0(eta,ttemp)
-        VBulk(i,j,k) = ViscousZetasTemp(Ed(i,j,k)*HbarC)*Sd(i,j,k)
+        !VBulk(i,j,k) = ViscousZetasTemp(Ed(i,j,k)*HbarC)*Sd(i,j,k)
+        VBulk(i,j,k) = VisBulk*Sd(i,j,k) !jia test
         If (IRelaxBulk.eq.0) then
           TTpi=DMax1(0.1d0, 120* VBulk(i,j,k)/DMax1(Sd(i,j,k),0.1d0))
           VRelaxT0(i,j,k)=1.0/TTpi
@@ -3252,7 +3287,8 @@ C###################################################################
       double precision M0, M
       double precision scaleFactor
       double precision temp1, temp2
-
+      double precision cstilde2_min !minimum value of PL/Ed, read from EOS_PST.dat
+      cstilde2_min = 4.31832000D-2
       cstilde2 = PL/Ed
       T00 = dMax1(0.0d0, T00)
       M0 = T00
@@ -3267,10 +3303,10 @@ C###################################################################
       if (BulkPi .lt. temp1) then
         BulkPi = temp1 + 1D-3*abs(temp1)
       endif
-
-      temp2 = (M - M0)
-      if (BulkPi .lt. temp2) then
-        BulkPi = 0.999*temp2
+!     tackle too negative bulk pressure
+      temp2 = (M-M0)*(1+cstilde2_min)  
+      if (BulkPi<temp2) then
+        BulkPi = 0.999*temp2     
       endif
       
       RETURN
@@ -3444,7 +3480,20 @@ C-------------------------------------------
        Common /Nsm/ Nsm
        Common /Accu/Accu
        common/Edec1/Edec1
-
+********************************J.Liu changes****************************************
+       common / OutputMore/  Output_avg
+       logical:: Output_avg
+       double precision::sigma00_avg, sigma1122_avg
+       double precision::pi01_avg_all, pi02_avg_all
+       double precision::sigma01_avg, sigma02_avg
+       double precision::pi00_avg_all, pi00_avg_inside
+       double precision::PPI_1st_avg, PPI_avg
+       double precision::BulkRelxTime_avg ! Avg bulk relaxation time
+       double precision::temp_all, temp_inside ! Avg temperature for all cells / cells inside freeze-out surface
+       double precision::temp_avg_num, temp_avg_den ! numerator and denominator to find temp_all
+       Integer:: surf_counter
+       double precision::U0_guess ! predict the solution of U0 by the solution of VP_local
+********************************J.Liu changes end**********************************
       ! ----- Use in root search -----
       Double Precision :: RSDM0, RSDM, RSPPI, RSee
       Common /findEdHookData/ RSDM0, RSDM, RSPPI ! M0, M, Pi (see 0510014)
@@ -3573,16 +3622,20 @@ C--------------------------------------
 
         !eeH = findEdHook(1D0)
         !Call invertFunctionD(findEdHook,0D0,5D3,1D-3,ED(I,J,K),0D0,eeH)
+C        VP_local = findvHook(0.0D0)
+C         Call invertFunctionD(findvHook, 0.0D0, 1.0D0, 1D-6, 0.0, 0D0, 
+C      &                       VP_local)
+C        U0_local = findU0Hook(0.0D0)
+C         Call invertFunctionD(findU0Hook, 1D0, 5D3, 1D-6, 1.0, 0D0, 
+C      &                       U0_local)
         VP_local = findvHook(0.0D0)
-        Call invertFunctionH(findvHook, 0.0D0, 1.0D0, 0.0, 1D-6, 
-     &                       VP_local)
-        U0_guess = 1./sqrt(1. - VP_local*VP_local)
-        U0_low_boundary = dmax1(1.0, 0.5*U0_guess)
-        U0_upper_boundary = 1.5*U0_guess
+        Call invertFunctionH(findvHook, 0.D0, 1.D0, 0.D0, 1D-6, 
+     &    VP_local)
+        U0_guess = 1.0/sqrt(1.0-VP_local**2.0+AAC)
         U0_local = findU0Hook(0.0D0)
-        Call invertFunctionH(findU0Hook, U0_low_boundary, 
-     &                       U0_upper_boundary, 0.0, 1D-6,
-     &                       U0_local)
+        Call invertFunctionH(findU0Hook, 1.D0,  
+     &    U0_guess*2.0, 0.D0, 1D-6, U0_local)
+        
         U0_critial = 1.21061
         if(U0_local .gt. U0_critial) then
           VP_local = sqrt(1. - 1./U0_local/U0_local)
@@ -3904,7 +3957,7 @@ C-------------------------------------------------------------------------------
           PT0=VRelaxT0(I,J,K)/U0(I,J,K)
           PS0=VBulk(I,J,K)
 
-       if(ViscousC.ge.0.00001) then
+       if(ViscousC.ge.0.000001) then
            D0Ln=(DLog(etaTtp0(I,J,K))-DLog(etaTtp(I,J,K)))/DT
            D1Ln=(DLog(etaTtp(I-1,J,K))-DLog(etaTtp(I+1,J,K)))/(2.0*DX)
            D2Ln=(DLog(etaTtp(I,J-1,K))-DLog(etaTtp(I,J+1,K)))/(2.0*DY)
@@ -3916,7 +3969,7 @@ C-------------------------------------------------------------------------------
            ADLnT=0.0
         end if
 
-       if(VisBulk.ge.0.00001) then
+       if(VisBulk.ge.0.000001) then
            dB0=(U0(I,J,K)/XiTtp(i,j,k)-PU0(I,J,K)/XiTtp0(i,j,k))
            dB1=(U1(I+1,J,K)/XiTtp(I+1,j,k)-U1(I-1,J,K)/XiTtp(I-1,j,k))
            dB2=(U2(I,J+1,K)/XiTtp(i,j+1,k)-U2(I,J-1,K)/XiTtp(i,j-1,k))
@@ -4285,11 +4338,11 @@ C-------------------------------------------------------------------------------
             if(Ed(I-1,J-1,K).ge. Edec1/HbarC)  then
              if(ViscousC>1D-6) then
               Dsp1=Dsp1+(Pi00(I,J,K)**2 +Pi11(I,J,K)**2 +Pi22(I,J,K)**2
-     &             +Pi33(I,J,K)**2 +2.0*Pi01(I,J,K)**2
-     &             +2.0*Pi02(I,J,K)**2 +2.0*Pi12(I,J,K)**2)/
+     &             +Pi33(I,J,K)**2 -2.0*Pi01(I,J,K)**2
+     &             -2.0*Pi02(I,J,K)**2 +2.0*Pi12(I,J,K)**2)/
      &                  (2.0*VCoefi(I,J,K)*Temp(I,J,K))
              end if
-             if(Visbulk.ge.0.00001.and.VBulk(I,J,K).ge.0.000001)then
+             if(Visbulk.ge.0.000001.and.VBulk(I,J,K).ge.0.000001)then
              Dsp2=Dsp2+(PPI(I,J,K)*PPI(I,J,K))/
      &                    (VBulk(I,J,K)*Temp(I,J,K))
              end if
@@ -4306,7 +4359,15 @@ C            Print *, 'time',time,'Stotal', Stotal,StotalSv,StotalBv
 
          If(Time.le.TT0+dT) SxyT=0.0d0
 
-        call anisotrop10 (Vx,Vy,U0,U1,U2, Ed,PL,Sd, PPI,
+C        call anisotrop10 (Vx,Vy,U0,U1,U2, Ed,PL,Sd, PPI,
+C     &  Pi00,Pi01,Pi02, Pi33, Pi11,Pi12,Pi22, ScT00,ScT01,ScT02,
+C     &  DX,DY,DZ,DT,Time,EpsX,EpsP,TEpsP, Vaver,VavX,VavY, STotal22,
+C     &  AE,ATemp, APL, APLdx,APLdy, AScT00, AScT01, AScT02,
+C     &  AP11dx,AP22dy,  AP33,AP00, AP01,AP02, AP11, Ap12, AP22,SxyT,
+C     &  PaScT00,PaScT01,PaScT02, difScT0102,difPLxy, difPixy, difVxVy,
+C     &  NXPhy0,NYPhy0, NXPhy,NYPhy, NX0,NX,NY0,NY,NZ0,NZ)  !PNEW NNEW something related to root finding
+
+        call anisotrop11 (Vx,Vy,U0,U1,U2, Ed,PL,Sd, PPI,
      &  Pi00,Pi01,Pi02, Pi33, Pi11,Pi12,Pi22, ScT00,ScT01,ScT02,
      &  DX,DY,DZ,DT,Time,EpsX,EpsP,TEpsP, Vaver,VavX,VavY, STotal22,
      &  AE,ATemp, APL, APLdx,APLdy, AScT00, AScT01, AScT02,
@@ -4314,7 +4375,106 @@ C            Print *, 'time',time,'Stotal', Stotal,StotalSv,StotalBv
      &  PaScT00,PaScT01,PaScT02, difScT0102,difPLxy, difPixy, difVxVy,
      &  NXPhy0,NYPhy0, NXPhy,NYPhy, NX0,NX,NY0,NY,NZ0,NZ)  !PNEW NNEW something related to root finding
 
+*********************J.Liu changes*******************************************************************   
+*output the averaged p00 over the transverse plane, averaged pi00 inside the freeze-out surface
+*and Navier-Stokes limit: 2*eta*sigma00, which is 2.D0*VCoefi(i,j,k)*DPc00(i,j,k)
+        if (Output_avg) Then
+          pi00_avg_all=0.D0
+          pi00_avg_inside=0.D0 
+          sigma00_avg=0.D0
+          sigma1122_avg=0.D0
 
+          pi01_avg_all=0.D0
+          pi02_avg_all=0.D0
+          sigma01_avg = 0.D0
+          sigma02_avg = 0.D0
+
+          PPI_avg = 0.D0
+          PPI_1st_avg = 0.D0 ! first order N-S limit of Bulk pressure
+          surf_counter=0  
+          BulkRelxTime_avg = 0.D0
+
+          temp_all = 0.D0
+          temp_avg_num = 0.D0
+          temp_avg_den = 0.D0
+          temp_inside = 0.D0
+          DO I=NXPhy0,NXPhy
+              Do J=NYPhy0, NYPhy
+                pi00_avg_all = pi00_avg_all + Pi00(I, J, NZ0)
+                pi01_avg_all = pi01_avg_all + Pi01(I, J, NZ0)
+                pi02_avg_all = pi02_avg_all + Pi02(I, J, NZ0)
+                
+                sigma00_avg = sigma00_avg 
+     &              + 2.D0*VCoefi(I, J, NZ0)*DPc00(I, J, NZ0)
+                sigma1122_avg = sigma1122_avg + 2.D0*VCoefi(I, J, NZ0)
+     &              *(DPc11(I, J, NZ0)+ DPc22(I, J, NZ0))        
+                sigma01_avg = sigma01_avg 
+     &              + 2.D0*VCoefi(I, J, NZ0)*DPc01(I, J, NZ0)
+                sigma02_avg = sigma00_avg 
+     &              + 2.D0*VCoefi(I, J, NZ0)*DPc02(I, J, NZ0)     
+
+                PPI_1st_avg = PPI_1st_avg-1.0*VBulk(I,J,K)*SiLoc(I,J,K)  ! avg PPI of Navier-Stockes limit
+                temp_avg_num = temp_avg_num + 
+     &                Temp(I,J,NZ0)*Ed(I,J,NZ0)*U0(I,J,NZ0)  
+                temp_avg_den = temp_avg_den + 
+     &                Ed(I,J,NZ0)*U0(I,J,NZ0)         
+                PPI_avg = PPI_avg + PPI(I,J,K)*U0(I,J,NZ0)
+
+                if(Ed(I,J,NZ0)*HBarC<=Edec1) then  ! jia test: only counts points inside freeze-out surface
+                  BulkRelxTime_avg = BulkRelxTime_avg
+                else
+                  pi00_avg_inside =  pi00_avg_inside 
+     &                + Pi00(I, J, NZ0)
+                  surf_counter = surf_counter+1                  
+                  BulkRelxTIme_avg = BulkRelxTime_avg 
+     &                + 1/(VRelaxT0(I,J,NZ0)+1e-30)
+                  temp_inside = temp_inside + Temp(I,J,NZ0) ! avg temp inside freeze-out surface
+                EndIf
+              enddo          
+          enddo
+
+          pi00_avg_all = pi00_avg_all/(NXPhy-NXPhy0+1)
+     &       /(NYPhy-NYPhy0+1)/(NZ-NZ0+1)*HBarC   ! unit: fm^-4--->GeV/fm^-3
+          pi01_avg_all = pi01_avg_all/(NXPhy-NXPhy0+1)
+     &       /(NYPhy-NYPhy0+1)/(NZ-NZ0+1)*HBarC  
+          pi02_avg_all = pi02_avg_all/(NXPhy-NXPhy0+1)
+     &       /(NYPhy-NYPhy0+1)/(NZ-NZ0+1)*HBarC
+
+          sigma00_avg = sigma00_avg/(NXPhy-NXPhy0+1)
+     &       /(NYPhy-NYPhy0+1)/(NZ-NZ0+1)*HBarC
+          sigma1122_avg = sigma1122_avg/(NXPhy-NXPhy0+1)
+     &       /(NYPhy-NYPhy0+1)/(NZ-NZ0+1)*HBarC  
+          sigma01_avg = sigma01_avg/(NXPhy-NXPhy0+1)
+     &       /(NYPhy-NYPhy0+1)/(NZ-NZ0+1)*HBarC
+          sigma02_avg = sigma02_avg/(NXPhy-NXPhy0+1)
+     &       /(NYPhy-NYPhy0+1)/(NZ-NZ0+1)*HBarC  
+
+          PPI_avg = PPI_avg/(NXPhy-NXPhy0+1)
+     &       /(NYPhy-NYPhy0+1)/(NZ-NZ0+1)*HBarC
+          PPI_1st_avg = PPI_1st_avg/(NXPhy-NXPhy0+1)
+     &       /(NYPhy-NYPhy0+1)/(NZ-NZ0+1)*HBarC
+          temp_all = temp_avg_num/(temp_avg_den+1e-10)*HBarC  !unit: GeV
+
+          if(surf_counter==0) then
+            pi00_avg_inside = 0D0
+            temp_inside = 0D0
+            BulkRelxTime_avg = 0D0
+          else
+            pi00_avg_inside = pi00_avg_inside/surf_counter
+     &        *HBarC     
+            temp_inside = temp_inside/surf_counter
+     &        /(NZ-NZ0+1)*HBarC  !unit: GeV   
+            BulkRelxTime_avg = BulkRelxTime_avg/surf_counter
+     &        /(NZ-NZ0+1)  !unit: fm 
+          endif 
+
+C  output to file "pi_avg_evo.dat"
+          write(3424, '(1f12.3,13E20.8E3)') Time, pi00_avg_all, 
+     &      pi00_avg_inside, pi01_avg_all, pi02_avg_all, PPI_avg,
+     &      sigma00_avg, sigma1122_avg, sigma01_avg, sigma02_avg,
+     &      PPI_1st_avg, BulkRelxTime_avg, temp_inside, temp_all
+        endif !output_avg
+C ********************J.Liu changes end******************************************************    
 
       AMV=Hbarc*1000.0 !fm-1 change to MEV
       GV=Hbarc !fm-1 change to GEV
@@ -4602,6 +4762,464 @@ C----------------------------------------------------------------
       end
 
 
+C###########################################################################################
+***************************J.Liu changes*******************************
+* slight changed from anisotrop10() to output more hydro information
+***********************************************************************
+      subroutine anisotrop11 (Vx,Vy,U0,U1,U2, Ed,PL,Sd, PPI,
+     &  Pi00,Pi01,Pi02, Pi33, Pi11,Pi12,Pi22, ScT00,ScT01,ScT02,
+     &  DX,DY,DZ,DT,Time,EpsX,EpsP,TEpsP, Vaver,VavX,VavY, STotal,
+     &  AE,ATemp, APL, APLdx,APLdy, AScT00, AScT01, AScT02,
+     &  AP11dx,AP22dy,  AP33,AP00, AP01,AP02, AP11, Ap12, AP22,SxyT,
+     &  PaScT00,PaScT01,PaScT02, difScT0102,difPLxy, difPixy, difVxVy,
+     &  NXPhy0,NYPhy0, NXPhy,NYPhy, NX0,NX,NY0,NY,NZ0,NZ)  !PNEW NNEW  related to root finding
+
+      Implicit Double Precision (A-H, O-Z)
+      Dimension Vx(NX0:NX, NY0:NY, NZ0:NZ) !fluid velocity
+      Dimension Vy(NX0:NX, NY0:NY, NZ0:NZ) !fluid velocity
+
+      Dimension U0(NX0:NX, NY0:NY, NZ0:NZ) !Four velocity
+      Dimension U1(NX0:NX, NY0:NY, NZ0:NZ) !Four velocity
+      Dimension U2(NX0:NX, NY0:NY, NZ0:NZ) !Four velocity
+
+      Dimension Ed(NX0:NX, NY0:NY, NZ0:NZ) !energy density
+      Dimension PL(NX0:NX, NY0:NY, NZ0:NZ) !local pressure
+      Dimension Sd(NX0:NX, NY0:NY, NZ0:NZ) !entropy density
+      Dimension Temp(NX0:NX, NY0:NY, NZ0:NZ) !Local Temperature
+
+      Dimension Pi00(NX0:NX, NY0:NY, NZ0:NZ)    !Stress Tensor
+      Dimension Pi01(NX0:NX, NY0:NY, NZ0:NZ)    !Stress Tensor
+      Dimension Pi02(NX0:NX, NY0:NY, NZ0:NZ)    !Stress Tensor
+      Dimension Pi33(NX0:NX, NY0:NY, NZ0:NZ)    !Stress Tensor
+      Dimension Pi11(NX0:NX, NY0:NY, NZ0:NZ)    !Stress Tensor
+      Dimension Pi12(NX0:NX, NY0:NY, NZ0:NZ)    !Stress Tensor
+      Dimension Pi22(NX0:NX, NY0:NY, NZ0:NZ)    !Stress Tensor
+      Dimension PPI(NX0:NX, NY0:NY, NZ0:NZ)    !Bulk pressure
+
+
+      Dimension ScT00(NX0:NX, NY0:NY, NZ0:NZ) !Source Term  ScT=ScX+ScY+ScZ
+      Dimension ScT01(NX0:NX, NY0:NY, NZ0:NZ) !Source Term  ScT=ScX+ScY+ScZ
+      Dimension ScT02(NX0:NX, NY0:NY, NZ0:NZ) !Source Term  ScT=ScX+ScY+ScZ
+
+      common/Edec/Edec    !decoupling temperature
+
+**************************J.Liu changes*************************************
+      common/OutputMore/ Output_avg
+      logical :: Output_avg      
+      Common /TT0/ TT0   !T0
+      Double Precision TT0
+      Common/event_angle/ event_phi2
+      Double Precision event_phi2
+      Double Precision :: EdAvg, Pi00Avg, Pi01Avg, Pi02Avg
+      Double Precision :: Pi03Avg, Pi11Avg, Pi12Avg, Pi22Avg
+      Double Precision :: Pi33Avg
+      Integer :: total_points
+      Double Precision, Parameter :: HbarC=0.19733d0 !for changcing between fm and GeV ! Hbarc=0.19733=GeV*fm
+
+      total_points = (NXPhy-NXPhy0+1)*(NYPhy-NYPhy0+1)*(NZ-NZ0+1)
+
+      EpsX1_REAL=0.0  !relate spacial ellipticity
+      EpsX1_IMAG=0.0  !relate spacial ellipticity
+**************************J.Liu changes ends********************************
+
+      EpsX1=0.0  !relate spacial ellipticity
+      EpsX2=0.0  !relate spacial ellipticity
+
+      EpsP1=0.0  !relate momentum ellipticity
+      EpsP2=0.0  !relate momentum ellipticity
+      TEpsP1=0.0  !relate momentum ellipticity
+      TEpsP2=0.0  !relate momentum ellipticity
+      STotal=0.0
+      Vaver1=0.0    !average velocity
+      Vaver2=0.0
+      VavX1=0.0
+      VavY1=0.0
+C ************************J.Liu changes**********************************       
+      TXX=0.0
+      TYY=0.0
+      TXY =0.0
+      TXXP=0.0   !TX'X'
+      TYYP=0.0   !TY'Y'
+
+      TTXY = 0.0
+      TTXX =0.0
+      TTYY =0.0
+      TTXXP=0.0  !TTX'X'
+      TTYYP=0.0
+
+      EpsP_full =0.0
+      EpsP1_full = 0.0 ! numerator of rotated momentum anisotropy
+      EpsP2_full = 0.0 ! denominator of rotated momentum anisotropy  
+      TEpsP_full =0.0     
+      TEpsP1_full = 0.0 ! numerator of rotated total momentum anisotropy 
+      TEpsP2_full = 0.0 ! denominator of rotated total momentum anisotropy
+      TEpsP_full_weighted =0.0     
+      TEpsP1_full_weighted = 0.0 ! numerator of rotated total momentum anisotropy 
+      TEpsP2_full_weighted = 0.0 ! denominator of rotated total momentum anisotropy 
+
+      TEpsP_inside = 0.0  ! count totoal momentum anisotropy for cells inside the freeze-out surface
+      TEpsP1_inside = 0.0
+      TEpsP2_inside = 0.0   
+
+      EpsP_real = 0.0 ! momentum anisotropy calculated after the imaginary part has been taken out
+      EpsP_img = 0.0
+      TXX_avg=0.0
+      TYY_avg=0.0
+      TXY_avg=0.0
+
+      TEpsP_real = 0.0   ! total momentum anisotropy calculated after the imaginary part has been taken out
+      TEpsP_img = 0.0
+      TTXX_avg=0.0
+      TTYY_avg=0.0
+      TTXY_avg=0.0      
+
+C find the center of the profile 
+      XC = 0D0
+      YC = 0D0
+      TotalE = 0D0
+      Do K = NZ0, NZ
+      Do I = NXPhy0, NXPhy
+      Do J = NYPhy0, NYPhy
+        XX = I*DX
+        YY = J*DY
+        XC = XC + XX*Ed(I,J,K)*U0(I,J,K)
+        YC = YC + YY*Ed(I,J,K)*U0(I,J,K)
+        TotalE = TotalE + Ed(I,J,K)*U0(I,J,K)
+      End Do
+      End Do
+      End Do
+      XC = XC/TotalE
+      YC = YC/TotalE
+C      Print *, "Centered at X=", XC, "Y=", YC        
+C ************************J.Liu changes end**********************************     
+
+      DO 100 K=NZ0,NZ
+      DO 100 J=-NYPhy,NYPhy
+      DO 100 I=-NXPhy,NXPhy
+        !If (Ed(I,J,K) < EDec) Cycle
+        gamma=1.0D0/sqrt(1D0-Vx(I,J,NZ0)**2-Vy(I,J,NZ0)**2)
+        !gamma=1.0D0/max(sqrt(abs(1D0-Vx(I,J,K)**2-Vy(I,J,K)**2)),1D-15)
+
+c "Recenter" the profile: xx---->xx-XC
+        xx=I*DX - XC 
+        yy=J*DY - YC
+        xx=I*DX
+        yy=J*DY
+
+        x2=xx*xx
+        y2=yy*yy
+        EpsX1_REAL=EpsX1_REAL+(y2-x2)*Ed(I,J,K)*gamma   !*
+        EpsX1_IMAG=EpsX1_IMAG+2.D0*xx*yy*Ed(I,J,K)*gamma 
+        EpsX2=EpsX2+(y2+x2)*Ed(I,J,K)*gamma   !*
+
+        !angle = 2*atan2(YY,XX)
+        !RR = sqrt(XX*XX+YY*YY)
+        !
+        !gammaE=1.0/sqrt(1-Vx(I,J,K)**2-Vy(I,J,K)**2)*Ed(I,J,K)
+
+        ! eccentricity, defined using r^2 as weight function:
+        !Weight=Weight+RR*RR*gammaE ! Note that this weight is repeatedly calculated. But since it is much cleaner written this way and it is very fast...
+        !EpsX1=EpsX1+RR*RR*cos(angle)*gammaE
+        !EpsX2=EpsX2+RR*RR*gammaE
+
+        ep=Ed(I,J,K)+PL(I,J,K)
+        TXX=ep*U1(I,J,K)*U1(I,J,K)+PL(I,J,K)
+        TYY=ep*U2(I,J,K)*U2(I,J,K)+PL(I,J,K)
+
+        EpsP1=EpsP1+(TXX-TYY)
+        EpsP2=EpsP2+(TXX+TYY)
+
+        TTXX=TXX+Pi11(I,J,K)+PPI(I,J,K)
+     &   +PPI(I,J,K)*U1(I,J,K)*U1(I,J,K)
+        TTYY=TYY+Pi22(I,J,K)+PPI(I,J,K)
+     &   +PPI(I,J,K)*U2(I,J,K)*U2(I,J,K)
+
+        TEpsP1=TEpsP1+(TTXX-TTYY)
+        TEpsP2=TEpsP2+(TTXX+TTYY)
+
+        if(Ed(I,J,K)*HbarC>Edec) then
+          TEpsP1_inside = TEpsP1_inside+(TTXX-TTYY)
+          TEpsP2_inside = TEpsP2_inside+(TTXX+TTYY)
+        endif
+        Vr=sqrt(Vx(I,J,K)**2+Vy(I,J,K)**2)
+        Vaver1=Vaver1+Ed(I,J,K)*Vr*gamma   !*
+        VavX1=VavX1+Ed(I,J,K)*Vx(I,J,K)*gamma   !*
+        VavY1=VavY1+Ed(I,J,K)*Vy(I,J,K)*gamma   !*
+        Vaver2=Vaver2+Ed(I,J,K)*gamma   !*
+
+        STotal=STotal+Sd(I,J,K)*U0(I,J,K)*Time*dx*dy
+ 100  continue
+        EpsX1=sqrt(EpsX1_REAL**2+EpsX1_IMAG**2)
+        EpsX=EpsX1/EpsX2  !spacial ellipticity
+        EpsP=EpsP1/EpsP2  !Momentum  ellipticity
+        TEpsP=TEpsP1/TEpsP2 ! total Momentum  ellipticity
+        TEpsP_inside = TEpsP1_inside/TEpsP2_inside
+        If(isnan(TEpsP_inside)) TEpsP_inside=0.0 !end of hydro evolution, 
+                                                 !no points inside freezeout surface
+
+C         if(abs(TEpsP)>100) then  !jia test: whenever TEpsP is large
+C           OPEN(3429,FILE='results/ux_check.dat',FORM='FORMATTED',
+C      &        STATUS='REPLACE')  
+C           OPEN(3430,FILE='results/uy_check.dat',FORM='FORMATTED',
+C      &        STATUS='REPLACE')
+C           OPEN(3431,FILE='results/ed_check.dat',FORM='FORMATTED',
+C      &        STATUS='REPLACE')
+C           OPEN(3432,FILE='results/pl_check.dat',FORM='FORMATTED',
+C      &        STATUS='REPLACE')      
+C           do 2599 I = NXPhy0, NXPhy           
+C             write(3429,'(401e20.8)')(U0(I, J, NZ0),J=NYPhy0, NYPhy)  
+C             write(3430,'(401e20.8)')(U1(I, J, NZ0),J=NYPhy0, NYPhy) 
+C          write(3431,'(401e20.8)')(ED(I, J, NZ0)*HbarC,J=NYPhy0, NYPhy) 
+C          write(3432,'(401e20.8)')(PL(I, J, NZ0)*HbarC,J=NYPhy0, NYPhy) 
+C 2599    continue
+C           close(3429)
+C           close(3430)
+C           close(3431)
+C           close(3432)
+C           print*, 'Large epsilon_p Check completes!'
+C           stop
+C        endif
+C ***************************J.Liu changes*******************
+C find the momentum anisotropy and total momentum anisotropy after the rotation of profile 
+      DO 1100 K=NZ0,NZ
+      DO 1100 J=-NYPhy,NYPhy
+      DO 1100 I=-NXPhy,NXPhy        
+        ep=Ed(I,J,K)+PL(I,J,K)
+        TXX=ep*U1(I,J,K)*U1(I,J,K)+PL(I,J,K)
+        TYY=ep*U2(I,J,K)*U2(I,J,K)+PL(I,J,K)
+        TXY=ep*U1(I,J,K)*U2(I,J,K)
+
+        EpsP1_full = EpsP1_full + (TXX-TYY)*cos(2*event_phi2)
+     &     +2*TXY*sin(2*event_phi2)
+        EpsP2_full = EpsP2_full + (TXX+TYY)
+  
+
+        TTXX=TXX+Pi11(I,J,K)+PPI(I,J,K)
+     &   +PPI(I,J,K)*U1(I,J,K)*U1(I,J,K)
+        TTYY=TYY+Pi22(I,J,K)+PPI(I,J,K)
+     &   +PPI(I,J,K)*U2(I,J,K)*U2(I,J,K)
+        TTXY=TXY+Pi12(I,J,K)+PPI(I,J,K)*U1(I,J,K)*U2(I,J,K)
+   
+        TEpsP1_full = TEpsP1_full + (TTXX-TTYY)*cos(2*event_phi2)
+     &     +2*TTXY*sin(2*event_phi2)
+        TEpsP2_full = TEpsP2_full + (TTXX+TTYY) 
+
+        TEpsP1_full_weighted = TEpsP1_full_weighted + (TTXX-TTYY)
+     &     *cos(2*event_phi2)*Ed(I,J,K)*U0(I,J,K)          !weighting function: ed in lab frame
+     &     +2*TTXY*sin(2*event_phi2)*Ed(I,J,K)*U0(I,J,K)
+        TEpsP2_full_weighted = TEpsP2_full_weighted 
+     &     + (TTXX+TTYY)*Ed(I,J,K)*U0(I,J,K)
+
+! prepare calculate the real and img part of momentum anisotropies
+        TXX_avg = TXX_avg + TXX
+        TYY_avg = TYY_avg + TYY
+        TXY_avg = TXY_avg + TXY
+
+        TTXX_avg = TTXX_avg + TTXX
+        TTYY_avg = TTYY_avg + TTYY
+        TTXY_avg = TTXY_avg + TTXY
+
+ 1100  continue
+
+      EpsP_full = EpsP1_full/EpsP2_full
+      TEpsP_full = TEpsP1_full/TEpsP2_full
+      TEpsP_full_weighted = TEpsP1_full_weighted/TEpsP2_full_weighted
+
+      EpsP_real = (TYY_avg-TXX_avg)/(TYY_avg+TXX_avg+1e-20)
+      EpsP_img  = 2.D0*TXY_avg/(TYY_avg+TXX_avg+1e-20)
+
+      TEpsP_real = (TTYY_avg-TTXX_avg)/(TTYY_avg+TTXX_avg+1e-20)
+      TEpsP_img  = 2.D0*TTXY_avg/(TTYY_avg+TTXX_avg+1e-20)      
+
+C output transverse plane averaged energy density, pi_munu tensor for check
+C format Time - tau0, EpsP, EdAvg, Pi00, Pi01, Pi02, Pi11, Pi12, Pi22, Pi33
+C find the average of shear tensor
+      Pi00Avg=0.0 !Averaged pi00
+      Pi01Avg=0.0 !Averaged pi01 
+      Pi02Avg=0.0 !Averaged pi02
+      Pi11Avg=0.0 !Averaged pi11
+      Pi12Avg=0.0 !Averaged pi12
+      Pi22Avg=0.0 !Averaged pi22 
+      Pi33Avg=0.0 !Averaged pi33
+      if (Output_avg) Then
+C        write(*, *) Output_avg, ' ', total_points
+        Do K = NZ0, NZ
+        Do I = NXPhy0, NXPhy
+        Do J = NYPhy0, NYPhy 
+           Pi00Avg = Pi00Avg + Pi00(I, J, K)
+           Pi01Avg = Pi01Avg + Pi01(I, J, K)
+           Pi02Avg = Pi02Avg + Pi02(I, J, K)
+           Pi11Avg = Pi11Avg + Pi11(I, J, K)
+           Pi12Avg = Pi12Avg + Pi12(I, J, K)
+           Pi22Avg = Pi22Avg + Pi22(I, J, K)
+           Pi33Avg = Pi33Avg + Pi33(I, J, K)
+        End Do
+        End Do
+        End Do 
+        Pi00Avg = Pi00Avg/total_points*HbarC ! unit: fm^-4-->GeV/fm^-3
+        Pi01Avg = Pi01Avg/total_points*HbarC 
+        Pi02Avg = Pi02Avg/total_points*HbarC 
+        Pi11Avg = Pi11Avg/total_points*HbarC 
+        Pi12Avg = Pi12Avg/total_points*HbarC 
+        Pi22Avg = Pi22Avg/total_points*HbarC 
+        Pi33Avg = Pi33Avg/total_points*HbarC     
+        EdAvg = TotalE/total_points*HbarC   ! unit: fm^-4-->GeV/fm^-3 
+
+        Write(3423,'(1f12.3, 18e26.8)') Time-TT0, EpsP,
+     &    EdAvg, Vaver, Pi00Avg, Pi01Avg, Pi02Avg, 
+     &    Pi11Avg, Pi12Avg, Pi22Avg, Pi33Avg, EpsP_full,
+     &    TEpsP_full, TEpsP_full_weighted, TEpsP_inside,
+     &    EpsP_real, EpsP_img,
+     &    TEpsP_real, TEpsP_img
+      end if
+C ***************************J.Liu changes end*******************
+
+
+        Vaver=Vaver1/Vaver2
+        VavX=VaVX1/Vaver2
+        VavY=VaVY1/Vaver2
+
+      K=NZ0
+      Sx=0.0d0
+      I=NXPhy
+      DO 110 J=NYPhy0,NYPhy
+       Sx=Sx+1.0*Time*dy*dT*U1(I,J,K)*Sd(I,J,K)
+ 110  continue
+
+
+      K=NZ0
+      Sy=0.0d0
+      J=NYPhy
+      DO 120 I=NXPhy0,NXPhy
+       Sy=Sy+1.0*Time*dx*dT*U2(I,J,K)*Sd(I,J,K)
+ 120  continue
+
+
+         SxyT=SxyT+Sx+Sy
+         STotal=(STotal+SxyT)*4.0
+C        STotal=STotal*Time*dx*dy*DT
+
+
+       AE=0.0
+       ATemp=0.0
+       AP00=0.0
+       AP01=0.0
+       AP02=0.0
+       AP33=0.0
+       AP11=0.0
+       AP12=0.0
+       AP22=0.0
+
+       APLdx=0.0
+       APLdy=0.0
+       APL=0.0
+
+       PaScT00=0.0
+       PaSCT01=0.0
+       PaSCT02=0.0
+
+       AScT00=0.0
+       ASCT01=0.0
+       ASCT02=0.0
+
+
+       difScT0102=0.0
+       difPLxy=0.0
+       difPixy=0.0
+       difVxVy=0.0
+C----------------------------------------------------------------
+      DO 200 K=NZ0,NZ
+      DO 200 J=0,NYPhy
+      DO 200 I=0,NXPhy
+      AE=AE+Ed(I,J,K)*gamma  !*
+      ppe=PL(I,J,K)+Ed(I,J,K)
+      ATemp=ATemp+Ed(I,J,K)*Temp(I,J,K)*gamma  !*
+
+      AP00=AP00+Ed(I,J,K)*Pi00(I,J,K)*gamma/ppe  !*
+      AP01=AP01+Ed(I,J,K)*Pi01(I,J,K)*gamma/ppe  !*
+      AP02=AP02+Ed(I,J,K)*Pi02(I,J,K)*gamma/ppe  !*
+      AP11=AP11+Ed(I,J,K)*Pi11(I,J,K)*gamma/ppe  !*
+      AP12=AP12+Ed(I,J,K)*Pi12(I,J,K)*gamma/ppe  !*
+      AP22=AP22+Ed(I,J,K)*Pi22(I,J,K)*gamma/ppe  !*
+      AP33=AP33+Ed(I,J,K)*Pi33(I,J,K)*gamma/ppe  !*
+
+      APL=APL+PL(I,J,K)*Ed(I,J,K)*gamma  !*
+     & +Time*Ed(I,J,K)*gamma  !*
+     & *((PL(I+1,J,K)*Vx(I+1,J,K) -PL(I-1,J,K)*Vx(I-1,J,K))/(2.0*DX)
+     &    +(PL(I,J+1,K)*Vy(I,J+1,K)-PL(I,J-1,K)*Vy(I,J-1,K))/(2.0*DY))
+
+      APLdx=APLdx+(PL(I+1,J,K)-PL(I-1,J,K))*Ed(I,J,K)/(2.0*DX)*gamma  !*
+      APLdy=APLdy+(PL(I,J+1,K)-PL(I,J-1,K))*Ed(I,J,K)/(2.0*DY)*gamma  !*
+
+      AP11dx=AP11dx+(Pi11(I+1,J,K)-Pi11(I-1,J,K))
+     &                                  *Ed(I,J,K)/(2.0*DX) *gamma  !*
+      AP22dy=AP22dy+(Pi22(I,J+1,K)-Pi22(I,J-1,K))
+     &                                  *Ed(I,J,K)/(2.0*DY) *gamma  !*
+
+      AScT00=ASCT00+ScT00(I,J,K)*Ed(I,J,K)*gamma  !*
+      AScT01=ASCT01+ScT01(I,J,K)*Ed(I,J,K)*gamma  !*
+      AScT02=ASCT02+ScT02(I,J,K)*Ed(I,J,K)*gamma  !*
+
+      difScT0102=difScT0102+(ScT01(I,J,K)-ScT02(I,J,K))*Ed(I,J,K)*gamma  !*
+      difPLxy=difPLxy
+     &     +Time*(PL(I+1,J,K)-PL(I-1,J,K))*Ed(I,J,K)/(2.0*DX)*gamma  !*
+     &     -Time*(PL(I,J+1,K)-PL(I,J-1,K))*Ed(I,J,K)/(2.0*DY)*gamma  !*
+      difPixy=difPixy
+     &      +Time*(PL(I+1,J,K)-PL(I-1,J,K))*Ed(I,J,K)/(2.0*DX)*gamma  !*
+     &      +Time*(Pi11(I+1,J,K)-Pi11(I-1,J,K))*Ed(I,J,K)/(2.0*DX)*gamma  !*
+     &      -Time*(PL(I,J+1,K)-PL(I,J-1,K))*Ed(I,J,K)/(2.0*DY)*gamma  !*
+     &      -Time*(Pi22(I,J+1,K)-Pi22(I,J-1,K))*Ed(I,J,K)/(2.0*DY)*gamma  !*
+
+      difVxVy=difVxVy+(Vx(I,J,K)-Vy(I,J,K))*Ed(I,J,K) *gamma  !*
+
+      PaScT00=PaScT00+PL(I,J,K)*Ed(I,J,K)*gamma  !*
+     &  +Time*Ed(I,J,K)*gamma  !*
+     &  *((PL(I+1,J,K)*Vx(I+1,J,K) -PL(I-1,J,K)*Vx(I-1,J,K))/(2.0*DX)
+     &    +(PL(I,J+1,K)*Vy(I,J+1,K)-PL(I,J-1,K)*Vy(I,J-1,K))/(2.0*DY))
+     & +Ed(I,J,K)*Pi33(I,J,K)*gamma  !*
+
+      PaSCT01=PaScT01
+     &   +(PL(I+1,J,K)-PL(I-1,J,K))*Ed(I,J,K)/(2.0*DX)*gamma  !*
+     &   +(Pi11(I+1,J,K)-Pi11(I-1,J,K))*Ed(I,J,K)/(2.0*DX)*gamma  !*
+      PaSCT02=PaScT02
+     &    +(PL(I,J+1,K)-PL(I,J-1,K))*Ed(I,J,K)/(2.0*DY)*gamma  !*
+     &    +(Pi22(I,J+1,K)-Pi22(I,J-1,K))*Ed(I,J,K)/(2.0*DY)*gamma  !*
+ 200  continue
+
+      ATemp=ATemp/AE
+
+      AP00=AP00/AE
+      AP01=AP01/AE
+      AP02=AP02/AE
+      AP11=AP11/AE
+      AP12=AP12/AE
+      AP22=AP22/AE
+      AP33=AP33/AE
+
+      APL=APL/AE
+      APLdx=Time*APLdx/AE
+      APLdy=Time*APLdy/AE
+      AP11dx=Time*AP11dx/AE
+      AP22dy=Time*AP22dy/AE
+
+      AScT00=AScT00/AE
+      AScT01=AScT01/AE
+      AScT02=AScT02/AE
+
+      PaScT00=PaScT00/AE
+      PaScT01=Time*PaScT01/AE
+      PaScT02=Time*PaScT02/AE
+
+      difScT0102=difScT0102/AE
+      difPLxy=difPLxy/AE
+      difPixy=difPixy/AE
+      difVxVy=difVxVy/AE
+
+      return
+      end
+
+
+
 !======================================================================
       Double Precision Function quadESolver(ee0,DM0,DM,PPI,debug,I,J)
       ! Root finding by interating quadratic equation formula for the equation
@@ -4734,7 +5352,6 @@ C----------------------------------------------------------------
 
       Double Precision :: RSDM0, RSDM, RSPPI, RSee
       Common /findEdHookData/ RSDM0, RSDM, RSPPI ! M0, M, Pi (see 0510014)
-
       Double Precision cstilde2 ! energy density from previous iteration, p/e, pressure
       ! Note that cstilde2 is NOT dp/de, but rather p/e!!!
 
@@ -4742,13 +5359,20 @@ C----------------------------------------------------------------
       Double Precision, Parameter :: HbarC=0.19733d0 !for changing between fm and GeV ! Hbarc=0.19733=GeV*fm
 
       Double Precision A ! temporary variables
-
+      Double Precision temp
       RSee = RSDM0 - v*RSDM
       cstilde2=PEPS(0.0d0, RSee*Hbarc)/dmax1(abs(RSee),zero)/Hbarc
       A=RSDM0*(1+cstilde2)+RSPPI
 
       findvHook = v - (2*RSDM)/(A + sqrt(dmax1(A*A 
      &                  - 4*cstilde2*RSDM*RSDM, 1D-30)) + 1D-30)
+      temp = 1 - (2*RSDM)/(A + sqrt(dmax1(A*A 
+     &                  - 4*cstilde2*RSDM*RSDM, 1D-30)) + 1D-30) 
+      if(temp<0) then
+        print*, "findvHook: error!"
+        print*, RSDM0, RSDM, RSPPI, cstilde2
+        print*, (RSDM- RSDM0)*(1+cstilde2)
+      EndIf        
       if(isnan(findvHook)) then
         print*, cstilde2, A, v
         print*, A*A - 4*cstilde2*RSDM*RSDM

@@ -225,7 +225,7 @@
 
 !     declare input parameters
       Double Precision func
-      Double Precision varL, varR, acc, varI, varX, varResult
+      Double Precision varL, varR, varY, acc, varI, varX, varResult
       Double precision dd
 
 !     pre-fixed parameters
@@ -301,24 +301,26 @@
 
 
 ************************************************************************
-      Subroutine invertFunctionH(func,varL,varR,yy,acc,varResult)
+      Subroutine invertFunctionH(func, varL,varR, varY, acc, varResult)
 !     Newton/Bisect hybrid root search algorithm.
 !     Adapted from W.Press et.al. Numerical Recipies in C.
 !     Purpose:
-!       Return the varResult=func^-1(varX) using Newton method and Bisection.
+!       Return the varResult=func^-1(varY) using Newton method and Bisection.
 !
 !       -- func: double precision 1-argument function to be inverted
 !       -- varL: left boundary (for numeric derivative)
 !       -- varR: right boundary (for numeric derivative)
+!       -- varY: value of the number to be inverted
+!       -- acc:  accuracy of solution
 !       -- varResult: the return inverted value
 !
-!   Solve: f(x)=yy with f(x)=table(x)-varX => f'(x)=table'(x)
+!   Solve: f(x)=varY with f(x)=table(x)-varX => f'(x)=table'(x)
 !
       Implicit None
 
 !     declare input parameters
       Double Precision func
-      Double Precision varL, varR, acc, varX, varResult, yy
+      Double Precision varL, varR, varY, acc, varX, varResult
       Double Precision dd ! step size of numerical derivative
 
 !     pre-fixed parameters
@@ -339,11 +341,13 @@
       dd = DMAX1(1D-6,1D-3*abs(varR - varL))
 
 !     initial value, left and right point
-      fl = func(varL) - yy
-      fh = func(varR) - yy
+      fl = func(varL) - varY
+      fh = func(varR) - varY
       if(fl*fh>0) then
         print*, "invertFunctionH error!"
         print*, "No solution at given boundary!"
+        print*, varL, varR, varY
+        print*, fl, fh        
         stop
       EndIf
 
@@ -369,7 +373,7 @@
       rts = (xl+xh)/2.0
       dxold = abs(varR-varL)
       dx=dxold
-      f = func(rts) - yy
+      f = func(rts) - varY
       df = (func(rts+dd) - func(rts-dd))/(2.0*dd)
 
       Do While (impatience<tolerance)
@@ -401,7 +405,7 @@
         EndIf
 !       if not converge, calculate function and its derivative again
         dd = (xh - xl)/20.0
-        f = func(rts) - yy
+        f = func(rts) - varY
         df = (func(rts+dd) - func(rts-dd))/(2.0*dd)
 !       maintain the bracket on the root
         if(f<0.0) then

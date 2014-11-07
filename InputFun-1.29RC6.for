@@ -66,6 +66,9 @@
       Double Precision maxBulkPiRatio ! used in tanh regulation method: Pi=Pi_max*tanh(Pi/Pi_max), Pi_max=maxPiRatio*(e+p)
       Common /maxBulkPiRatio/ maxBulkPiRatio
 
+      Integer InitialURead
+      Common/LDInitial/ InitialURead  ! IintURead =1 read initial velocity profile
+
       Integer checkE
       Common /checkE/ checkE
 
@@ -199,6 +202,9 @@
       Common /R0Bdry/ R0Bdry
       Integer LS
       Common /LS/ LS
+
+      Integer InitialURead
+      Common/LDInitial/ InitialURead  ! IintURead =1 read initial velocity profile
 
       Integer QNum, ArgIndex ! QNum is the total number of arguments, ArgIndex gives the index to the one currently reading
 
@@ -456,12 +462,13 @@
         NDX = 2
         NDY = 2     ! freeze-out step in x and y direction
         NDT = 5       ! freeze-out step in \tau direction
-
+        InitialURead = 1 ! default: read in initial flow etc.
         Write (*,*) "Have:", "EOS=", IEOS, "Qkind=", Qkind, ! write out parameter for a check
      &    "Initialization=", IInit, "dT=", dT_1,
      &    "eta/s=",ViscousC,"b=",b,"Rx2=",Rx2,"Ry2=",Ry2,
      &    "EK=", EK, "tau0=", T0, "EDec=", EDec,
-     &    "LS=", LS, "R0Bdry", R0Bdry, "VisBeta=", VisBeta
+     &    "LS=", LS, "R0Bdry", R0Bdry, "VisBeta=", VisBeta,
+     &    "InitialURead=", InitialURead
 
 
       If (debug>=3) Print *, "* readInputFromCML finished"
@@ -518,12 +525,11 @@
 
       Double Precision sFactor ! multiplicity factor on entropy density
       Common /sFactor/ sFactor
-       
-      Integer :: IhydroJetoutput   ! Output control for hydro evolution history
-      Common /hydroJetoutput/ IhydroJetoutput
-      
-      Integer InitialURead
-      Common/LDInitial/ InitialURead  ! IintURead =1 read initial velocity profile
+
+      Double Precision event_phi2 ! phi2 of initial profile
+      Common /event_angle/ event_phi2
+      Integer InitialURead ! IintURead =1 read initial velocity profile
+      Common/LDInitial/ InitialURead 
 
       Integer NDX, NDY, NDT
       Common /NXYTD/ NDX, NDY, NDT
@@ -552,7 +558,7 @@
       QNum = iargc ()
 
       sFactor = 1D0
-
+      event_phi2 =0D0 ! default value of event plane phi_2
       Do ArgIndex = 1, QNum
         Call getarg(ArgIndex, buffer)
         Call processAssignment(buffer, "=", varName, IResult, DResult)
@@ -621,10 +627,10 @@
         If (varName=="ndt") NDT=IResult
 
         If (varName=="visbeta") VisBeta=DResult ! VisBeta, used for proper time tau_pi
-        
-        If (varName=="initialuread") InitialURead=IResult ! read in initial flow velocity profiles
-        If (varName=="ihydrojetoutput") IhydroJetoutput=IResult ! output hydro evolution
 
+        If (varName=="initialuread") InitialURead=DResult  ! read initial flows etc.
+        If (varName=="visbulk") Visbulk=DResult ! bulk viscosity
+        If (varName=="event_angle") event_phi2=DResult ! phi2 of initial profile
       End Do ! ArgIndex
 
       If (debug>=3) Print *, "* readInputFromCML finished"
