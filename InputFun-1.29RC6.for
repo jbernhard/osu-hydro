@@ -628,7 +628,7 @@
 
         If (varName=="visbeta") VisBeta=DResult ! VisBeta, used for proper time tau_pi
 
-        If (varName=="initialUread") InitialURead=DResult  ! read initial flows etc.
+        If (varName=="initialuread") InitialURead=IResult  ! read initial flows etc.
         If (varName=="visbulk") Visbulk=DResult ! bulk viscosity
         If (varName=="event_angle") event_phi2=DResult ! phi2 of initial profile
       End Do ! ArgIndex
