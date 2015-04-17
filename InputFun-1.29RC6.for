@@ -66,9 +66,6 @@
       Double Precision maxBulkPiRatio ! used in tanh regulation method: Pi=Pi_max*tanh(Pi/Pi_max), Pi_max=maxPiRatio*(e+p)
       Common /maxBulkPiRatio/ maxBulkPiRatio
 
-      Integer InitialURead
-      Common/LDInitial/ InitialURead  ! IintURead =1 read initial velocity profile
-
       Integer checkE
       Common /checkE/ checkE
 
@@ -170,8 +167,9 @@
       Common /EK/ EK, HWN  !EK(T0) constant related to energy density,HWN percent of Wounded Nucleon
       Common /thick/ TRo0, TEta, TRA  !Para in Nuclear Thickness Function
 
+      Integer IVisflag
       Double Precision ViscousC, VisBeta, Visbulk, BulkTau, IRelaxBulk
-      Common /ViscousC/ ViscousC, VIsBeta ! Related to Shear Viscosity
+      Common /ViscousC/ ViscousC, VIsBeta, IVisflag ! Related to Shear Viscosity
       Common /ViscousBulk/ Visbulk, BulkTau, IRelaxBulk  ! Related to bulk Visousity
 
       Double Precision ITeta, b, ddx, ddy, TT0
@@ -202,9 +200,6 @@
       Common /R0Bdry/ R0Bdry
       Integer LS
       Common /LS/ LS
-
-      Integer InitialURead
-      Common/LDInitial/ InitialURead  ! IintURead =1 read initial velocity profile
 
       Integer QNum, ArgIndex ! QNum is the total number of arguments, ArgIndex gives the index to the one currently reading
 
@@ -462,13 +457,12 @@
         NDX = 2
         NDY = 2     ! freeze-out step in x and y direction
         NDT = 5       ! freeze-out step in \tau direction
-        InitialURead = 1 ! default: read in initial flow etc.
+
         Write (*,*) "Have:", "EOS=", IEOS, "Qkind=", Qkind, ! write out parameter for a check
      &    "Initialization=", IInit, "dT=", dT_1,
      &    "eta/s=",ViscousC,"b=",b,"Rx2=",Rx2,"Ry2=",Ry2,
      &    "EK=", EK, "tau0=", T0, "EDec=", EDec,
-     &    "LS=", LS, "R0Bdry", R0Bdry, "VisBeta=", VisBeta,
-     &    "InitialURead=", InitialURead
+     &    "LS=", LS, "R0Bdry", R0Bdry, "VisBeta=", VisBeta
 
 
       If (debug>=3) Print *, "* readInputFromCML finished"
@@ -500,8 +494,12 @@
       Common /thick/ TRo0, TEta, TRA  !Para in Nuclear Thickness Function
 
       Double Precision ViscousC, VisBeta, Visbulk, BulkTau, IRelaxBulk
-      Common /ViscousC/ ViscousC, VisBeta
+      Integer IVisflag
+      Common /ViscousC/ ViscousC, VisBeta, IVisflag
       Common /ViscousBulk/ Visbulk, BulkTau, IRelaxBulk  ! Related to bulk Visousity
+      
+      Integer Initialpitensor
+      Common/Initialpi/ Initialpitensor
 
       Double Precision ITeta, b, ddx, ddy, TT0
       Common /ITeta/ ITeta
@@ -525,11 +523,12 @@
 
       Double Precision sFactor ! multiplicity factor on entropy density
       Common /sFactor/ sFactor
-
-      Double Precision event_phi2 ! phi2 of initial profile
-      Common /event_angle/ event_phi2
-      Integer InitialURead ! IintURead =1 read initial velocity profile
-      Common/LDInitial/ InitialURead 
+       
+      Integer :: IhydroJetoutput   ! Output control for hydro evolution history
+      Common /hydroJetoutput/ IhydroJetoutput
+      
+      Integer InitialURead
+      Common/LDInitial/ InitialURead  ! IintURead =1 read initial velocity profile
 
       Integer NDX, NDY, NDT
       Common /NXYTD/ NDX, NDY, NDT
@@ -558,7 +557,7 @@
       QNum = iargc ()
 
       sFactor = 1D0
-      event_phi2 =0D0 ! default value of event plane phi_2
+
       Do ArgIndex = 1, QNum
         Call getarg(ArgIndex, buffer)
         Call processAssignment(buffer, "=", varName, IResult, DResult)
@@ -627,10 +626,13 @@
         If (varName=="ndt") NDT=IResult
 
         If (varName=="visbeta") VisBeta=DResult ! VisBeta, used for proper time tau_pi
+        
+        If (varName=="initialuread") InitialURead=IResult ! read in initial flow velocity profiles
+        If (varName=="ihydrojetoutput") IhydroJetoutput=IResult ! output hydro evolution
 
-        If (varName=="initialuread") InitialURead=IResult  ! read initial flows etc.
-        If (varName=="visbulk") Visbulk=DResult ! bulk viscosity
-        If (varName=="event_angle") event_phi2=DResult ! phi2 of initial profile
+        If (varName=="visflag") IVisflag=IResult ! Flag for temperature dependent eta/s(T)
+        If (varName=="initialpitensor") Initialpitensor=IResult ! initialization of pi tensor
+
       End Do ! ArgIndex
 
       If (debug>=3) Print *, "* readInputFromCML finished"
@@ -752,8 +754,9 @@
       Double Precision VCoefi(NX0:NX, NY0:NY, NZ0:NZ) !viscous coeficient shear viscosity eta
       Double Precision RMin, PiEPRatio, SigmaLargeness, EAndP
 
+      Integer IVisflag
       Double Precision ViscousC, VisBeta
-      Common /ViscousC / ViscousC, VisBeta
+      Common /ViscousC/ ViscousC, VisBeta, IVisflag
 
       Double Precision PiRatio ! used to determine R0; within r<R0, Pi/(e+p) < PiRatio
       Common /PiRatio/ PiRatio ! should already be setuped in prepareInputFun function
