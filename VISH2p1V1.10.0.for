@@ -156,6 +156,9 @@ C *******************************J.Liu changes end***************************
       Integer Initialpitensor
       Common/Initialpi/ Initialpitensor
 
+      Integer ViscousEqsType
+      Common/ViscousEqsControl/ ViscousEqsType
+
       call prepareInputFun() ! this is the initialization function in InputFun.for
 
       Print *, "Read parameters from Vishydro.inp file."
@@ -229,6 +232,7 @@ C ***************************J.Liu changes end***************************
       Read(1,*) Cha
       Read(1,*) Cha
       Read(1,*) Initialpitensor
+      Read(1,*) ViscousEqsType
       CLOSE(1)
 C===========================================================================
 
@@ -250,7 +254,8 @@ C===========================================================================
      &    "NDX=", NDX, "NDY=", NDY, "NDT=", NDT,
      &    "IhydroJetoutput=", IhydroJetoutput,
      &    "IVisflag=", IVisflag,
-     &    "Initialpitensor=", Initialpitensor
+     &    "Initialpitensor=", Initialpitensor,
+     &    "ViscousEqsType=", ViscousEqsType
 
       ddx=dx
       ddy=dy
@@ -541,6 +546,9 @@ C-------------------------------------------------------------------------------
       Common /ViscousC / ViscousC,VisBeta, IVisflag ! Related to Shear Viscosity
       Common /ViscousBulk/ Visbulk, BulkTau,IRelaxBulk  ! Related to bulk Viscosity
       Common /sFactor/ sFactor
+
+      Integer ViscousEqsType
+      Common/ViscousEqsControl/ ViscousEqsType
 
       Double Precision SEOSL7, PEOSL7, TEOSL7, SEOSL6
       Double Precision ss, ddt1, ddt2, ee1, ee2
@@ -3531,6 +3539,8 @@ C-------------------------------------------
       ! ----- Use in root search -----
       Double Precision :: RSDM0, RSDM, RSPPI, RSee
       Common /findEdHookData/ RSDM0, RSDM, RSPPI ! M0, M, Pi (see 0510014)
+      Integer ViscousEqsType
+      Common/ViscousEqsControl/ ViscousEqsType
 
       Double precision :: deltaBPiBPi, lambdaSpiBPi ! bulk transport coefficients
       Double precision :: piSigma
@@ -4004,14 +4014,17 @@ C-------------------------------------------------------------------------------
        if(VisBulk.ge.0.000001) then
 
 C old version: bulk pressure terms from entropy generation
-C           DB0Ln=(DLog(XiTtp0(I,J,K))-DLog(XiTtp(I,J,K)))/DT
-C           DB1Ln=(DLog(XiTtp(I-1,J,K))-DLog(XiTtp(I+1,J,K)))/(2.0*DX)
-C           DB2Ln=(DLog(XiTtp(I,J-1,K))-DLog(XiTtp(I,J+1,K)))/(2.0*DX)
+        if(ViscousEqsType .eq. 1) then
+          DB0Ln=(DLog(XiTtp0(I,J,K))-DLog(XiTtp(I,J,K)))/DT
+          DB1Ln=(DLog(XiTtp(I-1,J,K))-DLog(XiTtp(I+1,J,K)))/(2.0*DX)
+          DB2Ln=(DLog(XiTtp(I,J-1,K))-DLog(XiTtp(I,J+1,K)))/(2.0*DX)
 
-C            Badd=-0.5*(SiLoc(I,J,K)/U0(I,J,K)    !high precision version to reduce round-off error
-C      &          +(DB0Ln +Vx(I,J,K)*DB1Ln +Vy(I,J,K)*DB2Ln)*ff)
+           Badd=-0.5*(SiLoc(I,J,K)/U0(I,J,K)    !high precision version to reduce round-off error
+     &          +(DB0Ln +Vx(I,J,K)*DB1Ln +Vy(I,J,K)*DB2Ln)*ff)
+        endif
 
-C Bulk pressure terms from 14-moments expansion     
+C Bulk pressure terms from 14-moments expansion
+        if(ViscousEqsType .eq. 2) then
             call ViscousBulkTransCoefs(ED(i,j,k)*Hbarc, VBulk(i,j,k), 
      &          deltaBPiBPi, lambdaSpiBPi) ! calculate transport coefficients
 
@@ -4025,7 +4038,7 @@ C Bulk pressure terms from 14-moments expansion
             Badd = (-deltaBPiBPi*SiLoc(i,j,k)+
      &     lambdaSpiBPi/DMax1(PPI(i,j,k), 1e-18)*piSigma)
      &     /U0(i,j,k)/VRelaxT0(i,j,k)
-
+         endif
        else
            Badd=0.0
        end if
@@ -4078,7 +4091,7 @@ C Bulk pressure terms from 14-moments expansion
 
           PISc(i,j,K)=0.0 +( PPI(I,J,K)*BAdd+
      &       PA*PPI(I,J,K)-PT0*(PPI(I,J,K)+PS0*SiLoc(i,j,K)))*(-1.0)
-          
+
  710   continue
 
 !-----------------------------------------------------------------------
