@@ -2571,7 +2571,28 @@ C====zeta/s dependent on local temperature==================================
 
 CSHEN=====end==============================================================
 
+C---J.Liu------------------------------------------------------------------------
 
+      Subroutine ViscousBulkTransCoefs(Ed, tauBPi,
+     &        deltaBPiBPi, lambdaSpiBPi)
+      ! calculate the bulk transport coefficients according to 
+      ! Ed input should be in unit of GeV/fm^3
+      Implicit Double Precision (A-H, O-Z)
+      double precision lambdaSpiBPi
+
+      de = 0.05*Ed
+      p1 = PEOSL7(Ed - de/2.)
+      p2 = PEOSL7(Ed + de/2.)
+      cs2 = (p2 - p1)/de   !cs^2 = dP/de
+
+      deltaBPiBPi = 2.D0/3.D0*tauBPi
+      lambdaSpiBPi = 8.D0/5.D0*(1.D0/3.D0 - cs2)*tauBPi
+
+      Return
+      End
+
+
+C---J.Liu----end-----------------------------------------------------------------
 
 C----------------------------------------------------
        Double Precision FUNCTION BulkAdSH0(eta,tt)  !Ads-CFT Bulk-Vis=0 for HRG
@@ -3467,6 +3488,8 @@ C-------------------------------------------
       Double Precision :: RSDM0, RSDM, RSPPI, RSee
       Common /findEdHookData/ RSDM0, RSDM, RSPPI ! M0, M, Pi (see 0510014)
 
+      Double precision :: deltaBPiBPi, lambdaSpiBPi ! bulk transport coefficients
+      Double precision :: piSigma
          Nsm=5
 
         if(NZ0.ne.NZ)then
@@ -3934,19 +3957,29 @@ C-------------------------------------------------------------------------------
            ADLnT=0.0
         end if
 
-       if(VisBulk.ge.0.00001) then
-           dB0=(U0(I,J,K)/XiTtp(i,j,k)-PU0(I,J,K)/XiTtp0(i,j,k))
-           dB1=(U1(I+1,J,K)/XiTtp(I+1,j,k)-U1(I-1,J,K)/XiTtp(I-1,j,k))
-           dB2=(U2(I,J+1,K)/XiTtp(i,j+1,k)-U2(I,J-1,K)/XiTtp(i,j-1,k))
-          Badd2=-0.5*XiTtP(i,j,k)*(dB0/DT+dB1/(2.0*DX)+dB2/(2.0*DY)
-     &       +U0(I,J,K)/XiTtP(i,j,k)/time)/U0(I,J,K) *ff
+       if(VisBulk.ge.0.000001) then
 
-          DB0Ln=(DLog(XiTtp0(I,J,K))-DLog(XiTtp(I,J,K)))/DT
-          DB1Ln=(DLog(XiTtp(I-1,J,K))-DLog(XiTtp(I+1,J,K)))/(2.0*DX)
-          DB2Ln=(DLog(XiTtp(I,J-1,K))-DLog(XiTtp(I,J+1,K)))/(2.0*DX)
+C old version: bulk pressure terms from entropy generation
+C           DB0Ln=(DLog(XiTtp0(I,J,K))-DLog(XiTtp(I,J,K)))/DT
+C           DB1Ln=(DLog(XiTtp(I-1,J,K))-DLog(XiTtp(I+1,J,K)))/(2.0*DX)
+C           DB2Ln=(DLog(XiTtp(I,J-1,K))-DLog(XiTtp(I,J+1,K)))/(2.0*DX)
 
-           Badd=-0.5*(SiLoc(I,J,K)/U0(I,J,K)    !high precision version to reduce round-off error
-     &          +(DB0Ln +Vx(I,J,K)*DB1Ln +Vy(I,J,K)*DB2Ln)*ff)
+C            Badd=-0.5*(SiLoc(I,J,K)/U0(I,J,K)    !high precision version to reduce round-off error
+C      &          +(DB0Ln +Vx(I,J,K)*DB1Ln +Vy(I,J,K)*DB2Ln)*ff)
+
+C Bulk pressure terms from 14-moments expansion     
+            call ViscousBulkTransCoefs(ED(i,j,k)*Hbarc, VBulk(i,j,k), 
+     &          deltaBPiBPi, lambdaSpiBPi) ! calculate transport coefficients
+
+            piSigma = Pi00(i,j,k)*DPc00(i,j,k)+
+     &           Pi11(i,j,k)*DPc11(i,j,k) + Pi22(i,j,k)*DPc22(i,j,k)
+     &           + Time**4.D0*Pi33(i,j,k)*DPc33(i,j,k)
+     &           - 2.D0*Pi01(i,j,k)*DPc01(i,j,k)
+     &           - 2.D0*Pi02(i,j,k)*DPc02(i,j,k)
+     &           + 2.D0*Pi12(i,j,k)*DPc12(i,j,k) !Tr(pi*sigma)
+
+            Badd = (-deltaBPiBPi*SiLoc(i,j,k)+
+     &     lambdaSpiBPi/PPI(i,j,k)*piSigma)/U0(i,j,k)/VRelaxT0(i,j,k)
 
        else
            Badd=0.0
