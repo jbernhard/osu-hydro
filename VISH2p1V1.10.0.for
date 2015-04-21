@@ -2495,7 +2495,11 @@ CSHEN======end=================================================================
       If (VisBulk.ge.1D-6) then
         !eta=ViscousC*Sd(i,j,k)
         !VBulk(i,j,k)=VisBulk*BulkAdSH0(eta,ttemp)
-        VBulk(i,j,k) = ViscousZetasTemp(Ed(i,j,k)*HbarC)*Sd(i,j,k)
+        !VBulk(i,j,k) = ViscousZetasTemp(Ed(i,j,k)*HbarC)*Sd(i,j,k)
+        visBulk_normFactor = 1.D0 ! test
+        VBulk(i,j,k)= ViscousZetasTempParametrized(ttemp,
+     &      0.155D0, visBulk_normFactor)
+
         If (IRelaxBulk.eq.0) then
           TTpi=DMax1(0.1d0, 120* VBulk(i,j,k)/DMax1(Sd(i,j,k),0.1d0))
           VRelaxT0(i,j,k)=1.0/TTpi
@@ -2506,6 +2510,10 @@ CSHEN======end=================================================================
         else if (IRelaxBulk .eq. 3) then
           TauPi = 9.0*VBulk(i,j,k)/(Ed(i,j,k) - 3.*PL(i,j,k))
           VRelaxT0(i,j,k) = 1.0/DMax1(0.1d0, TauPi)
+        else if (IRelaxBulk .eq. 4) then
+          cs2 = getCS2(Ed(i,j,k)*HbarC)
+          VRelaxT0(i,j,k)=VBulk(i,j,k)/(14.55*(1.0/3.0-cs2)**2.0)
+     &     /DMax1(Ed(i,j,k)+PL(i,j,k),1e-18)                  
         else
           Print*,'This option is not supported by this version'
           Print*,'IRelaxBulk'
@@ -2573,6 +2581,19 @@ CSHEN=====end==============================================================
 
 C---J.Liu------------------------------------------------------------------------
 
+      double precision function getCS2(Ed)
+      Implicit double precision (A-H, O-Z)
+      ! unit of Ed should be GeV/fm^3
+      de = 0.05*Ed
+      p1 = PEOSL7(Ed - de/2.)
+      p2 = PEOSL7(Ed + de/2.)
+      cs2 = (p2 - p1)/de   !cs^2 = dP/de
+
+      getCS2 = cs2
+      Return
+      End
+
+
       Subroutine ViscousBulkTransCoefs(Ed, tauBPi,
      &        deltaBPiBPi, lambdaSpiBPi)
       ! calculate the bulk transport coefficients according to 
@@ -2580,10 +2601,7 @@ C---J.Liu-----------------------------------------------------------------------
       Implicit Double Precision (A-H, O-Z)
       double precision lambdaSpiBPi
 
-      de = 0.05*Ed
-      p1 = PEOSL7(Ed - de/2.)
-      p2 = PEOSL7(Ed + de/2.)
-      cs2 = (p2 - p1)/de   !cs^2 = dP/de
+      cs2 = getCS2(Ed)
 
       deltaBPiBPi = 2.D0/3.D0*tauBPi
       lambdaSpiBPi = 8.D0/5.D0*(1.D0/3.D0 - cs2)*tauBPi
@@ -2591,6 +2609,32 @@ C---J.Liu-----------------------------------------------------------------------
       Return
       End
 
+
+      double precision function ViscousZetasTempParametrized(Temp_now,
+     &      T_cr, zetas_normFactor)
+      ! Unit of input temperatures should be GeV
+      ! Calculate the temperature dependent parameterization of zeta/s
+      Implicit double precision (A-H, O-Z)
+      double precision :: A1=-13.77D0, A2=27.55D0, A3=13.45D0
+      double precision :: lambda1=0.9D0, lambda2=0.25D0
+      double precision :: lambda3=0.9D0, lambda4=0.22D0
+      double precision :: sigma1=0.025D0, sigma2=0.13D0
+      double precision :: sigma3=0.0025D0, sigma4=0.022D0
+
+      dummy = Temp_now/T_cr
+      bulk = A1*dummy*dummy + A2*dummy - A3
+
+      if(Temp_now < 0.995D0*T_cr) Then
+        bulk = lambda3*exp((dummy-1.D0)/sigma3)
+     &         + lambda4*exp((dummy-1.D0)/sigma4)+0.03D0
+      Else If(Temp_now > 1.05D0 * T_cr) then
+        bulk = lambda1*exp(-(dummy-1.D0)/sigma1)
+     &         + lambda2*exp(-(dummy-1.D0)/sigma2)+0.001D0
+      EndIf
+
+      ViscousZetasTempParametrized = bulk*zetas_normFactor
+      Return
+      End
 
 C---J.Liu----end-----------------------------------------------------------------
 
@@ -3979,7 +4023,8 @@ C Bulk pressure terms from 14-moments expansion
      &           + 2.D0*Pi12(i,j,k)*DPc12(i,j,k) !Tr(pi*sigma)
 
             Badd = (-deltaBPiBPi*SiLoc(i,j,k)+
-     &     lambdaSpiBPi/PPI(i,j,k)*piSigma)/U0(i,j,k)/VRelaxT0(i,j,k)
+     &     lambdaSpiBPi/DMax1(PPI(i,j,k), 1e-18)*piSigma)
+     &     /U0(i,j,k)/VRelaxT0(i,j,k)
 
        else
            Badd=0.0
@@ -4033,7 +4078,7 @@ C Bulk pressure terms from 14-moments expansion
 
           PISc(i,j,K)=0.0 +( PPI(I,J,K)*BAdd+
      &       PA*PPI(I,J,K)-PT0*(PPI(I,J,K)+PS0*SiLoc(i,j,K)))*(-1.0)
-
+          
  710   continue
 
 !-----------------------------------------------------------------------
