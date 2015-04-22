@@ -4011,20 +4011,19 @@ C-------------------------------------------------------------------------------
            ADLnT=0.0
         end if
 
-       if(VisBulk.ge.0.000001) then
+        if(VisBulk.ge.0.000001) then
 
-C old version: bulk pressure terms from entropy generation
-        if(ViscousEqsType .eq. 1) then
-          DB0Ln=(DLog(XiTtp0(I,J,K))-DLog(XiTtp(I,J,K)))/DT
-          DB1Ln=(DLog(XiTtp(I-1,J,K))-DLog(XiTtp(I+1,J,K)))/(2.0*DX)
-          DB2Ln=(DLog(XiTtp(I,J-1,K))-DLog(XiTtp(I,J+1,K)))/(2.0*DX)
+          if(ViscousEqsType .eq. 1) then
+          ! old version: bulk pressure terms from entropy generation
+            DB0Ln=(DLog(XiTtp0(I,J,K))-DLog(XiTtp(I,J,K)))/DT
+            DB1Ln=(DLog(XiTtp(I-1,J,K))-DLog(XiTtp(I+1,J,K)))/(2.0*DX)
+            DB2Ln=(DLog(XiTtp(I,J-1,K))-DLog(XiTtp(I,J+1,K)))/(2.0*DX)
 
-           Badd=-0.5*(SiLoc(I,J,K)/U0(I,J,K)    !high precision version to reduce round-off error
+            Badd=-0.5*(SiLoc(I,J,K)/U0(I,J,K)    !high precision version to reduce round-off error
      &          +(DB0Ln +Vx(I,J,K)*DB1Ln +Vy(I,J,K)*DB2Ln)*ff)
-        endif
 
-C Bulk pressure terms from 14-moments expansion
-        if(ViscousEqsType .eq. 2) then
+          elseif(ViscousEqsType .eq. 2) then   
+          ! Bulk pressure terms from 14-moments expansion     
             call ViscousBulkTransCoefs(ED(i,j,k)*Hbarc, VRelaxT0(i,j,k), 
      &          deltaBPiBPi, lambdaSpiBPi) ! calculate transport coefficients
 
@@ -4036,12 +4035,16 @@ C Bulk pressure terms from 14-moments expansion
      &           + 2.D0*Pi12(i,j,k)*DPc12(i,j,k) !Tr(pi*sigma)
 
             Badd = (-deltaBPiBPi*SiLoc(i,j,k)+
-     &     lambdaSpiBPi/DMax1(PPI(i,j,k), 1e-18)*piSigma)
-     &     /U0(i,j,k)*VRelaxT0(i,j,k)
-         endif
-       else
-           Badd=0.0
-       end if
+     &      lambdaSpiBPi/DMax1(PPI(i,j,k), 1e-18)*piSigma)
+     &      /U0(i,j,k)*VRelaxT0(i,j,k)
+          else
+            write(*, *) "No such viscous equation type:", ViscousEqsType
+            stop
+          endif
+
+        else
+          Badd=0.0
+        end if
 
           PScT00(i,j,K)=PScT00(i,j,K) +( Pi00(I,J,K)*ADLnT+
      &       PA*Pi00(I,J,K)-PT*(Pi00(I,J,K)-PS*DPc00(i,j,K)))*(-1.0)
