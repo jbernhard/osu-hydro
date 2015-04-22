@@ -2520,8 +2520,8 @@ CSHEN======end=================================================================
           VRelaxT0(i,j,k) = 1.0/DMax1(0.1d0, TauPi)
         else if (IRelaxBulk .eq. 4) then
           cs2 = getCS2(Ed(i,j,k)*HbarC)
-          VRelaxT0(i,j,k)=VBulk(i,j,k)/(14.55*(1.0/3.0-cs2)**2.0)
-     &     /DMax1(Ed(i,j,k)+PL(i,j,k),1e-18)                  
+          VRelaxT0(i,j,k)=(14.55*(1.0/3.0-cs2)**2.0)
+     &     *(Ed(i,j,k)+PL(i,j,k))/VBulk(i,j,k)             
         else
           Print*,'This option is not supported by this version'
           Print*,'IRelaxBulk'
@@ -2602,13 +2602,13 @@ C---J.Liu-----------------------------------------------------------------------
       End
 
 
-      Subroutine ViscousBulkTransCoefs(Ed, tauBPi,
+      Subroutine ViscousBulkTransCoefs(Ed, tauBPi_inverse,
      &        deltaBPiBPi, lambdaSpiBPi)
       ! calculate the bulk transport coefficients according to 
       ! Ed input should be in unit of GeV/fm^3
       Implicit Double Precision (A-H, O-Z)
       double precision lambdaSpiBPi
-
+      tauBPi = 1.D0/dMax1(tauBPi_inverse, 1e-18)
       cs2 = getCS2(Ed)
 
       deltaBPiBPi = 2.D0/3.D0*tauBPi
@@ -4025,19 +4025,19 @@ C old version: bulk pressure terms from entropy generation
 
 C Bulk pressure terms from 14-moments expansion
         if(ViscousEqsType .eq. 2) then
-            call ViscousBulkTransCoefs(ED(i,j,k)*Hbarc, VBulk(i,j,k), 
+            call ViscousBulkTransCoefs(ED(i,j,k)*Hbarc, VRelaxT0(i,j,k), 
      &          deltaBPiBPi, lambdaSpiBPi) ! calculate transport coefficients
 
             piSigma = Pi00(i,j,k)*DPc00(i,j,k)+
      &           Pi11(i,j,k)*DPc11(i,j,k) + Pi22(i,j,k)*DPc22(i,j,k)
-     &           + Time**4.D0*Pi33(i,j,k)*DPc33(i,j,k)
+     &           + Pi33(i,j,k)*DPc33(i,j,k)
      &           - 2.D0*Pi01(i,j,k)*DPc01(i,j,k)
      &           - 2.D0*Pi02(i,j,k)*DPc02(i,j,k)
      &           + 2.D0*Pi12(i,j,k)*DPc12(i,j,k) !Tr(pi*sigma)
 
             Badd = (-deltaBPiBPi*SiLoc(i,j,k)+
      &     lambdaSpiBPi/DMax1(PPI(i,j,k), 1e-18)*piSigma)
-     &     /U0(i,j,k)/VRelaxT0(i,j,k)
+     &     /U0(i,j,k)*VRelaxT0(i,j,k)
          endif
        else
            Badd=0.0
