@@ -2456,6 +2456,9 @@ C#####################################################
        Common/R0Bdry/ R0Bdry
        Parameter (HbarC=0.19733d0) !for changing between fm and GeV ! Hbarc=0.19733=GeV*fm
 
+       Integer ViscousEqsType
+       Common/ViscousEqsControl/ ViscousEqsType
+
       do 10 k=1,1
       do 10 j=NYPhy0-2,NYPhy+2 ! -2,NYPhy+2
       do 10 i=NXPhy0-2,NXPhy+2
@@ -2474,8 +2477,15 @@ CSHEN======end=================================================================
         VCoefi(i,j,k)=ViscousC*Sd(i,j,k)
         VCBeta(i,j,k)=VisBeta*3.0/dmax1(Sd(i,j,k)*Temp(i,j,k),1e-30)
         VRelaxT(i,j,k)=1.0/dmax1(2.0*VCoefi(i,j,k)*VCBeta(i,j,k),1e-30)
+
+        if(ViscousEqsType .eq. 2) then   ! 14-moments results
+          VRelaxT(i,j,k)=(Ed(i,j,k)+PL(i,j,k))
+     &      /dMax1(VCoefi(i,j,k)*5.D0,1e-30)
+        EndIf
+
         etaTtp(i,j,k)=(VCoefi(i,j,k)*Temp(i,j,k))*VRelaxT(i,j,k)  ! A(e+p)T/6 !(eta T/tau_Pi) for extra term in full I-S
         etaTtp(i,j,k)=dmax1(etaTtp(i,j,k),1e-30)
+
         VCoefi(i,j,k)=VCoefi(i,j,k)*ff
         VRelaxT(i,j,k)=VRelaxT(i,j,k)*ff
         If (Time > 0.8) Then
@@ -2601,18 +2611,35 @@ C---J.Liu-----------------------------------------------------------------------
       Return
       End
 
+      Subroutine ViscousShearTransCoefs(PL, taupi_inverse,
+     &        deltaSpiSpi, lambdaSpiBPi, phi7, taupipi)
+      ! calculate the shear transport coefficients according to 
+      ! PL input should be in unit of GeV/fm^3
+      Implicit Double Precision (A-H, O-Z)
+      Double precision :: lambdaSpiBPi
+
+      taupi = 1.D0/dMax1(taupi_inverse, 1e-30)
+
+      deltaSpiSpi = 4.0*taupi/3.0
+      lambdaSpiBPi= 6.0*taupi/5.0
+      phi7 = 9.0/70.0/PL
+      taupipi = 10.0*taupi/7.0
+
+      Return
+      End
+
 
       Subroutine ViscousBulkTransCoefs(Ed, tauBPi_inverse,
-     &        deltaBPiBPi, lambdaSpiBPi)
+     &        deltaBPiBPi, lambdaBPiSpi)
       ! calculate the bulk transport coefficients according to 
       ! Ed input should be in unit of GeV/fm^3
       Implicit Double Precision (A-H, O-Z)
-      double precision lambdaSpiBPi
+      double precision lambdaBPiSpi
       tauBPi = 1.D0/dMax1(tauBPi_inverse, 1e-18)
       cs2 = getCS2(Ed)
 
       deltaBPiBPi = 2.D0/3.D0*tauBPi
-      lambdaSpiBPi = 8.D0/5.D0*(1.D0/3.D0 - cs2)*tauBPi
+      lambdaBPiSpi = 8.D0/5.D0*(1.D0/3.D0 - cs2)*tauBPi
 
       Return
       End
@@ -3542,7 +3569,8 @@ C-------------------------------------------
       Integer ViscousEqsType
       Common/ViscousEqsControl/ ViscousEqsType
 
-      Double precision :: deltaBPiBPi, lambdaSpiBPi ! bulk transport coefficients
+      Double precision :: deltaBPiBPi, lambdaBPiSpi ! bulk transport coefficients
+      Double precision :: deltaSpiSpi, lambdaSpiBPi, phi7, taupipi ! shear transport coefficients 
       Double precision :: piSigma
          Nsm=5
 
@@ -3980,35 +4008,177 @@ C-------------------------------------------------------------------------------
         rr=sqrt(xx**2+yy**2)
         ff=1.0/(Dexp((rr-R0Bdry)/Aeps)+1.0)
 
-      Accu=3.0
-       If(abs(Accu-3.0).le.0.00001) then  !3pt formula
+        Accu=3.0
+        If(abs(Accu-3.0).le.0.00001) then  !3pt formula
           PA=(Vx(I+1,J,K)-Vx(I-1,J,K))/(2*DX)
      &      +(Vy(I,J+1,K)-Vy(I,J-1,K))/(2*DY)
-       else if(abs(Accu-5.0).le.0.00001) then  !5pt formula
+        else if(abs(Accu-5.0).le.0.00001) then  !5pt formula
           PA=( Vx(I+1,J,K)*2.0d0/3.0d0-Vx(I-1,J,K)*2.0d0/3.0d0
      &       -Vx(I+2,J,K)/12.0d0+Vx(I-2,J,K)/12.0d0 )/DX
      &      +( Vy(I,J+1,K)*2.0d0/3.0d0-Vy(I,J-1,K)*2.0d0/3.0d0
      &       -Vy(I,J+2,K)/12.0d0+Vy(I,J-2,K)/12.0d0 )/DY
-       else
+        else
           Print*, "wrong input for Accu"
-       end if
+        end if
 
-          PT=VRelaxT(I,J,K)/U0(I,J,K)
-          PS=2.0*VCoefi(I,J,K)
+        PT=VRelaxT(I,J,K)/U0(I,J,K)
+        PS=2.0*VCoefi(I,J,K)
 
-          PT0=VRelaxT0(I,J,K)/U0(I,J,K)
-          PS0=VBulk(I,J,K)
+        PT0=VRelaxT0(I,J,K)/U0(I,J,K)
+        PS0=VBulk(I,J,K)
 
-       if(ViscousC.ge.0.00001) then
-           D0Ln=(DLog(etaTtp0(I,J,K))-DLog(etaTtp(I,J,K)))/DT
-           D1Ln=(DLog(etaTtp(I-1,J,K))-DLog(etaTtp(I+1,J,K)))/(2.0*DX)
-           D2Ln=(DLog(etaTtp(I,J-1,K))-DLog(etaTtp(I,J+1,K)))/(2.0*DY)
+        if(ViscousC.ge.0.00001) then
 
-           ADLnT=-0.5*(SiLoc(I,J,K)/U0(I,J,K)         !high precision version to reduce round-off error
+          if(ViscousEqsType .eq. 1) then 
+          ! old version: shear tensor pressure terms from entropy generation
+            D0Ln=(DLog(etaTtp0(I,J,K))-DLog(etaTtp(I,J,K)))/DT
+            D1Ln=(DLog(etaTtp(I-1,J,K))-DLog(etaTtp(I+1,J,K)))/(2.0*DX)
+            D2Ln=(DLog(etaTtp(I,J-1,K))-DLog(etaTtp(I,J+1,K)))/(2.0*DY)
+
+            ADLnT=-0.5*(SiLoc(I,J,K)/U0(I,J,K)         !high precision version to reduce round-off error
      &           +(D0Ln+ Vx(I,J,K)*D1Ln +Vy(I,J,K)*D2Ln)*ff)
 
+            PScT00(i,j,K)=PScT00(i,j,K) +( Pi00(I,J,K)*ADLnT+
+     &         PA*Pi00(I,J,K)-PT*(Pi00(I,J,K)-PS*DPc00(i,j,K)))*(-1.0)
+            PScT01(i,j,K)=PScT01(i,j,K) +( Pi01(I,J,K)*ADLnT+
+     &         PA*Pi01(I,J,K)-PT*(Pi01(I,J,K)-PS*DPc01(i,j,K)))*(-1.0)
+            PScT02(i,j,K)=PScT02(i,j,K) +( Pi02(I,J,K)*ADLnT+
+     &         PA*Pi02(I,J,K)-PT*(Pi02(I,J,K)-PS*DPc02(i,j,K)))*(-1.0)
+            PScT33(i,j,K)=PScT33(i,j,K) +( Pi33(I,J,K)*ADLnT+
+     &         PA*Pi33(I,J,K)-PT*(Pi33(I,J,K)-PS*DPc33(i,j,K)))*(-1.0)
+            PScT11(i,j,K)=PScT11(i,j,K) +( Pi11(I,J,K)*ADLnT+
+     &         PA*Pi11(I,J,K)-PT*(Pi11(I,J,K)-PS*DPc11(i,j,K)))*(-1.0)
+            PScT22(i,j,K)=PScT22(i,j,K) +( Pi22(I,J,K)*ADLnT+
+     &         PA*Pi22(I,J,K)-PT*(Pi22(I,J,K)-PS*DPc22(i,j,K)))*(-1.0)
+            PScT12(i,j,K)=PScT12(i,j,K) +( Pi12(I,J,K)*ADLnT+
+     &         PA*Pi12(I,J,K)-PT*(Pi12(I,J,K)-PS*DPc12(i,j,K)))*(-1.0)
+
+          else if(ViscousEqsType .eq. 2) then
+          ! shear terms from 14-moments expansion 
+            p00 = Pi00(I,J,K)    ! some short hand
+            p01 = Pi01(I,J,K)
+            p02 = Pi02(I,J,K)
+            p11 = Pi11(I,J,K)
+            p12 = Pi12(I,J,K)
+            p22 = Pi22(I,J,K)
+            p33 = Pi33(I,J,K)
+
+            s00 = DPc00(I,J,K)   
+            s01 = DPc01(I,J,K)
+            s02 = DPc02(I,J,K)
+            s11 = DPc11(I,J,K)
+            s12 = DPc12(I,J,K)
+            s22 = DPc22(I,J,K)
+            s33 = DPc33(I,J,K)
+
+            u0_temp = U0(I,J,K)   
+            vx_temp = Vx(I,J,K)
+            vy_temp = Vy(I,J,K)
+
+            theta_temp = SiLoc(I,J,K)
+            ppi_temp = PPI(I,J,K)   
+            taupi = 1.D0/VRelaxT(I,J,K) 
+
+            s0d = s00 - vx_temp*s01 - vy_temp*s02
+            s1d = s01 - vx_temp*s11 - vy_temp*s12
+            s2d = s02 - vx_temp*s12 - vy_temp*s22
+
+            ! calculate Tr(pi^2)
+            TrPi2 = p00*p00 + p11*p11+  p22*p22 + p33*p33
+     &        -2*p01*p01-2*p02*p02+2*p12*p12
+            ! calculate Tr(pi*sigma)
+            TrPiSigma = p00*s00 + p11*s11 + p22*s22 + p33*s33
+     &           - 2.D0*p01*s01 - 2.D0*p02*s02 + 2*p12*s12
+
+            call ViscousShearTransCoefs(PL(I,J,K), VRelaxT(I,J,K),
+     &        deltaSpiSpi, lambdaSpiBPi, phi7, taupipi)
+
+            ! pi source 0,0
+            phi7Add = p00**2.0 - p01**2.0 - p02**2.0
+     &        -(1.0-u0_temp**2.0)*TrPi2/3.D0 
+            taupipiAdd = p00*s00 - p01*s01 - p02*s02 
+     &        -u0_temp**2.0*(p00*s0d-p01*s1d-p02*s2d)
+     &        -(1.D0-u0_temp**2.0)*TrPiSigma/3.D0
+            PScT00(i,j,K)=PScT00(i,j,K) + (-PT)
+     &        *(taupi*u0_temp*PA*p00-(p00-PS*s00)
+     &         -deltaSpiSpi*p00*theta_temp+lambdaSpiBPi*ppi_temp*s00
+     &         +phi7*phi7Add - taupipi*taupipiAdd)
+
+            ! pi source 0,1
+            phi7Add = p00*p01 - p01*p11 - p12*p02
+     &        +u0_temp**2.0*vx_temp*TrPi2/3.D0
+            taupipiAdd = 0.5*(p00*s01+p01*s00-p01*s11-p02*s12-p11*s01
+     &         -p12*s02) 
+     &        - 0.5*u0_temp**2.0*vx_temp*(p00*s0d-p01*s1d-p02*s2d)
+     &        - 0.5*u0_temp**2.0*(p01*s0d-p11*s1d-p12*s2d)
+     &        + u0_temp**2.0*vx_temp*TrPiSigma/3.D0
+            PScT01(i,j,k)=PScT01(i,j,k) + (-PT)
+     &        *(taupi*u0_temp*PA*p01-(p01-PS*s01)
+     &         -deltaSpiSpi*p01*theta_temp+lambdaSpiBPi*ppi_temp*s01
+     &         +phi7*phi7Add - taupipi*taupipiAdd)
+
+            ! pi source 0,2
+            phi7Add = p00*p02 - p01*p12 - p02*p22 
+     &        +u0_temp**2.0*vy_temp*TrPi2/3.D0
+            taupipiAdd = 0.5*(p00*s02+p02*s00-p01*s12-p02*s22-p12*s10
+     &         -p22*s02)
+     &        -0.5*u0_temp**2.0*vy_temp*(p00*s0d-p01*s1d-p02*s2d)
+     &        -0.5*u0_temp**2.0*(p02*s0d-p12*s1d-p22*s2d)
+     &        +u0_temp**2.0*vy_temp*TrPiSigma/3.D0
+            PScT02(i,j,k)=PScT02(i,j,k) + (-PT)
+     &        *(taupi*u0_temp*PA*p02-(p02-PS*s02)
+     &         -deltaSpiSpi*p02*theta_temp+lambdaSpiBPi*ppi_temp*s02
+     &         +phi7*phi7Add - taupipi*taupipiAdd)
+
+            ! pi source 1,1
+            phi7Add = p01**2.0-p11**2.0-p12**2.0
+     &        +(1.0+u0_temp**2.0*vx_temp**2.0)*TrPi2/3.D0
+            taupipiAdd = p01*s01-p11*s11-p12*s12
+     &        -u0_temp**2.0*vx_temp*(p01*s0d-p11*s1d-p12*s2d)
+     &        +(1.0+u0_temp**2*vx_temp**2)*TrPiSigma/3.D0
+            PScT11(i,j,k)=PScT11(i,j,k) + (-PT)
+     &        *(taupi*u0_temp*PA*p11-(p11-PS*s11)
+     &         -deltaSpiSpi*p11*theta_temp+lambdaSpiBPi*ppi_temp*s11
+     &         +phi7*phi7Add - taupipi*taupipiAdd)
+
+            ! pi source 1,2
+            phi7Add = p01*p02-p11*p12-p12*p22
+     &        +u0_temp**2.0*vx_temp*vy_temp*TrPi2/3.D0
+            taupipiAdd = 0.5*(p01*s02-p11*s12-p12*s22+p02*s01-p12*s11
+     &         -p22*s12)
+     &        -0.5*u0_temp**2.0*vy_temp*(p10*s0d-p11*s1d-p12*s2d)
+     &        -0.5*u0_temp**2.0*vx_temp*(p02*s0d-p12*s1d-p22*s2d)
+     &        +u0_temp**2.0*vx_temp*vy_temp*TrPiSigma/3.D0
+            PScT12(i,j,k)=PScT12(i,j,k) + (-PT)
+     &        *(taupi*u0_temp*PA*p12-(p12-PS*s12)
+     &         -deltaSpiSpi*p12*theta_temp+lambdaSpiBPi*ppi_temp*s12
+     &         +phi7*phi7Add - taupipi*taupipiAdd)
+
+            ! pi source 2,2
+            phi7Add = p02**2.0-p12**2.0-p22*2.0
+     &        +(1.0+u0_temp**2.0*vy_temp**2.0)*TrPi2/3.D0
+            taupipiAdd = p02*s02-p12*s12-p22*s22
+     &        -u0_temp**2.0*vy_temp*(p02*s0d-p12*s1d-p22*s2d)
+     &        +(1.0+u0_temp**2.0*vy_temp**2.0)*TrPiSigma/3.0
+            PScT22(i,j,k)=PScT22(i,j,k) + (-PT)
+     &        *(taupi*u0_temp*PA*p22-(p22-PS*s22)
+     &         -deltaSpiSpi*p22*theta_temp+lambdaSpiBPi*ppi_temp*s22
+     &         +phi7*phi7Add - taupipi*taupipiAdd)
+
+            ! pi source 3,3
+            phi7Add = p33**2.0+TrPi2/Time**2.0/3.D0
+            taupipiAdd = p33*s33+TrPiSigma/Time**2.0/3.D0 
+            PScT33(i,j,k)=PScT33(i,j,k) + (-PT)
+     &        *(taupi*u0_temp*PA*p33-(p33-PS*s33)
+     &         -deltaSpiSpi*p33*theta_temp+lambdaSpiBPi*ppi_temp*s33
+     &         +phi7*phi7Add - taupipi*taupipiAdd)
+
+          else
+            write(*, *) "No such viscous equation type:",ViscousEqsType
+            stop            
+          end if
         else
-           ADLnT=0.0
+          ADLnT = 0.D0
         end if
 
         if(VisBulk.ge.0.000001) then
@@ -4025,7 +4195,7 @@ C-------------------------------------------------------------------------------
           elseif(ViscousEqsType .eq. 2) then   
           ! Bulk pressure terms from 14-moments expansion     
             call ViscousBulkTransCoefs(ED(i,j,k)*Hbarc, VRelaxT0(i,j,k), 
-     &          deltaBPiBPi, lambdaSpiBPi) ! calculate transport coefficients
+     &          deltaBPiBPi, lambdaBPiSpi) ! calculate transport coefficients
 
             piSigma = Pi00(i,j,k)*DPc00(i,j,k)+
      &           Pi11(i,j,k)*DPc11(i,j,k) + Pi22(i,j,k)*DPc22(i,j,k)
@@ -4035,8 +4205,8 @@ C-------------------------------------------------------------------------------
      &           + 2.D0*Pi12(i,j,k)*DPc12(i,j,k) !Tr(pi*sigma)
 
             Badd = (-deltaBPiBPi*SiLoc(i,j,k)+
-     &      lambdaSpiBPi/DMax1(PPI(i,j,k), 1e-18)*piSigma)
-     &      /U0(i,j,k)*VRelaxT0(i,j,k)
+     &       lambdaBPiSpi/DMax1(PPI(i,j,k), 1e-18)*piSigma)
+     &       /U0(i,j,k)*VRelaxT0(i,j,k)
           else
             write(*, *) "No such viscous equation type:", ViscousEqsType
             stop
@@ -4046,54 +4216,39 @@ C-------------------------------------------------------------------------------
           Badd=0.0
         end if
 
-          PScT00(i,j,K)=PScT00(i,j,K) +( Pi00(I,J,K)*ADLnT+
-     &       PA*Pi00(I,J,K)-PT*(Pi00(I,J,K)-PS*DPc00(i,j,K)))*(-1.0)
-          PScT01(i,j,K)=PScT01(i,j,K) +( Pi01(I,J,K)*ADLnT+
-     &       PA*Pi01(I,J,K)-PT*(Pi01(I,J,K)-PS*DPc01(i,j,K)))*(-1.0)
-          PScT02(i,j,K)=PScT02(i,j,K) +( Pi02(I,J,K)*ADLnT+
-     &       PA*Pi02(I,J,K)-PT*(Pi02(I,J,K)-PS*DPc02(i,j,K)))*(-1.0)
-          PScT33(i,j,K)=PScT33(i,j,K) +( Pi33(I,J,K)*ADLnT+
-     &       PA*Pi33(I,J,K)-PT*(Pi33(I,J,K)-PS*DPc33(i,j,K)))*(-1.0)
-          PScT11(i,j,K)=PScT11(i,j,K) +( Pi11(I,J,K)*ADLnT+
-     &       PA*Pi11(I,J,K)-PT*(Pi11(I,J,K)-PS*DPc11(i,j,K)))*(-1.0)
-          PScT22(i,j,K)=PScT22(i,j,K) +( Pi22(I,J,K)*ADLnT+
-     &       PA*Pi22(I,J,K)-PT*(Pi22(I,J,K)-PS*DPc22(i,j,K)))*(-1.0)
-          PScT12(i,j,K)=PScT12(i,j,K) +( Pi12(I,J,K)*ADLnT+
-     &       PA*Pi12(I,J,K)-PT*(Pi12(I,J,K)-PS*DPc12(i,j,K)))*(-1.0)
+        PScTSum = PScT00(i,j,k) + PScT01(i,j,k) + PScT02(i,j,k)
+     &        + PScT11(i,j,k) + PScT12(i,j,k) + PScT22(i,j,k)
+     &        + PScT33(i,j,k)
 
-          PScTSum = PScT00(i,j,k) + PScT01(i,j,k) + PScT02(i,j,k)
-     &      + PScT11(i,j,k) + PScT12(i,j,k) + PScT22(i,j,k)
-     &      + PScT33(i,j,k)
+        If (TIME > TT0) Then
+        If (PScTSum .ne. PScTSum) Then
+          Print *, "Invalid PScT terms!"
+          Print *, "i,j,k=", i,j,k
+          Print *, "PScT00=", PScT00(i,j,K)
+          Print *, "PScT01=", PScT01(i,j,K)
+          Print *, "PScT02=", PScT02(i,j,K)
+          Print *, "PScT11=", PScT11(i,j,K)
+          Print *, "PScT12=", PScT12(i,j,K)
+          Print *, "PScT22=", PScT22(i,j,K)
+          Print *, "PScT33=", PScT33(i,j,K)
+          Print *, "Pi00,ADLnT=", Pi00(I,J,K), ADLnT
+          Print *, "PA", PA
+          Print *, "Vx(I+1,J,K)", Vx(I+1,J,K),"Vx(I-1,J,K)",Vx(I-1,J,K)
+          Print *, "Vy(I,J+1,K)", Vy(I,J+1,K),"Vy(I,J-1,K)",Vy(I,J-1,K)
+          Print *, "PT=", PT, "Pi00=", Pi00(I,J,K)
+          Print *, "PS=", PS, "DPc00=", DPc00(i,j,K)
+          Print *, "SiLoc=", SiLoc(I,J,K), "U0=", U0(I,J,K)   !high precision version to reduce round-off error
+          Print *, "D0Ln=", D0Ln, "Vx=", Vx(I,J,K), "Vy=", Vy(I,J,K)
+          Print *, "D1Ln=", D1Ln, "D2Ln=", D2Ln, "ff=", ff
+          Print *, "etaTtp(I,J-1,K)=", etaTtp(I,J-1,K)
+          Print *, "etaTtp(I,J+1,K)=", etaTtp(I,J+1,K)
 
-      If (TIME > TT0) Then
-      If (PScTSum .ne. PScTSum) Then
-        Print *, "Invalid PScT terms!"
-        Print *, "i,j,k=", i,j,k
-        Print *, "PScT00=", PScT00(i,j,K)
-        Print *, "PScT01=", PScT01(i,j,K)
-        Print *, "PScT02=", PScT02(i,j,K)
-        Print *, "PScT11=", PScT11(i,j,K)
-        Print *, "PScT12=", PScT12(i,j,K)
-        Print *, "PScT22=", PScT22(i,j,K)
-        Print *, "PScT33=", PScT33(i,j,K)
-        Print *, "Pi00,ADLnT=", Pi00(I,J,K), ADLnT
-        Print *, "PA", PA
-        Print *, "Vx(I+1,J,K)", Vx(I+1,J,K), "Vx(I-1,J,K)", Vx(I-1,J,K)
-        Print *, "Vy(I,J+1,K)", Vy(I,J+1,K), "Vy(I,J-1,K)", Vy(I,J-1,K)
-        Print *, "PT=", PT, "Pi00=", Pi00(I,J,K)
-        Print *, "PS=", PS, "DPc00=", DPc00(i,j,K)
-        Print *, "SiLoc=", SiLoc(I,J,K), "U0=", U0(I,J,K)   !high precision version to reduce round-off error
-        Print *, "D0Ln=", D0Ln, "Vx=", Vx(I,J,K), "Vy=", Vy(I,J,K)
-        Print *, "D1Ln=", D1Ln, "D2Ln=", D2Ln, "ff=", ff
-        Print *, "etaTtp(I,J-1,K)=", etaTtp(I,J-1,K)
-        Print *, "etaTtp(I,J+1,K)=", etaTtp(I,J+1,K)
+          Stop
+        EndIf
+        EndIf
 
-        Stop
-      EndIf
-      EndIf
-
-          PISc(i,j,K)=0.0 +( PPI(I,J,K)*BAdd+
-     &       PA*PPI(I,J,K)-PT0*(PPI(I,J,K)+PS0*SiLoc(i,j,K)))*(-1.0)
+        PISc(i,j,K)=0.0 +( PPI(I,J,K)*BAdd+
+     &      PA*PPI(I,J,K)-PT0*(PPI(I,J,K)+PS0*SiLoc(i,j,K)))*(-1.0)
 
  710   continue
 
