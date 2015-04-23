@@ -4204,8 +4204,8 @@ C-------------------------------------------------------------------------------
      &           - 2.D0*Pi02(i,j,k)*DPc02(i,j,k)
      &           + 2.D0*Pi12(i,j,k)*DPc12(i,j,k) !Tr(pi*sigma)
 
-            Badd = (-deltaBPiBPi*SiLoc(i,j,k)+
-     &       lambdaBPiSpi/DMax1(PPI(i,j,k), 1e-18)*piSigma)
+            Badd = (-deltaBPiBPi*SiLoc(i,j,k)+sign(1.D0,PPI(i,j,k))*
+     &       lambdaBPiSpi/DMax1(abs(PPI(i,j,k)), 1e-30)*piSigma)
      &       /U0(i,j,k)*VRelaxT0(i,j,k)
           else
             write(*, *) "No such viscous equation type:", ViscousEqsType
