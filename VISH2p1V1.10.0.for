@@ -4120,7 +4120,7 @@ C-------------------------------------------------------------------------------
             ! pi source 0,2
             phi7Add = p00*p02 - p01*p12 - p02*p22 
      &        +u0_temp**2.0*vy_temp*TrPi2/3.D0
-            taupipiAdd = 0.5*(p00*s02+p02*s00-p01*s12-p02*s22-p12*s10
+            taupipiAdd = 0.5*(p00*s02+p02*s00-p01*s12-p02*s22-p12*s01
      &         -p22*s02)
      &        -0.5*u0_temp**2.0*vy_temp*(p00*s0d-p01*s1d-p02*s2d)
      &        -0.5*u0_temp**2.0*(p02*s0d-p12*s1d-p22*s2d)
@@ -4146,7 +4146,7 @@ C-------------------------------------------------------------------------------
      &        +u0_temp**2.0*vx_temp*vy_temp*TrPi2/3.D0
             taupipiAdd = 0.5*(p01*s02-p11*s12-p12*s22+p02*s01-p12*s11
      &         -p22*s12)
-     &        -0.5*u0_temp**2.0*vy_temp*(p10*s0d-p11*s1d-p12*s2d)
+     &        -0.5*u0_temp**2.0*vy_temp*(p01*s0d-p11*s1d-p12*s2d)
      &        -0.5*u0_temp**2.0*vx_temp*(p02*s0d-p12*s1d-p22*s2d)
      &        +u0_temp**2.0*vx_temp*vy_temp*TrPiSigma/3.D0
             PScT12(i,j,k)=PScT12(i,j,k) + (-PT)
