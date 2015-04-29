@@ -109,7 +109,7 @@ CSHEN===EOS from tables end====================================================
        Common /EK/ EK, HWN  !EK(T0) constant related to energy density,HWN percent of Wounded Nucleon
        Common /thick/ TRo0, TEta, TRA  !Para in Nuclear Thickness Function
        Common /ViscousC / ViscousC,VisBeta, IVisflag ! Related to Shear Viscosity
-       Common /ViscousBulk/ Visbulk, BulkTau,IRelaxBulk  ! Related to bulk Visousity
+       Common /ViscousBulk/ Visbulk, BulkTau,IRelaxBulk ! Related to bulk Visousity
 
        Common /bb/ b  !impact parameter
        Common/dxdy/ ddx, ddy
@@ -157,7 +157,7 @@ C *******************************J.Liu changes end***************************
       Common/Initialpi/ Initialpitensor
 
       Integer ViscousEqsType
-      Common/ViscousEqsControl/ ViscousEqsType
+      Common/ViscousEqsControl/ ViscousEqsType, VisBulkNorm
 
       call prepareInputFun() ! this is the initialization function in InputFun.for
 
@@ -233,12 +233,12 @@ C ***************************J.Liu changes end***************************
       Read(1,*) Cha
       Read(1,*) Initialpitensor
       Read(1,*) ViscousEqsType
+      Read(1,*) VisBulkNorm
       CLOSE(1)
 C===========================================================================
 
       DX=0.1d0
       DY=0.1d0
-
 
 !-----------End of reading parameters from file-------------------------
 
@@ -255,7 +255,8 @@ C===========================================================================
      &    "IhydroJetoutput=", IhydroJetoutput,
      &    "IVisflag=", IVisflag,
      &    "Initialpitensor=", Initialpitensor,
-     &    "ViscousEqsType=", ViscousEqsType
+     &    "ViscousEqsType=", ViscousEqsType,
+     &    "VisBulkNorm=", VisBulkNorm
 
       ddx=dx
       ddy=dy
@@ -548,7 +549,8 @@ C-------------------------------------------------------------------------------
       Common /sFactor/ sFactor
 
       Integer ViscousEqsType
-      Common/ViscousEqsControl/ ViscousEqsType
+      double precision:: VisBulkNorm
+      Common/ViscousEqsControl/ ViscousEqsType, VisBulkNorm 
 
       Double Precision SEOSL7, PEOSL7, TEOSL7, SEOSL6
       Double Precision ss, ddt1, ddt2, ee1, ee2
@@ -657,6 +659,8 @@ CSHEN===EOS from tables end====================================================
      &                              "!NTD   freeze out skip step in tau"
        Write(111,'(A,T10,A3,F4.1,T30,A)')"R0Bdry", " = ", R0Bdry, 
      &                                                    "!boundary R0"
+       Write(111,'(A,T11,A2,F5.3,T30,A)')"VisBulkNorm", "= " ,
+     &           VisBulkNorm, "!Bulk viscosity zeta/s norm factor"     
       Close(111)
 
 !     Output entropy and energy profiles:
@@ -2457,7 +2461,8 @@ C#####################################################
        Parameter (HbarC=0.19733d0) !for changing between fm and GeV ! Hbarc=0.19733=GeV*fm
 
        Integer ViscousEqsType
-       Common/ViscousEqsControl/ ViscousEqsType
+       double precision :: VisBulkNorm 
+       Common/ViscousEqsControl/ ViscousEqsType, VisBulkNorm 
 
       do 10 k=1,1
       do 10 j=NYPhy0-2,NYPhy+2 ! -2,NYPhy+2
@@ -2514,9 +2519,8 @@ CSHEN======end=================================================================
         !eta=ViscousC*Sd(i,j,k)
         !VBulk(i,j,k)=VisBulk*BulkAdSH0(eta,ttemp)
         !VBulk(i,j,k) = ViscousZetasTemp(Ed(i,j,k)*HbarC)*Sd(i,j,k)
-        visBulk_normFactor = 1.D0 ! test
         VBulk(i,j,k)= ViscousZetasTempParametrized(ttemp,
-     &      0.155D0, visBulk_normFactor)*Sd(i,j,k)
+     &      0.155D0, VisBulkNorm)*Sd(i,j,k)
 
         If (IRelaxBulk.eq.0) then
           TTpi=DMax1(0.1d0, 120* VBulk(i,j,k)/DMax1(Sd(i,j,k),0.1d0))
@@ -3567,7 +3571,8 @@ C-------------------------------------------
       Double Precision :: RSDM0, RSDM, RSPPI, RSee
       Common /findEdHookData/ RSDM0, RSDM, RSPPI ! M0, M, Pi (see 0510014)
       Integer ViscousEqsType
-      Common/ViscousEqsControl/ ViscousEqsType
+      double precision :: VisBulkNorm 
+      Common/ViscousEqsControl/ ViscousEqsType, VisBulkNorm 
 
       Double precision :: deltaBPiBPi, lambdaBPiSpi ! bulk transport coefficients
       Double precision :: deltaSpiSpi, lambdaSpiBPi, phi7, taupipi ! shear transport coefficients 

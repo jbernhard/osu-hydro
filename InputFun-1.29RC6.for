@@ -496,10 +496,14 @@
       Double Precision ViscousC, VisBeta, Visbulk, BulkTau, IRelaxBulk
       Integer IVisflag
       Common /ViscousC/ ViscousC, VisBeta, IVisflag
-      Common /ViscousBulk/ Visbulk, BulkTau, IRelaxBulk  ! Related to bulk Visousity
+      Common /ViscousBulk/ Visbulk, BulkTau, IRelaxBulk ! Related to bulk Visousity
       
       Integer Initialpitensor
       Common/Initialpi/ Initialpitensor
+
+      Integer :: ViscousEqsType
+      double precision:: VisBulkNorm
+      Common/ViscousEqsControl/ ViscousEqsType, VisBulkNorm 
 
       Double Precision ITeta, b, ddx, ddy, TT0
       Common /ITeta/ ITeta
@@ -557,6 +561,7 @@
       QNum = iargc ()
 
       sFactor = 1D0
+      VisBulkNorm = 1D0
 
       Do ArgIndex = 1, QNum
         Call getarg(ArgIndex, buffer)
@@ -632,6 +637,8 @@
 
         If (varName=="visflag") IVisflag=IResult ! Flag for temperature dependent eta/s(T)
         If (varName=="initialpitensor") Initialpitensor=IResult ! initialization of pi tensor
+
+        If (varName=="visbulknorm") VisBulkNorm=DResult ! VisBulkNorm, use for temperature dependent zeta/s(T)
 
       End Do ! ArgIndex
 
