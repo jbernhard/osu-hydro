@@ -245,6 +245,13 @@ C===========================================================================
       Print *, "Now read parameters specified from CML"
 
       Call readInputFromCML2() ! check CML to see if there are any modifications on parameters
+
+C ***************************J.Liu changes*******************************
+      if(VisBulkNorm < 1e-30) then ! when VisBulkNorm reduces the zeta/s to 0
+        Visbulk = 0.D0
+      endif
+C ***************************J.Liu changes end***************************
+
       Write (*,*) "Have:", "IEOS=", IEOS, "A=", A, ! write out parameter for a check
      &    "IInit=", IInit, "dT=", dT_1,
      &    "eta/s=",ViscousC,"b=",b,"Rx2=",Rx2,"Ry2=",Ry2,
