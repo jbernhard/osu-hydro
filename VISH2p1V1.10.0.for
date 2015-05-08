@@ -2622,7 +2622,7 @@ C---J.Liu-----------------------------------------------------------------------
       Return
       End
 
-      Subroutine ViscousShearTransCoefs(PL, taupi_inverse,
+      Subroutine ViscousShearTransCoefs(Ed, PL, taupi_inverse,
      &        deltaSpiSpi, lambdaSpiBPi, phi7, taupipi)
       ! calculate the shear transport coefficients according to 
       ! PL input should be in unit of GeV/fm^3
@@ -2633,7 +2633,7 @@ C---J.Liu-----------------------------------------------------------------------
 
       deltaSpiSpi = 4.0*taupi/3.0
       lambdaSpiBPi= 6.0*taupi/5.0
-      phi7 = 9.0/70.0/PL
+      phi7 = 4.0*9.0/70.0/DMax1(Ed+PL, 1e-30)
       taupipi = 10.0*taupi/7.0
 
       Return
@@ -4102,8 +4102,9 @@ C-------------------------------------------------------------------------------
             TrPiSigma = p00*s00 + p11*s11 + p22*s22 + p33*s33
      &           - 2.D0*p01*s01 - 2.D0*p02*s02 + 2*p12*s12
 
-            call ViscousShearTransCoefs(PL(I,J,K), VRelaxT(I,J,K),
-     &        deltaSpiSpi, lambdaSpiBPi, phi7, taupipi)
+            call ViscousShearTransCoefs(Ed(I,J,K), PL(I,J,K),
+     &         VRelaxT(I,J,K), deltaSpiSpi, lambdaSpiBPi, 
+     &         phi7, taupipi)
 
             ! pi source 0,0
             phi7Add = p00**2.0 - p01**2.0 - p02**2.0
