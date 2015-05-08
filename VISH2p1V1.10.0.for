@@ -2487,8 +2487,8 @@ CSHEN======end=================================================================
 !------------- for shear pressure -----------
       If (ViscousC.ge.1D-6) then
         VCoefi(i,j,k)=ViscousC*Sd(i,j,k)
-        VCBeta(i,j,k)=VisBeta*3.0/dmax1(Sd(i,j,k)*Temp(i,j,k),1e-30)
-        VRelaxT(i,j,k)=1.0/dmax1(2.0*VCoefi(i,j,k)*VCBeta(i,j,k),1e-30)
+        VCBeta(i,j,k)=1.D0/dmax1(Ed(i,j,k)+PL(i,j,k),1e-30)
+        VRelaxT(i,j,k)=1.0/dmax1(5.0*VCoefi(i,j,k)*VCBeta(i,j,k),1e-30)
 
         if(ViscousEqsType .eq. 2) then   ! 14-moments results
           VRelaxT(i,j,k)=(Ed(i,j,k)+PL(i,j,k))
