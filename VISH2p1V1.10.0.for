@@ -2538,7 +2538,7 @@ CSHEN======end=================================================================
         !VBulk(i,j,k)=VisBulk*BulkAdSH0(eta,ttemp)
         !VBulk(i,j,k) = ViscousZetasTemp(Ed(i,j,k)*HbarC)*Sd(i,j,k)
         VBulk(i,j,k)= ViscousZetasTempParametrized(ttemp,
-     &      0.155D0, VisBulkNorm)*Sd(i,j,k)
+     &      0.180D0, VisBulkNorm)*Sd(i,j,k)
 
         If (IRelaxBulk.eq.0) then
           TTpi=DMax1(0.1d0, 120* VBulk(i,j,k)/DMax1(Sd(i,j,k),0.1d0))
