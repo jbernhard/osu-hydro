@@ -301,6 +301,8 @@ C======output the chemical potential information at freeze out surface.====
      &     STATUS='REPLACE')         !output the freeze-out surface along y-axis
       open(91,File='results/Temp.dat',status='REPLACE')
       open(93,File='results/Temp_evo.dat',status='REPLACE')
+      open(2293, File='results/PPI_over_PL_evo.dat', 
+     &     STATUS='REPLACE')
       open(90,File='results/APi.dat',status='REPLACE')
       open(89,File='results/AScource.dat',status='REPLACE')
       open(88,File='results/AScource2.dat',status='REPLACE')
@@ -376,6 +378,7 @@ CSHEN======set up output file for hydro evolution history===================
       Close(83)
       close(IOSCARWrite)
       Close(377)
+      Close(2293)
       if(outputMovie) then 
          close(3773)
       endif
@@ -1279,6 +1282,14 @@ CSHEN===end=====================================================================
       enddo
       enddo
 
+      Do J=0,NXPhy,NXPhy+1
+      Do I=NYPhy0,NYPhy,10
+        write(2293, '(5e15.5)')Time, I*DX, J*DY, 
+     &                  abs(PPI(I,J,NZ0))/Dmax1(1e-30, PL(I,J,NZ0)), 
+     &                  Ed(I,J,NZ0)*Hc
+      enddo
+      enddo
+      
       DO 203 I=0,NXPhy,20
          Write(*,'(500e12.3)')(Temp(I,J,NZ0)*Hc,J=0,NYPhy,20 )
 203   continue
