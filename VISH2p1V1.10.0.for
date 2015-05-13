@@ -1285,7 +1285,7 @@ CSHEN===end=====================================================================
       Do J=0,NXPhy,NXPhy+1
       Do I=NYPhy0,NYPhy,10
         write(2293, '(5e15.5)')Time, I*DX, J*DY, 
-     &                  abs(PPI(I,J,NZ0))/Dmax1(1e-30, PL(I,J,NZ0)), 
+     &                  PPI(I,J,NZ0)/Dmax1(1e-30, PL(I,J,NZ0)), 
      &                  Ed(I,J,NZ0)*Hc
       enddo
       enddo
