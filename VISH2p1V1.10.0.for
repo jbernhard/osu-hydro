@@ -303,6 +303,8 @@ C======output the chemical potential information at freeze out surface.====
       open(93,File='results/Temp_evo.dat',status='REPLACE')
       open(2293, File='results/PPI_over_PL_evo.dat', 
      &     STATUS='REPLACE')
+      open(2294, File='results/PPI_NS_evo.dat', 
+     &     STATUS='REPLACE')
       open(90,File='results/APi.dat',status='REPLACE')
       open(89,File='results/AScource.dat',status='REPLACE')
       open(88,File='results/AScource2.dat',status='REPLACE')
@@ -379,6 +381,7 @@ CSHEN======set up output file for hydro evolution history===================
       close(IOSCARWrite)
       Close(377)
       Close(2293)
+      Close(2294)
       if(outputMovie) then 
          close(3773)
       endif
@@ -4629,6 +4632,13 @@ C            Print *, 'time',time,'Stotal', Stotal,StotalSv,StotalBv
      &  -difPixy*GV, -APL*GV, -APLdx*GV, -APLdy*GV,
      &   AP11dx*GV, AP22dy*GV
 
+      Do J=0,NXPhy,NXPhy+1
+      Do I=NYPhy0,NYPhy,10
+        PPI_NS = (-1.0)*VBulk(I,J,NZ0)*SiLoc(I,J,NZ0) ! Navier-Stokes limit
+        write(2294, '(6e15.5)')Time, I*DX, J*DY, 
+     &           PPI_NS*Hbarc, PL(I,J,K)*Hbarc, Ed(I,J,NZ0)*Hbarc
+      enddo
+      enddo
 
 !     Checking codes deleted
 !     See previous versions
