@@ -2555,8 +2555,9 @@ CSHEN======end=================================================================
           VRelaxT0(i,j,k) = 1.0/DMax1(0.1d0, TauPi)
         else if (IRelaxBulk .eq. 4) then
           cs2 = getCS2(Ed(i,j,k)*HbarC)
-          VRelaxT0(i,j,k)=(14.55*(1.0/3.0-cs2)**2.0)
-     &     *(Ed(i,j,k)+PL(i,j,k))/VBulk(i,j,k)             
+          Taupi = VBulk(i,j,k)/(14.55*(1.0/3.0-cs2)**2.0
+     &     *(Ed(i,j,k)+PL(i,j,k))) ! set lower bound of bulk relaxation time
+          VRelaxT0(i,j,k) = 1.D0/DMax1(0.1D0, TauPi)              
         else
           Print*,'This option is not supported by this version'
           Print*,'IRelaxBulk'
