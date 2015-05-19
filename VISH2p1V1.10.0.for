@@ -305,6 +305,7 @@ C======output the chemical potential information at freeze out surface.====
      &     STATUS='REPLACE')
       open(2294, File='results/PPI_NS_evo.dat', 
      &     STATUS='REPLACE')
+      open(2295, File='results/pi_evo.dat', status='REPLACE')
       open(90,File='results/APi.dat',status='REPLACE')
       open(89,File='results/AScource.dat',status='REPLACE')
       open(88,File='results/AScource2.dat',status='REPLACE')
@@ -382,6 +383,7 @@ CSHEN======set up output file for hydro evolution history===================
       Close(377)
       Close(2293)
       Close(2294)
+      Close(2295)
       if(outputMovie) then 
          close(3773)
       endif
@@ -1092,6 +1094,17 @@ CSHEN====END====================================================================
      &  U0,U1,U2, PU0,PU1,PU2,SxyT,Stotal,StotalBv,StotalSv,
      &  Ed,PL,Bd,Sd,Temp0,Temp,CMu, T00,T01,T02, IAA,CofAA,Time,DX,DY,
      &  DZ,DT,NXPhy0,NYPhy0,NXPhy,NYPhy,NX0,NX,NY0,NY,NZ0,NZ,PNEW,NNEW)  !PNEW NNEW  related to root finding
+
+      Do J=0,NXPhy,NXPhy+1
+      Do I=NYPhy0,NYPhy,10
+        write(2295, '(12e15.5)')Time, I*DX, J*DY, 
+     &                  Ed(I,J,NZ0)*Hbarc,   Temp(I,J,NZ0)*Hbarc, 
+     &                  PI00(I,J,NZ0)*Hbarc, PI01(I,J,NZ0)*Hbarc, 
+     &                  PI02(I,J,NZ0)*Hbarc, PI11(I,J,NZ0)*Hbarc, 
+     &                  PI12(I,J,NZ0)*Hbarc, PI22(I,J,NZ0)*Hbarc, 
+     &                  pi33(I,J,NZ0)*Hbarc
+      enddo
+      enddo
 
         DIFFC = 0.125D0
         !DIFFC = 0D0
