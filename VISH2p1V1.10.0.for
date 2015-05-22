@@ -2653,7 +2653,7 @@ C---J.Liu-----------------------------------------------------------------------
       Subroutine ViscousShearTransCoefs(Ed, PL, taupi_inverse,
      &        deltaSpiSpi, lambdaSpiBPi, phi7, taupipi)
       ! calculate the shear transport coefficients according to 
-      ! PL input should be in unit of GeV/fm^3
+      ! PL input should be in unit of fm^-4
       Implicit Double Precision (A-H, O-Z)
       Double precision :: lambdaSpiBPi
 
