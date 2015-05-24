@@ -4207,8 +4207,8 @@ C-------------------------------------------------------------------------------
      &         +phi7*phi7Add - taupipi*taupipiAdd)
 
             ! pi source 3,3
-            phi7Add = p33**2.0+TrPi2/Time**2.0/3.D0
-            taupipiAdd = p33*s33+TrPiSigma/Time**2.0/3.D0 
+            phi7Add = -p33**2.0+TrPi2/Time**2.0/3.D0
+            taupipiAdd = -p33*s33+TrPiSigma/Time**2.0/3.D0 
             PScT33(i,j,k)=PScT33(i,j,k) + (-PT)
      &        *(taupi*u0_temp*PA*p33-(p33-PS*s33)
      &         -deltaSpiSpi*p33*theta_temp+lambdaSpiBPi*ppi_temp*s33
