@@ -168,9 +168,10 @@
       Common /thick/ TRo0, TEta, TRA  !Para in Nuclear Thickness Function
 
       Integer IVisflag
+      Integer IVisBulkFlag
       Double Precision ViscousC, VisBeta, Visbulk, BulkTau, IRelaxBulk
       Common /ViscousC/ ViscousC, VIsBeta, IVisflag ! Related to Shear Viscosity
-      Common /ViscousBulk/ Visbulk, BulkTau, IRelaxBulk  ! Related to bulk Visousity
+      Common /ViscousBulk/ Visbulk, BulkTau, IRelaxBulk, IVisBulkFlag  ! Related to bulk Visousity
 
       Double Precision ITeta, b, ddx, ddy, TT0
       Common /ITeta/ ITeta
@@ -496,7 +497,8 @@
       Double Precision ViscousC, VisBeta, Visbulk, BulkTau, IRelaxBulk
       Integer IVisflag
       Common /ViscousC/ ViscousC, VisBeta, IVisflag
-      Common /ViscousBulk/ Visbulk, BulkTau, IRelaxBulk ! Related to bulk Visousity
+      Integer IVisBulkFlag
+      Common /ViscousBulk/ Visbulk, BulkTau, IRelaxBulk, IVisBulkFlag ! Related to bulk Visousity
       
       Integer Initialpitensor
       Common/Initialpi/ Initialpitensor
@@ -639,7 +641,6 @@
         If (varName=="initialpitensor") Initialpitensor=IResult ! initialization of pi tensor
 
         If (varName=="visbulknorm") VisBulkNorm=DResult ! VisBulkNorm, use for temperature dependent zeta/s(T)
-
       End Do ! ArgIndex
 
       If (debug>=3) Print *, "* readInputFromCML finished"

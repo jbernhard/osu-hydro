@@ -98,6 +98,20 @@ C=============add chemical potential for EOS-PCE
       integer :: Muflag
 CSHEN===EOS from tables end====================================================
 
+C *******************************J.Liu changes*******************************
+      Integer InitialURead
+      Common/LDInitial/ InitialURead  ! IintURead =1 read initial velocity profile
+      
+      Integer Initialpitensor
+      Common/Initialpi/ Initialpitensor
+
+      Integer ViscousEqsType
+      Common/ViscousEqsControl/ ViscousEqsType, VisBulkNorm
+
+      Integer :: IVisBulkFlag
+      Common /ViscousBulk/ Visbulk, BulkTau,IRelaxBulk, IVisBulkFlag ! Related to bulk Visousity
+C *******************************J.Liu changes end***************************
+
        Common /LS/ LS
        Common /R0Bdry/ R0Bdry
 
@@ -109,7 +123,6 @@ CSHEN===EOS from tables end====================================================
        Common /EK/ EK, HWN  !EK(T0) constant related to energy density,HWN percent of Wounded Nucleon
        Common /thick/ TRo0, TEta, TRA  !Para in Nuclear Thickness Function
        Common /ViscousC / ViscousC,VisBeta, IVisflag ! Related to Shear Viscosity
-       Common /ViscousBulk/ Visbulk, BulkTau,IRelaxBulk ! Related to bulk Visousity
 
        Common /bb/ b  !impact parameter
        Common/dxdy/ ddx, ddy
@@ -148,17 +161,6 @@ CSHEN===EOS from tables end====================================================
       Double Precision T0 ! initial time tau_0
       Common /T0/ T0
 
-C *******************************J.Liu changes*******************************
-      Integer InitialURead
-      Common/LDInitial/ InitialURead  ! IintURead =1 read initial velocity profile
-C *******************************J.Liu changes end***************************
-      
-      Integer Initialpitensor
-      Common/Initialpi/ Initialpitensor
-
-      Integer ViscousEqsType
-      Common/ViscousEqsControl/ ViscousEqsType, VisBulkNorm
-
       call prepareInputFun() ! this is the initialization function in InputFun.for
 
       Print *, "Read parameters from Vishydro.inp file."
@@ -187,6 +189,7 @@ C------- Parameter for viscous coeficients  ------------------------
       READ(1,*) IVisflag     !Flag for temperature dependent eta/s(T)
 
       READ(1,*) VisBulk     !VisBulk=C;  Xi/s= C* (Xi/S)_min  (C=0, no bulk vis; or C>1 )
+      READ(1,*) IVisBulkFlag !Flag for temperature dependent zeta/s(T)
       READ(1,*) IRelaxBulk  !type of bulk relaxation time (0: critical slowing down; 1: contant Relax Time
                             !2: \tau_PI=1.5/(2\piT))
       READ(1,*) BulkTau !constant relaxation time (fm/c) (require input IRelaxBulk=1)
@@ -261,6 +264,7 @@ C ***************************J.Liu changes end***************************
      &    "NDX=", NDX, "NDY=", NDY, "NDT=", NDT,
      &    "IhydroJetoutput=", IhydroJetoutput,
      &    "IVisflag=", IVisflag,
+     &    "IVisBulkFlag=", IVisBulkFlag,
      &    "Initialpitensor=", Initialpitensor,
      &    "ViscousEqsType=", ViscousEqsType,
      &    "VisBulkNorm=", VisBulkNorm
@@ -560,7 +564,7 @@ C-------------------------------------------------------------------------------
       Double Precision XNP(0:9), YNP(0:9), WeightP ! XN' and YN', the one using r^n in the weight
 
       Common /ViscousC / ViscousC,VisBeta, IVisflag ! Related to Shear Viscosity
-      Common /ViscousBulk/ Visbulk, BulkTau,IRelaxBulk  ! Related to bulk Viscosity
+      Common /ViscousBulk/ Visbulk,BulkTau,IRelaxBulk,IVisBulkFlag  ! Related to bulk Viscosity
       Common /sFactor/ sFactor
 
       Integer ViscousEqsType
@@ -652,9 +656,12 @@ CSHEN===EOS from tables end====================================================
        Write(111,'(A,T10,A3,F5.3,T30,A)')"VisBeta", " = ", VisBeta, 
      &                        "!relaxation constant for shear viscosity"
        Write(111,'(A,T10,A3,I1,T30,A)')"IVisflag", " = ", IVisflag, 
-     &        "!flag for temperature dependent eta/s(T) (=0 for const.)"
+     &        "!flag for temperature dependent eta/s(T) (=0 for const.)"     
        Write(111,'(A,T10,A3,F5.3,T30,A)')"VisBulk", " = ", VisBulk, 
      &                                  "!Bulk viscosity zeta/s(const.)"
+       Write(111,'(A,T10,A3,I1,T30,A)')"IVisBulkFlag"," = ",
+     &        IVisBulkFlag, 
+     &        "!flag for temperature dependent eta/s(T) (=0 for const.)"
        Write(111,'(A,T10,A3,I1,T30,A)')"IRelaxBulk", " = ", IRelaxBulk, 
      &                          "!relaxtion constant for bulk viscosity"
        Write(111,'(A1)')"*"
@@ -2485,9 +2492,10 @@ C#####################################################
        Dimension AA(NX0:NX, NY0:NY, NZ0:NZ) !
 
        Integer :: IVisflag
+       Integer :: IVisBulkFlag
 
        Common /ViscousC / ViscousC,VisBeta, IVisflag ! Related to Viscous Coefficient eta and beta2
-       Common /ViscousBulk/ Visbulk, BulkTau,IRelaxBulk  ! Related to bulk Viscous Coefficient Xi and beta0
+       Common /ViscousBulk/ Visbulk, BulkTau,IRelaxBulk, IVisBulkFlag  ! Related to bulk Viscous Coefficient Xi and beta0
 
        Common /Tde/ Tde, Rdec1, Rdec2,TempIni !Decoupling Temperature !decoupling radius
        Common/R0Aeps/ R0,Aeps
@@ -2553,8 +2561,12 @@ CSHEN======end=================================================================
         !eta=ViscousC*Sd(i,j,k)
         !VBulk(i,j,k)=VisBulk*BulkAdSH0(eta,ttemp)
         !VBulk(i,j,k) = ViscousZetasTemp(Ed(i,j,k)*HbarC)*Sd(i,j,k)
-        VBulk(i,j,k)= ViscousZetasTempParametrized(ttemp,
-     &      0.180D0, VisBulkNorm)*Sd(i,j,k)
+        if (IVisBulkFlag .eq. 0) then
+          VBulk(i,j,k) = Visbulk*Sd(i,j,k)
+        else
+          VBulk(i,j,k)= ViscousZetasTempParametrized(ttemp,
+     &        0.180D0, VisBulkNorm)*Sd(i,j,k)
+        endif
 
         If (IRelaxBulk.eq.0) then
           TTpi=DMax1(0.1d0, 120* VBulk(i,j,k)/DMax1(Sd(i,j,k),0.1d0))
@@ -3580,9 +3592,10 @@ C-------------------------------------------
         Dimension CofAA(0:2,NX0:NX, NY0:NY, NZ0:NZ)
 
        Integer :: IVisflag
+       Integer :: IVisBulkFlag
 
        Common /ViscousC / ViscousC,VisBeta, IVisflag
-       Common /ViscousBulk/ Visbulk, BulkTau,IRelaxBulk
+       Common /ViscousBulk/ Visbulk, BulkTau,IRelaxBulk, IVisBulkFlag
 
         DIMENSION PNEW(NNEW)!something related to root finding
        Parameter(XC0=1.0d-15, AAC=1.0d-16) !root finding accuracy

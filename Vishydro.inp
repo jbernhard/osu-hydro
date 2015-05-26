@@ -12,6 +12,7 @@
 0.833333    !VisBeta               \tau_Pi=VisBeta*6.0\eta /(ST)
 1           !Flag for temperature dependent eta/s(T)
 0.2         !VisBulk               VisBulk=C;  Xi/s= C* (Xi/S)_min  (C=0, no bulk vis; or C>1 )
+1           !Flag for temperature dependent zeta/s(T)
 4           !IRelaxBulk            type of bulk relaxation time (0: critical slowing down; 1: constant relaxation time; 2: 1.5/(2 Pi T))
 5.0         !BulkTau               constant relaxation time (fm/c) (require input IRelaxBulk=1)
 *
