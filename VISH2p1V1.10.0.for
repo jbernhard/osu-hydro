@@ -4209,7 +4209,7 @@ C-------------------------------------------------------------------------------
      &         +phi7*phi7Add - taupipi*taupipiAdd)
 
             ! pi source 2,2
-            phi7Add = p02**2.0-p12**2.0-p22*2.0
+            phi7Add = p02**2.0-p12**2.0-p22**2.0
      &        +(1.0+u0_temp**2.0*vy_temp**2.0)*TrPi2/3.D0
             taupipiAdd = p02*s02-p12*s12-p22*s22
      &        -u0_temp**2.0*vy_temp*(p02*s0d-p12*s1d-p22*s2d)
