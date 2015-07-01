@@ -35,19 +35,19 @@
       common /EOSdatastructure/ EOSe0, EOSde, EOSne
 
       common /EOSMudata/MuEOSdata, IMuflag
-      common /EOSMudatastructure/ EOS_Mu_e0, EOS_Mu_de, EOS_Mu_ne, 
+      common /EOSMudatastructure/ EOS_Mu_e0, EOS_Mu_de, EOS_Mu_ne,
      &                            Inumparticle
       common /EOScoeffs/ Pcoeff1, Pcoeff2, Scoeff1, Scoeff2,
      &                   Tcoeff1, Tcoeff2
 !=======common blocks end====================================================
-      
+
 
       open(5,FILE='EOS/EOS_tables/EOS_PST.dat',STATUS='OLD')
       do I=1,EOSne
         read(5,*) ee, PEOSdata(I), SEOSdata(I), TEOSdata(I)
         if(I.eq.1) EOSe0 = ee
         if(I.eq.2) EOSde = ee - EOSe0
-      enddo 
+      enddo
       close(5)
 
       EOSEend = EOSe0 + EOSde*(EOSne-1)
@@ -106,8 +106,8 @@ C====EOS from table===================================================
       else if (ee.lt.EOSe0) then
             p1 = PEOSdata(1)
             PEOSL7 = ee*p1/EOSe0
-      else if (ee.lt.EOSEend) then 
-       call interpCubic(PEOSdata, RegEOSdatasize, 
+      else if (ee.lt.EOSEend) then
+       call interpCubic(PEOSdata, RegEOSdatasize,
      &                  EOSe0, EOSde, ee, PEOSL7)
       else
        PEOSL7 = Pcoeff1*(ee**Pcoeff2)
@@ -150,8 +150,8 @@ C====EOS from table===================================================
        else if (ee.lt.EOSe0) then
             s1 = SEOSdata(1)
             SEOSL7 = ee*S1/EOSe0
-      else if (ee.lt.EOSEend) then 
-       call interpCubic(SEOSdata, RegEOSdatasize, 
+      else if (ee.lt.EOSEend) then
+       call interpCubic(SEOSdata, RegEOSdatasize,
      &                  EOSe0, EOSde, ee, SEOSL7)
       else
        SEOSL7 = Scoeff1*(ee**Scoeff2)
@@ -194,8 +194,8 @@ C====EOS from table===================================================
        else if (ee.lt.EOSe0) then
             T1 = TEOSdata(1)
             TEOSL7 = ee*T1/EOSe0
-      else if (ee.lt.EOSEend) then 
-       call interpCubic(TEOSdata, RegEOSdatasize, 
+      else if (ee.lt.EOSEend) then
+       call interpCubic(TEOSdata, RegEOSdatasize,
      &                  EOSe0, EOSde, ee, TEOSL7)
       else
        TEOSL7 = Tcoeff1*(ee**Tcoeff2)
@@ -206,4 +206,4 @@ C====EOS from table===================================================
 
       return
       end
- 
+

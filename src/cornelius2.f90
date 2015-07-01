@@ -3,7 +3,7 @@
 ! This subroutine is aimed to be used as a part of the fluid dynamical
 ! models of the heavy-ion physics community. Permission to use it for
 ! any purpose except for any commercial purpose is granted, provided
-! that any publication cites the paper describing the algorithm: 
+! that any publication cites the paper describing the algorithm:
 ! P. Huovinen and H. Petersen, arXiv:1206.3371
 !
 ! Permission to distribute this subroutine is granted, provided that no
@@ -27,7 +27,7 @@
 !
 ! This routine search for a 2-dimensional isosurface of constant X in
 ! a volume-element (cube) of 3-dimensional space when the values of X
-! are known at the vertices (=corners) of the cube and X is interpolated 
+! are known at the vertices (=corners) of the cube and X is interpolated
 ! linearly between the vertices. I.e. the usual problem of finding the
 ! freeze-out surface.
 ! The routine devides this surface into triangles, evaluates their
@@ -88,7 +88,7 @@
      REAL(KIND(0D0)),INTENT(IN) :: dt, dx, dy
      INTEGER,INTENT(INOUT)      :: Nambi, Ndisc
 
-     REAL(KIND(0D0)),DIMENSION(0:2,2,12) :: Edge ! Table for ends of edges  
+     REAL(KIND(0D0)),DIMENSION(0:2,2,12) :: Edge ! Table for ends of edges
                                                  ! i.e. corners of the polygons
      INTEGER :: Nedge, Ncorners
      LOGICAL :: Ambiguous
@@ -293,7 +293,7 @@
    END SUBROUTINE FindEdge
 
 
-   SUBROUTINE EndsOfEdge(E0,Square,Cut,dx,dy,Ncuts)     
+   SUBROUTINE EndsOfEdge(E0,Square,Cut,dx,dy,Ncuts)
 
      IMPLICIT NONE
      REAL(KIND(0D0)) :: E0,dx,dy

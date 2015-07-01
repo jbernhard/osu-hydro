@@ -85,7 +85,7 @@ CSHEN===EOS from tables========================================================
       double precision :: EOSe0         !lowest energy density
       double precision :: EOSde         !spacing of energy density
       Integer :: EOSne                  !total rows of energy density
-      
+
 CSHEN======================================================================
 C=============add chemical potential for EOS-PCE
       Integer, Parameter :: RegEOSMudatasize = EOSMUDATALENGTH   !converted EOS Mu table data size
@@ -101,7 +101,7 @@ CSHEN===EOS from tables end====================================================
 C *******************************J.Liu changes*******************************
       Integer InitialURead
       Common/LDInitial/ InitialURead  ! IintURead =1 read initial velocity profile
-      
+
       Integer Initialpitensor
       Common/Initialpi/ Initialpitensor
 
@@ -139,7 +139,7 @@ C *******************************J.Liu changes end***************************
        common /EOSdata/PEOSdata, SEOSdata, TEOSdata !CSHEN: for EOS from tables
        common /EOSdatastructure/ EOSe0, EOSde, EOSne
        common /EOSMudata/MuEOSdata, IMuflag
-       common /EOSMudatastructure/ EOS_Mu_e0, EOS_Mu_de, EOS_Mu_ne, 
+       common /EOSMudatastructure/ EOS_Mu_e0, EOS_Mu_de, EOS_Mu_ne,
      &                            Inumparticle
 
        parameter (HbarC=0.19733d0) !for changcing between fm and GeV ! Hbarc=0.19733=GeV*fm
@@ -219,7 +219,7 @@ C------ Some uncommon parameters ----------------------------
 C------ freeze out at first time below Edec  ----------------------------
       Read(1,*) Cha
       Read(1,*) Ifreez
-      Read(1,*) Edec0   
+      Read(1,*) Edec0
 
 C------ output hydro evolution file  ----------------------------
       Read(1,*) Cha
@@ -229,7 +229,7 @@ C ***************************J.Liu changes***************************
 C------- Parameters for initial profile from Laudan matching-----------------------
       Read(1,*) Cha
       Read(1,*) Cha
-      Read(1,*) InitialURead  
+      Read(1,*) InitialURead
 C ***************************J.Liu changes end***************************
 
       Read(1,*) Cha
@@ -305,9 +305,9 @@ C======output the chemical potential information at freeze out surface.====
      &     STATUS='REPLACE')         !output the freeze-out surface along y-axis
       open(91,File='results/Temp.dat',status='REPLACE')
       open(93,File='results/Temp_evo.dat',status='REPLACE')
-      open(2293, File='results/PPI_over_PL_evo.dat', 
+      open(2293, File='results/PPI_over_PL_evo.dat',
      &     STATUS='REPLACE')
-      open(2294, File='results/PPI_NS_evo.dat', 
+      open(2294, File='results/PPI_NS_evo.dat',
      &     STATUS='REPLACE')
       open(2295, File='results/pi_evo.dat', status='REPLACE')
       open(90,File='results/APi.dat',status='REPLACE')
@@ -317,7 +317,7 @@ C======output the chemical potential information at freeze out surface.====
 
       !Open(3771,FILE='movie/DPc.dat',STATUS='REPLACE')
       !Close(3771)
-      if (outputMovie) then 
+      if (outputMovie) then
          open(3773,FILE='movie/Evolution.dat',STATUS='REPLACE')
       endif
       !Open(3774,FILE='movie/U1.dat',STATUS='REPLACE')
@@ -388,7 +388,7 @@ CSHEN======set up output file for hydro evolution history===================
       Close(2293)
       Close(2294)
       Close(2295)
-      if(outputMovie) then 
+      if(outputMovie) then
          close(3773)
       endif
 
@@ -569,7 +569,7 @@ C-------------------------------------------------------------------------------
 
       Integer ViscousEqsType
       double precision:: VisBulkNorm
-      Common/ViscousEqsControl/ ViscousEqsType, VisBulkNorm 
+      Common/ViscousEqsControl/ ViscousEqsType, VisBulkNorm
 
       Double Precision SEOSL7, PEOSL7, TEOSL7, SEOSL6
       Double Precision ss, ddt1, ddt2, ee1, ee2
@@ -614,7 +614,7 @@ CSHEN===EOS from tables end====================================================
       common /EOSdata/PEOSdata, SEOSdata, TEOSdata !CSHEN: for EOS from tables
       common /EOSdatastructure/ EOSe0, EOSde, EOSne
       common /EOSMudata/MuEOSdata, IMuflag
-      common /EOSMudatastructure/ EOS_Mu_e0, EOS_Mu_de, EOS_Mu_ne, 
+      common /EOSMudatastructure/ EOS_Mu_e0, EOS_Mu_de, EOS_Mu_ne,
      &                            Inumparticle
 
       TFLAG = 0
@@ -637,52 +637,52 @@ CSHEN===EOS from tables end====================================================
 
       !output hydro parameters for current run
       Open(111,File='./results/VISH2p1_tec.dat',status='Replace')
-       Write(111,'(A,T10,A3,I1,T30,A)')"IEOS", " = ", IEOS, 
+       Write(111,'(A,T10,A3,I1,T30,A)')"IEOS", " = ", IEOS,
      &                                            "!IEOS   type for EOS"
-       Write(111,'(A,T10,A3,F4.2,T30,A)')"Tau0", " = ", T0, 
+       Write(111,'(A,T10,A3,F4.2,T30,A)')"Tau0", " = ", T0,
      &                                "!tau0   initial time(unit: fm/c)"
-       Write(111,'(A,T10,A3,F5.3,T30,A)')"Edec", " = ", EDec, 
+       Write(111,'(A,T10,A3,F5.3,T30,A)')"Edec", " = ", EDec,
      &              "!Edec   Decoupling energy density (unit: GeV/fm^3)"
-       Write(111,'(A,T10,A3,F5.3,T30,A)')"Tdec", " = ", TFREEZ, 
+       Write(111,'(A,T10,A3,F5.3,T30,A)')"Tdec", " = ", TFREEZ,
      &                                  "!T_fo   freeze out temperature"
        Write(111,'(A1)')"*"
-       Write(111,'(A,T10,A3,I1,T30,A)')"IInit", " = ", IInit, 
+       Write(111,'(A,T10,A3,I1,T30,A)')"IInit", " = ", IInit,
      &                                          "!Initialization method"
        Write(111,'(A,T10,A3,E13.7,T30,A)')"Norm"," = ", sFactor,
      &                       "!normalization factor for initial profile"
        Write(111,'(A1)')"*"
-       Write(111,'(A,T10,A3,F5.3,T30,A)')"ViscousC", " = ", ViscousC, 
+       Write(111,'(A,T10,A3,F5.3,T30,A)')"ViscousC", " = ", ViscousC,
      &                                        "!ViscousC  eta/s(const.)"
-       Write(111,'(A,T10,A3,F5.3,T30,A)')"VisBeta", " = ", VisBeta, 
+       Write(111,'(A,T10,A3,F5.3,T30,A)')"VisBeta", " = ", VisBeta,
      &                        "!relaxation constant for shear viscosity"
-       Write(111,'(A,T10,A3,I1,T30,A)')"IVisflag", " = ", IVisflag, 
-     &        "!flag for temperature dependent eta/s(T) (=0 for const.)"     
-       Write(111,'(A,T10,A3,F5.3,T30,A)')"VisBulk", " = ", VisBulk, 
+       Write(111,'(A,T10,A3,I1,T30,A)')"IVisflag", " = ", IVisflag,
+     &        "!flag for temperature dependent eta/s(T) (=0 for const.)"
+       Write(111,'(A,T10,A3,F5.3,T30,A)')"VisBulk", " = ", VisBulk,
      &                                  "!Bulk viscosity zeta/s(const.)"
        Write(111,'(A,T10,A3,I1,T30,A)')"IVisBulkFlag"," = ",
-     &        IVisBulkFlag, 
+     &        IVisBulkFlag,
      &        "!flag for temperature dependent eta/s(T) (=0 for const.)"
-       Write(111,'(A,T10,A3,I1,T30,A)')"IRelaxBulk", " = ", IRelaxBulk, 
+       Write(111,'(A,T10,A3,I1,T30,A)')"IRelaxBulk", " = ", IRelaxBulk,
      &                          "!relaxtion constant for bulk viscosity"
        Write(111,'(A1)')"*"
-       Write(111,'(A,T10,A3,F4.2,T30,A)')"DT", " = ", DT_1, 
+       Write(111,'(A,T10,A3,F4.2,T30,A)')"DT", " = ", DT_1,
      &                                                 "!dT   time step"
-       Write(111,'(A,T10,A3,F4.2,T30,A)')"DX", " = ", DX, 
+       Write(111,'(A,T10,A3,F4.2,T30,A)')"DX", " = ", DX,
      &                                   "!DX   lattice spacial spacing"
-       Write(111,'(A,T10,A3,F4.2,T30,A)')"DY", " = ", DY, 
+       Write(111,'(A,T10,A3,F4.2,T30,A)')"DY", " = ", DY,
      &                                   "!DY   lattice spacial spacing"
-       Write(111,'(A,T10,A3,I3,T30,A)')"ILS", " = ", NXPhy, 
+       Write(111,'(A,T10,A3,I3,T30,A)')"ILS", " = ", NXPhy,
      &                           "!lattice size (in positive direction)"
        Write(111,'(A,T10,A3,I1,T30,A)')"NDX", " = ", NDX,
      &                      "!NXD   freeze out skip step in x direction"
        Write(111,'(A,T10,A3,I1,T30,A)')"NDY", " = ", NDY,
      &                      "!NYD   freeze out skip step in y direction"
-       Write(111,'(A,T10,A3,I1,T30,A)')"NDT", " = ", NDT, 
+       Write(111,'(A,T10,A3,I1,T30,A)')"NDT", " = ", NDT,
      &                              "!NTD   freeze out skip step in tau"
-       Write(111,'(A,T10,A3,F4.1,T30,A)')"R0Bdry", " = ", R0Bdry, 
+       Write(111,'(A,T10,A3,F4.1,T30,A)')"R0Bdry", " = ", R0Bdry,
      &                                                    "!boundary R0"
        Write(111,'(A,T11,A2,F5.3,T30,A)')"VisBulkNorm", "= " ,
-     &           VisBulkNorm, "!Bulk viscosity zeta/s norm factor"     
+     &           VisBulkNorm, "!Bulk viscosity zeta/s norm factor"
       Close(111)
 
 !     Output entropy and energy profiles:
@@ -703,12 +703,12 @@ CSHEN===EOS from tables end====================================================
         Write (111,*)
       End Do
       Close(111)
-    
+
       ! output fluid cells outside the freeze out surface at initial time
       if(Ifreez .ne. 0) then
       DA0=(dx*NDX)*(dy*NDY)
       DA1=0.0
-      DA2=0.0          
+      DA2=0.0
 
       DO J = NYPhy0, NYPhy
         IF (MOD(J, NDY) .NE. 0) cycle
@@ -720,39 +720,39 @@ CSHEN===EOS from tables end====================================================
           VZCM = Vx(I,J,1)
           VRCM = Vy(I,J,1)
           BN = 0.0
-          BAMU = 0.0                   
-          SMU  = 0.0                  
+          BAMU = 0.0
+          SMU  = 0.0
           PDec2 = PL(I,J,1)
 
-          CPi00 = Pi00(I,J,1)    
-          CPi01 = Pi01(I,J,1)    
-          CPi02 = Pi02(I,J,1)   
-          CPi11 = Pi11(I,J,1)    
-          CPi12 = Pi12(I,J,1)    
-          CPi22 = Pi22(I,J,1)     
-          CPi33 = Pi33(I,J,1)    
+          CPi00 = Pi00(I,J,1)
+          CPi01 = Pi01(I,J,1)
+          CPi02 = Pi02(I,J,1)
+          CPi11 = Pi11(I,J,1)
+          CPi12 = Pi12(I,J,1)
+          CPi22 = Pi22(I,J,1)
+          CPi33 = Pi33(I,J,1)
           CPPI = PPI(I,J,1)
 
           WRITE(99,'(99E20.8E3)') Time,DA0,DA1,DA2,VZCM,VRCM,
      &                  Ed(I,J,1)*HbarC,BN,
-     &                  Temp(I,J,1)*HbarC,BAMU,SMU, PDec2*HbarC, 
+     &                  Temp(I,J,1)*HbarC,BAMU,SMU, PDec2*HbarC,
      &                  CPi33*HbarC,
      &                  CPi00*HbarC,CPi01*HbarC,CPi02*HbarC,
      &                  CPi11*HbarC,CPi12*HbarC,CPi22*HbarC
      &                  CPPI*HbarC
-          
+
           TM = Time
           XM = XX
           YM = YY
 
           WRITE(98,'(99E20.8)') Time, TM, XM,YM,
-     &                  Sqrt(XM**2+YM**2), R0,Aeps    !surface    
-        
+     &                  Sqrt(XM**2+YM**2), R0,Aeps    !surface
+
 
           EDEC2 = Ed(I,J,1)*HbarC
           IF (IEOS.EQ.7) then
              do L=1,Inumparticle
-                call interpCubic(MuEOSdata(:,L), RegEOSMudatasize, 
+                call interpCubic(MuEOSdata(:,L), RegEOSMudatasize,
      &                   EOS_Mu_e0, EOS_Mu_de, EDEC2, XMufreezetemp)
                 XMufreeze(L) = XMufreezetemp
              end do
@@ -1061,7 +1061,7 @@ CSHEN====END====================================================================
 
       ! Initialize PiXXRegulated and backup oldTTXX
       if (ViscousC>1D-6 .or. VisBulk > 1D-6) then
-        
+
         !shear
         If (ViscousC>1D-6) Then
           Pi00Regulated = Pi00
@@ -1072,28 +1072,28 @@ CSHEN====END====================================================================
           Pi12Regulated = Pi12
           Pi33Regulated = Pi33
           iRegulateCounter = 0D0
-          If (echo_level>=3) Print*, "Regulation counts:", 
+          If (echo_level>=3) Print*, "Regulation counts:",
      &                               iRegulateCounter
         else
-          Pi00 = 0D0 
-          Pi01 = 0D0 
-          Pi02 = 0D0 
-          Pi11 = 0D0 
-          Pi22 = 0D0 
-          Pi12 = 0D0 
-          Pi33 = 0D0 
+          Pi00 = 0D0
+          Pi01 = 0D0
+          Pi02 = 0D0
+          Pi11 = 0D0
+          Pi22 = 0D0
+          Pi12 = 0D0
+          Pi33 = 0D0
         endif
-        
+
         !bulk
         if(VisBulk > 1D-6) then
           PPIRegulated = PPI
           iRegulateCounterBulkPi = 0D0
-          If (echo_level>=3) Print*, "Regulation Bulk Pi counts:", 
+          If (echo_level>=3) Print*, "Regulation Bulk Pi counts:",
      &                               iRegulateCounterBulkPi
         else
           PPI = 0D0
         endif
-        
+
 
       call dpSc8(TT00,TT01,TT02,ScT00,ScT01,ScT02,Vx,Vy,
      &  Pi00,Pi01,Pi02,Pi33,Pi11,Pi12,Pi22, PScT00,PScT01,PScT02,PScT33,
@@ -1104,18 +1104,18 @@ CSHEN====END====================================================================
 
       Do J=0,NXPhy,NXPhy+1
       Do I=NYPhy0,NYPhy,10
-        write(2295, '(12e15.5)')Time, I*DX, J*DY, 
-     &                  Ed(I,J,NZ0)*Hbarc,   Temp(I,J,NZ0)*Hbarc, 
-     &                  PI00(I,J,NZ0)*Hbarc, PI01(I,J,NZ0)*Hbarc, 
-     &                  PI02(I,J,NZ0)*Hbarc, PI11(I,J,NZ0)*Hbarc, 
-     &                  PI12(I,J,NZ0)*Hbarc, PI22(I,J,NZ0)*Hbarc, 
+        write(2295, '(12e15.5)')Time, I*DX, J*DY,
+     &                  Ed(I,J,NZ0)*Hbarc,   Temp(I,J,NZ0)*Hbarc,
+     &                  PI00(I,J,NZ0)*Hbarc, PI01(I,J,NZ0)*Hbarc,
+     &                  PI02(I,J,NZ0)*Hbarc, PI11(I,J,NZ0)*Hbarc,
+     &                  PI12(I,J,NZ0)*Hbarc, PI22(I,J,NZ0)*Hbarc,
      &                  pi33(I,J,NZ0)*Hbarc
       enddo
       enddo
 
         DIFFC = 0.125D0
         !DIFFC = 0D0
-        if(ViscousC > 1D-6) then 
+        if(ViscousC > 1D-6) then
          call UPShasta2 (Pi01,Vx,Vy,PScT01, NX0,NX,NY0,NY,NZ0,NZ, 0,0,  !Pi01
      &            DT,DX,DY, NXPhy0,NYPhy0,  NXPhy,NYPhy,-1,1, DIFFC)
          call UPShasta2 (Pi02,Vx,Vy,PScT02, NX0,NX,NY0,NY,NZ0,NZ, 0,0,
@@ -1131,7 +1131,7 @@ CSHEN====END====================================================================
          call UPShasta2 (Pi22,Vx,Vy,PScT22, NX0,NX,NY0,NY,NZ0,NZ, 0,0,
      &             DT,DX,DY, NXPhy0,NYPhy0,  NXPhy,NYPhy,1,1, DIFFC)
         endif
-        
+
         if(VisBulk > 1D-6) then
           call UPShasta2 (PPI,Vx,Vy,PISc, NX0,NX,NY0,NY,NZ0,NZ, 0,0,
      &             DT,DX,DY, NXPhy0,NYPhy0,  NXPhy,NYPhy,1,1, DIFFC)
@@ -1157,7 +1157,7 @@ CSHEN====END====================================================================
         End Do
         End Do
         End Do
-        
+
         if(ViscousC > 1D-6) then
          if (outputPiviolation) then
             call checkPiandoutputViolation(Time, DX, DY, Vx, Vy, Ed, PL,
@@ -1189,8 +1189,8 @@ CSHEN====END====================================================================
          EndIf
          End Do ! pi evolution
         endif
-      
-        if(VisBulk > 1D-6) then 
+
+        if(VisBulk > 1D-6) then
           if(outputPiviolation) then
             call checkBulkPiandoutputViolation(Time, Dx, Dy, Ed, PL,
      &        NXPhy0, NXPhy, NYPhy0, NYPhy, NX0, NX, NY0, NY, NZ0, NZ,
@@ -1262,7 +1262,7 @@ CSHEN====END====================================================================
          DO K=NZ0,NZ
          DO J=NYPhy0,NYPhy
          DO I=NXPhy0,NXPhy
-           if(mod(I, 5) .eq. 0 .and. mod(J, 5) .eq. 0) then  
+           if(mod(I, 5) .eq. 0 .and. mod(J, 5) .eq. 0) then
              write(3773, '(4F18.8)')Time, I*Dx, J*Dy,
      &             Temp(I, J, K)*0.19733D0
            endif
@@ -1270,13 +1270,13 @@ CSHEN====END====================================================================
          enddo
          enddo
       endif
-      
+
       if(IhydroJetoutput .eq. 1) then
 !        output hydro infos
 !        Units: [ed]=GeV/fm^3, [sd]=fm^-3, [p]=GeV/fm^3, [T]=GeV, [Vx]=[Vy]=1
 !        Units: [Pi]=GeV/fm^3, [PPi]=GeV/fm^3
          Call writeHydroBlock(ITime-1, Ed*HbarC, Sd, PL*HbarC,
-     &      Temp*HbarC,Vx, Vy, Pi00*HbarC, Pi01*HbarC, Pi02*HbarC, 
+     &      Temp*HbarC,Vx, Vy, Pi00*HbarC, Pi01*HbarC, Pi02*HbarC,
      &      Pi02*HbarC*0.0d0, Pi11*HbarC, Pi12*HbarC, Pi12*HbarC*0.0d0,
      &      Pi22*HbarC, Pi22*HbarC*0.0d0, Pi33*HbarC, PPI*HbarC)
 !        output hydro infos, end
@@ -1307,12 +1307,12 @@ CSHEN===end=====================================================================
 
       Do J=0,NXPhy,NXPhy+1
       Do I=NYPhy0,NYPhy,10
-        write(2293, '(5e15.5)')Time, I*DX, J*DY, 
-     &                  PPI(I,J,NZ0)/Dmax1(1e-30, PL(I,J,NZ0)), 
+        write(2293, '(5e15.5)')Time, I*DX, J*DY,
+     &                  PPI(I,J,NZ0)/Dmax1(1e-30, PL(I,J,NZ0)),
      &                  Ed(I,J,NZ0)*Hc
       enddo
       enddo
-      
+
       DO 203 I=0,NXPhy,20
          Write(*,'(500e12.3)')(Temp(I,J,NZ0)*Hc,J=0,NYPhy,20 )
 203   continue
@@ -1371,7 +1371,7 @@ C      NDT = 5
       Call FreezeoutPro10 (EDEC, IEOS, NDX, NDY, NDT,
      &     EPS0,EPS1,V10,V20,V11,V21, NINT, IW,
      &     F0Pi00,F0Pi01,F0Pi02,F0Pi33,F0Pi11,F0Pi12,F0Pi22,
-     &     FPi00,FPi01,FPi02,FPi33,FPi11,FPi12,FPi22, 
+     &     FPi00,FPi01,FPi02,FPi33,FPi11,FPi12,FPi22,
      &     F0PPI, FPPI,
      &     N,T,DX,DY,DT,NXPhy,NYPhy,NX0,NX,NY0,NY)
 
@@ -1527,7 +1527,7 @@ C=============add chemical potential for EOS-PCE
       double precision :: XMufreezetemp
 
       common /EOSMudata/MuEOSdata, IMuflag
-      common /EOSMudatastructure/ EOS_Mu_e0, EOS_Mu_de, EOS_Mu_ne, 
+      common /EOSMudatastructure/ EOS_Mu_e0, EOS_Mu_de, EOS_Mu_ne,
      &                            Inumparticle
 CSHEN======================================================================
 
@@ -1754,7 +1754,7 @@ C===============output chemcial potential for EOS-PCE=====================
          IF (((IEOS.EQ.6).or.(IEOS.eq.7)).and.(IMuflag.eq.0)) then
            if(Inumparticle.ne.0) then
             do L=1,Inumparticle
-               call interpCubic(MuEOSdata(:,L), RegEOSMudatasize, 
+               call interpCubic(MuEOSdata(:,L), RegEOSMudatasize,
      &                  EOS_Mu_e0, EOS_Mu_de, EDEC, XMufreezetemp)
                XMufreeze(L) = XMufreezetemp
             end do
@@ -1803,7 +1803,7 @@ C###############################################################################
       Subroutine FreezeoutPro10(Edec, IEOS, NDX, NDY, NDT,
      &     EPS0,EPS1,V10,V20,V11,V21, NINT, IW,
      &     F0Pi00,F0Pi01,F0Pi02,F0Pi33,F0Pi11,F0Pi12,F0Pi22,
-     &     FPi00,FPi01,FPi02,FPi33,FPi11,FPi12,FPi22, 
+     &     FPi00,FPi01,FPi02,FPi33,FPi11,FPi12,FPi22,
      &     F0PPI, FPPI,
      &     N,T,DX,DY,DT,NXPhy,NYPhy,NX0,NX,NY0,NY)
 *     a subroutine to calculate the freeze-out surface using cornelius from P. Huovinen
@@ -1886,7 +1886,7 @@ C=============add chemical potential for EOS-PCE
       double precision :: XMufreezetemp
 
       common /EOSMudata/MuEOSdata, IMuflag
-      common /EOSMudatastructure/ EOS_Mu_e0, EOS_Mu_de, EOS_Mu_ne, 
+      common /EOSMudatastructure/ EOS_Mu_e0, EOS_Mu_de, EOS_Mu_ne,
      &                            Inumparticle
 CSHEN======================================================================
 
@@ -2016,7 +2016,7 @@ CSHEN======================================================================
              IF (((IEOS.EQ.6).or.(IEOS.eq.7)).and.(IMuflag.eq.0)) then
                if(Inumparticle.ne.0) then
                 do L=1,Inumparticle
-                   call interpCubic(MuEOSdata(:,L), RegEOSMudatasize, 
+                   call interpCubic(MuEOSdata(:,L), RegEOSMudatasize,
      &                      EOS_Mu_e0, EOS_Mu_de, Edec, XMufreezetemp)
                    XMufreeze(L) = XMufreezetemp
                 end do
@@ -2503,8 +2503,8 @@ C#####################################################
        Parameter (HbarC=0.19733d0) !for changing between fm and GeV ! Hbarc=0.19733=GeV*fm
 
        Integer ViscousEqsType
-       double precision :: VisBulkNorm 
-       Common/ViscousEqsControl/ ViscousEqsType, VisBulkNorm 
+       double precision :: VisBulkNorm
+       Common/ViscousEqsControl/ ViscousEqsType, VisBulkNorm
 
       do 10 k=1,1
       do 10 j=NYPhy0-2,NYPhy+2 ! -2,NYPhy+2
@@ -2582,7 +2582,7 @@ CSHEN======end=================================================================
           cs2 = getCS2(Ed(i,j,k)*HbarC)
           Taupi = VBulk(i,j,k)/(14.55*(1.0/3.0-cs2)**2.0
      &     *(Ed(i,j,k)+PL(i,j,k))) ! set lower bound of bulk relaxation time
-          VRelaxT0(i,j,k) = 1.D0/DMax1(0.1D0, TauPi)              
+          VRelaxT0(i,j,k) = 1.D0/DMax1(0.1D0, TauPi)
         else
           Print*,'This option is not supported by this version'
           Print*,'IRelaxBulk'
@@ -2623,7 +2623,7 @@ C====eta/s dependent on local temperature==================================
       if(TT_GeV .gt. Ttr) then
           ViscousCTemp = 0.08
       else
-          ViscousCTemp = 0.681 - 0.0594*TT_GeV/Ttr 
+          ViscousCTemp = 0.681 - 0.0594*TT_GeV/Ttr
      &                   - 0.544*(TT_GeV/Ttr)**2.;
       endif
 
@@ -2664,7 +2664,7 @@ C---J.Liu-----------------------------------------------------------------------
 
       Subroutine ViscousShearTransCoefs(Ed, PL, taupi_inverse,
      &        deltaSpiSpi, lambdaSpiBPi, phi7, taupipi)
-      ! calculate the shear transport coefficients according to 
+      ! calculate the shear transport coefficients according to
       ! PL input should be in unit of fm^-4
       Implicit Double Precision (A-H, O-Z)
       Double precision :: lambdaSpiBPi
@@ -2682,7 +2682,7 @@ C---J.Liu-----------------------------------------------------------------------
 
       Subroutine ViscousBulkTransCoefs(Ed, tauBPi_inverse,
      &        deltaBPiBPi, lambdaBPiSpi)
-      ! calculate the bulk transport coefficients according to 
+      ! calculate the bulk transport coefficients according to
       ! Ed input should be in unit of GeV/fm^3
       Implicit Double Precision (A-H, O-Z)
       double precision lambdaBPiSpi
@@ -3441,7 +3441,7 @@ C###################################################################
       if (BulkPi .lt. temp2) then
         BulkPi = 0.999*temp2
       endif
-      
+
       RETURN
       END
 
@@ -3619,11 +3619,11 @@ C-------------------------------------------
       Double Precision :: RSDM0, RSDM, RSPPI, RSee
       Common /findEdHookData/ RSDM0, RSDM, RSPPI ! M0, M, Pi (see 0510014)
       Integer ViscousEqsType
-      double precision :: VisBulkNorm 
-      Common/ViscousEqsControl/ ViscousEqsType, VisBulkNorm 
+      double precision :: VisBulkNorm
+      Common/ViscousEqsControl/ ViscousEqsType, VisBulkNorm
 
       Double precision :: deltaBPiBPi, lambdaBPiSpi ! bulk transport coefficients
-      Double precision :: deltaSpiSpi, lambdaSpiBPi, phi7, taupipi ! shear transport coefficients 
+      Double precision :: deltaSpiSpi, lambdaSpiBPi, phi7, taupipi ! shear transport coefficients
       Double precision :: piSigma
          Nsm=5
 
@@ -3750,13 +3750,13 @@ C--------------------------------------
         !eeH = findEdHook(1D0)
         !Call invertFunctionD(findEdHook,0D0,5D3,1D-3,ED(I,J,K),0D0,eeH)
         VP_local = findvHook(0.0D0)
-        Call invertFunctionH(findvHook, 0.0D0, 1.0D0, 0.0, 1D-6, 
+        Call invertFunctionH(findvHook, 0.0D0, 1.0D0, 0.0, 1D-6,
      &                       VP_local)
         U0_guess = 1./sqrt(1. - VP_local*VP_local)
         U0_low_boundary = dmax1(1.0, 0.5*U0_guess)
         U0_upper_boundary = 1.5*U0_guess
         U0_local = findU0Hook(0.0D0)
-        Call invertFunctionH(findU0Hook, U0_low_boundary, 
+        Call invertFunctionH(findU0Hook, U0_low_boundary,
      &                       U0_upper_boundary, 0.0, 1D-6,
      &                       U0_local)
         U0_critial = 1.21061
@@ -3765,7 +3765,7 @@ C--------------------------------------
         else
           U0_local = 1./sqrt(1. - VP_local*VP_local)
         endif
-         
+
         eeH = DM0 - VP_local*DM
 
         !eeH = quadESolver(ED(I,J,K),DM0,DM,PPI(I,J,K),IDebug,I,J) ! use Ed from last time step as a starting point
@@ -4082,7 +4082,7 @@ C-------------------------------------------------------------------------------
 
         if(ViscousC.ge.0.00001) then
 
-          if(ViscousEqsType .eq. 1) then 
+          if(ViscousEqsType .eq. 1) then
           ! old version: shear tensor pressure terms from entropy generation
             D0Ln=(DLog(etaTtp0(I,J,K))-DLog(etaTtp(I,J,K)))/DT
             D1Ln=(DLog(etaTtp(I-1,J,K))-DLog(etaTtp(I+1,J,K)))/(2.0*DX)
@@ -4107,7 +4107,7 @@ C-------------------------------------------------------------------------------
      &         PA*Pi12(I,J,K)-PT*(Pi12(I,J,K)-PS*DPc12(i,j,K)))*(-1.0)
 
           else if(ViscousEqsType .eq. 2) then
-          ! shear terms from 14-moments expansion 
+          ! shear terms from 14-moments expansion
             p00 = Pi00(I,J,K)    ! some short hand
             p01 = Pi01(I,J,K)
             p02 = Pi02(I,J,K)
@@ -4116,7 +4116,7 @@ C-------------------------------------------------------------------------------
             p22 = Pi22(I,J,K)
             p33 = Pi33(I,J,K)
 
-            s00 = DPc00(I,J,K)   
+            s00 = DPc00(I,J,K)
             s01 = DPc01(I,J,K)
             s02 = DPc02(I,J,K)
             s11 = DPc11(I,J,K)
@@ -4124,13 +4124,13 @@ C-------------------------------------------------------------------------------
             s22 = DPc22(I,J,K)
             s33 = DPc33(I,J,K)
 
-            u0_temp = U0(I,J,K)   
+            u0_temp = U0(I,J,K)
             vx_temp = Vx(I,J,K)
             vy_temp = Vy(I,J,K)
 
             theta_temp = SiLoc(I,J,K)
-            ppi_temp = PPI(I,J,K)   
-            taupi = 1.D0/VRelaxT(I,J,K) 
+            ppi_temp = PPI(I,J,K)
+            taupi = 1.D0/VRelaxT(I,J,K)
 
             s0d = s00 - vx_temp*s01 - vy_temp*s02
             s1d = s01 - vx_temp*s11 - vy_temp*s12
@@ -4144,13 +4144,13 @@ C-------------------------------------------------------------------------------
      &           - 2.D0*p01*s01 - 2.D0*p02*s02 + 2*p12*s12
 
             call ViscousShearTransCoefs(Ed(I,J,K), PL(I,J,K),
-     &         VRelaxT(I,J,K), deltaSpiSpi, lambdaSpiBPi, 
+     &         VRelaxT(I,J,K), deltaSpiSpi, lambdaSpiBPi,
      &         phi7, taupipi)
 
             ! pi source 0,0
             phi7Add = p00**2.0 - p01**2.0 - p02**2.0
-     &        -(1.0-u0_temp**2.0)*TrPi2/3.D0 
-            taupipiAdd = p00*s00 - p01*s01 - p02*s02 
+     &        -(1.0-u0_temp**2.0)*TrPi2/3.D0
+            taupipiAdd = p00*s00 - p01*s01 - p02*s02
      &        -u0_temp**2.0*(p00*s0d-p01*s1d-p02*s2d)
      &        -(1.D0-u0_temp**2.0)*TrPiSigma/3.D0
             PScT00(i,j,K)=PScT00(i,j,K) + (-PT)
@@ -4162,7 +4162,7 @@ C-------------------------------------------------------------------------------
             phi7Add = p00*p01 - p01*p11 - p12*p02
      &        +u0_temp**2.0*vx_temp*TrPi2/3.D0
             taupipiAdd = 0.5*(p00*s01+p01*s00-p01*s11-p02*s12-p11*s01
-     &         -p12*s02) 
+     &         -p12*s02)
      &        - 0.5*u0_temp**2.0*vx_temp*(p00*s0d-p01*s1d-p02*s2d)
      &        - 0.5*u0_temp**2.0*(p01*s0d-p11*s1d-p12*s2d)
      &        + u0_temp**2.0*vx_temp*TrPiSigma/3.D0
@@ -4172,7 +4172,7 @@ C-------------------------------------------------------------------------------
      &         +phi7*phi7Add - taupipi*taupipiAdd)
 
             ! pi source 0,2
-            phi7Add = p00*p02 - p01*p12 - p02*p22 
+            phi7Add = p00*p02 - p01*p12 - p02*p22
      &        +u0_temp**2.0*vy_temp*TrPi2/3.D0
             taupipiAdd = 0.5*(p00*s02+p02*s00-p01*s12-p02*s22-p12*s01
      &         -p22*s02)
@@ -4221,7 +4221,7 @@ C-------------------------------------------------------------------------------
 
             ! pi source 3,3
             phi7Add = -p33**2.0+TrPi2/3.D0
-            taupipiAdd = -p33*s33+TrPiSigma/3.D0 
+            taupipiAdd = -p33*s33+TrPiSigma/3.D0
             PScT33(i,j,k)=PScT33(i,j,k) + (-PT)
      &        *(taupi*u0_temp*PA*p33-(p33-PS*s33)
      &         -deltaSpiSpi*p33*theta_temp+lambdaSpiBPi*ppi_temp*s33
@@ -4229,7 +4229,7 @@ C-------------------------------------------------------------------------------
 
           else
             write(*, *) "No such viscous equation type:",ViscousEqsType
-            stop            
+            stop
           end if
         else
           ADLnT = 0.D0
@@ -4246,9 +4246,9 @@ C-------------------------------------------------------------------------------
             Badd=-0.5*(SiLoc(I,J,K)/U0(I,J,K)    !high precision version to reduce round-off error
      &          +(DB0Ln +Vx(I,J,K)*DB1Ln +Vy(I,J,K)*DB2Ln)*ff)
 
-          elseif(ViscousEqsType .eq. 2) then   
-          ! Bulk pressure terms from 14-moments expansion     
-            call ViscousBulkTransCoefs(ED(i,j,k)*Hbarc, VRelaxT0(i,j,k), 
+          elseif(ViscousEqsType .eq. 2) then
+          ! Bulk pressure terms from 14-moments expansion
+            call ViscousBulkTransCoefs(ED(i,j,k)*Hbarc, VRelaxT0(i,j,k),
      &          deltaBPiBPi, lambdaBPiSpi) ! calculate transport coefficients
 
             piSigma = Pi00(i,j,k)*DPc00(i,j,k)+
@@ -4662,7 +4662,7 @@ C            Print *, 'time',time,'Stotal', Stotal,StotalSv,StotalBv
       Do J=0,NXPhy,NXPhy+1
       Do I=NYPhy0,NYPhy,10
         PPI_NS = (-1.0)*VBulk(I,J,NZ0)*SiLoc(I,J,NZ0) ! Navier-Stokes limit
-        write(2294, '(6e15.5)')Time, I*DX, J*DY, 
+        write(2294, '(6e15.5)')Time, I*DX, J*DY,
      &           PPI_NS*Hbarc, PL(I,J,K)*Hbarc, Ed(I,J,NZ0)*Hbarc
       enddo
       enddo
@@ -5075,7 +5075,7 @@ C----------------------------------------------------------------
       cstilde2=PEPS(0.0d0, RSee*Hbarc)/dmax1(abs(RSee),zero)/Hbarc
       A=RSDM0*(1+cstilde2)+RSPPI
 
-      findvHook = v - (2*RSDM)/(A + sqrt(dmax1(A*A 
+      findvHook = v - (2*RSDM)/(A + sqrt(dmax1(A*A
      &                  - 4*cstilde2*RSDM*RSDM, 1D-30)) + 1D-30)
       if(isnan(findvHook)) then
         print*, cstilde2, A, v
@@ -5109,7 +5109,7 @@ C----------------------------------------------------------------
       RSee = RSDM0 - v*RSDM
       cstilde2=PEPS(0.0d0, RSee*Hbarc)/dmax1(abs(RSee),zero)/Hbarc
       A=RSDM0*(1+cstilde2)+RSPPI
-      v = (2*RSDM)/(A+sqrt(dmax1(A*A-4*cstilde2*RSDM*RSDM, 1D-30)) 
+      v = (2*RSDM)/(A+sqrt(dmax1(A*A-4*cstilde2*RSDM*RSDM, 1D-30))
      &              + 1D-30)
 
       findU0Hook = U0 - 1/sqrt(1-v*v)
@@ -5362,7 +5362,7 @@ C----------------------------------------------------------------
       Do I=NXPhy0-3,NXPhy+3
 
         Tideal_scale = sqrt(Ed(I,J,K)**2 + 3*PL(I,J,K)**2)
-        
+
         TrPi2 = Pi00(I,J,K)**2+Pi11(I,J,K)**2+Pi22(I,J,K)**2
      &          +Pi33(I,J,K)**2
      &          -2*Pi01(I,J,K)**2-2*Pi02(I,J,K)**2+2*Pi12(I,J,K)**2
@@ -5450,7 +5450,7 @@ C----------------------------------------------------------------
         gamma_perp = sqrt(1./(1. - Vx(I,J,K)**2 - Vy(I,J,K)**2 + 1D-30))
         trans = gamma_perp*(Pi01(I,J,K) - Vx(I,J,K)*Pi11(I,J,K)
      &                      - Vy(I,J,K)*Pi12(I,J,K))
-        If (abs(trans) > max(relNumericalzero*pi_scale, 
+        If (abs(trans) > max(relNumericalzero*pi_scale,
      &      absNumericalzero)) Then
           If (say_level>=9) Then
           Print*, "Time=", Time
@@ -5542,7 +5542,7 @@ C----------------------------------------------------------------
       End Subroutine
 !-----------------------------------------------------------------------
 
-      Subroutine checkSigma(u0, u1, u2, 
+      Subroutine checkSigma(u0, u1, u2,
      &           sigma00, sigma01, sigma02, sigma11, sigma12, sigma22,
      &           sigma33, trigger)
       !check the traceless + transversality of the velocity shear tensor
@@ -5552,13 +5552,13 @@ C----------------------------------------------------------------
 
       Integer I,J,K
       Integer trigger
-      Double Precision sigma00, sigma01, sigma02, 
+      Double Precision sigma00, sigma01, sigma02,
      &                 sigma11, sigma12, sigma22, sigma33
       Double Precision trace, trans0, trans1, trans2
-      
+
       Double Precision :: absNumericalzero = 1D-2
       Double Precision :: relNumericalzero = 1D-2  !Xsi_0 in Zhi's thesis
- 
+
       trigger = 0
 
       trace = sigma00 - sigma11 - sigma22 - sigma33
@@ -5645,7 +5645,7 @@ C----------------------------------------------------------------
 
         violationType = 0D0
         Tideal_scale = sqrt(Ed(I,J,K)**2 + 3*PL(I,J,K)**2)
-        
+
         TrPi2 = Pi00(I,J,K)**2+Pi11(I,J,K)**2+Pi22(I,J,K)**2
      &          +Pi33(I,J,K)**2
      &          -2*Pi01(I,J,K)**2-2*Pi02(I,J,K)**2+2*Pi12(I,J,K)**2
@@ -5671,15 +5671,15 @@ C----------------------------------------------------------------
 
         !transversality of pi tensor  u_mu pi^{mu,x} = 0
         gamma_perp = sqrt(1./(1. - Vx(I,J,K)**2 - Vy(I,J,K)**2 + 1D-30))
-        trans = gamma_perp*(Pi01(I,J,K) - Vx(I,J,K)*Pi11(I,J,K) 
+        trans = gamma_perp*(Pi01(I,J,K) - Vx(I,J,K)*Pi11(I,J,K)
      &                      - Vy(I,J,K)*Pi12(I,J,K))
-        If (abs(trans) > max(relNumericalzero*pi_scale, 
+        If (abs(trans) > max(relNumericalzero*pi_scale,
      &      absNumericalzero)) Then
           violationType = violationType + 0.001D0
         End If
 
         !transversality of pi tensor  u_mu pi^{mu,y} = 0
-        trans = gamma_perp*(Pi02(I,J,K) - Vx(I,J,K)*Pi12(I,J,K) 
+        trans = gamma_perp*(Pi02(I,J,K) - Vx(I,J,K)*Pi12(I,J,K)
      &                      - Vy(I,J,K)*Pi22(I,J,K))
         If (abs(trans) > max(relNumericalzero*pi_scale,
      &      absNumericalzero)) Then
@@ -5687,14 +5687,14 @@ C----------------------------------------------------------------
         End If
 
         !transversality of pi tensor  u_mu pi^{mu,tau} = 0
-        trans = gamma_perp*(Pi00(I,J,K) - Vx(I,J,K)*Pi01(I,J,K) 
+        trans = gamma_perp*(Pi00(I,J,K) - Vx(I,J,K)*Pi01(I,J,K)
      &                      - Vy(I,J,K)*Pi02(I,J,K))
         If (abs(trans) > max(relNumericalzero*pi_scale,
      &      absNumericalzero)) Then
           violationType = violationType + 0.001D0
         End If
-        
-        if(violationType > 0D0) then 
+
+        if(violationType > 0D0) then
            iFlag = 1
            write(583, '(4F18.8)')Time, violationType, I*DX, J*DY
         endif
@@ -5703,7 +5703,7 @@ C----------------------------------------------------------------
       End Do
       End Do
 
-      if(iFlag .eq. 0) then 
+      if(iFlag .eq. 0) then
          write(583, '(4F18.8)')Time, 0D0, 10D0, 10D0
       endif
       End Subroutine
@@ -5771,7 +5771,7 @@ C----------------------------------------------------------------
       Subroutine checkBulkPiandoutputViolation(Time, Dx, Dy, Ed, PL,
      &  NXPhy0, NXPhy, NYPhy0, NYPhy, NX0, NX, NY0, NY, NZ0, NZ,
      &  PPI)
-      ! Check the size of Bulk pressure and output all violation 
+      ! Check the size of Bulk pressure and output all violation
       ! points in the transverse plane
 
       Implicit None

@@ -1,8 +1,8 @@
 !***********************************************************************
-      Subroutine setHydroFiles(XL_in, XH_in, DX_in, LSX_in, 
-     &                         YL_in, YH_in, DY_in, LSY_in, 
+      Subroutine setHydroFiles(XL_in, XH_in, DX_in, LSX_in,
+     &                         YL_in, YH_in, DY_in, LSY_in,
      &                         Tau0_in, dTau_in, LST_in)
-      
+
       Use HDF5
       Implicit none
 
@@ -20,7 +20,7 @@
       Integer:: XShift, YShift
       Common /hydroInfo/ XL, XH, DX, YL, YH, DY, Tau0, dTau
       Common /sparse/ XShift, LSX, YShift, LSY, LST, LST_cur
-      
+
       Integer :: OutputViscousFlag = 1 ! Flag for whether to output shear stress tensor
       Common /OutputCtl/ OutputViscousFlag
 
@@ -29,7 +29,7 @@
 
       INTEGER     ::   error ! Error flag
 
-      XL = XL_in 
+      XL = XL_in
       XH = XH_in
       DX = DX_in
       YL = YL_in
@@ -93,7 +93,7 @@
       Call addGroupattributeDouble(group_id, "DY", DY*LSY)
       Call addGroupattributeDouble(group_id, "Tau0", Tau0)
       Call addGroupattributeDouble(group_id, "dTau", dTau*LST)
-      Call addGroupattributeInt(group_id, "OutputViscousFlag", 
+      Call addGroupattributeInt(group_id, "OutputViscousFlag",
      &                             OutputViscousFlag)
 
       end
@@ -111,22 +111,22 @@
       INTEGER(HID_T) :: attr_id       ! Attribute identifier
       INTEGER(HID_T) :: aspace_id     ! Attribute Dataspace identifier
       Integer(HID_T) :: atype_id
-      
+
       INTEGER(HSIZE_T), DIMENSION(1) :: adims = (/1/) ! Attribute dimension
       INTEGER     ::   arank = 1                      ! Attribure rank
-      
+
       INTEGER     ::   error ! Error flag
-     
+
       ! Create scalar data space for the attribute.
       CALL h5screate_simple_f(arank, adims, aspace_id, error)
 
       ! Create dataset attribute.
       CALL h5acreate_f(group_id, aname, H5T_NATIVE_INTEGER, aspace_id,
      &                  attr_id, error)
-     
+
       ! Write the attribute data.
       CALL h5awrite_f(attr_id, H5T_NATIVE_INTEGER, avalue, adims, error)
-     
+
       ! Close the attribute.
       CALL h5aclose_f(attr_id, error)
 
@@ -147,22 +147,22 @@
 
       INTEGER(HID_T) :: attr_id       ! Attribute identifier
       INTEGER(HID_T) :: aspace_id     ! Attribute Dataspace identifier
-      
+
       INTEGER(HSIZE_T), DIMENSION(1) :: adims = (/1/) ! Attribute dimension
       INTEGER     ::   arank = 1                      ! Attribure rank
-      
+
       INTEGER     ::   error ! Error flag
-     
+
       ! Create scalar data space for the attribute.
       CALL h5screate_simple_f(arank, adims, aspace_id, error)
 
       ! Create dataset attribute.
       CALL h5acreate_f(group_id, aname, H5T_NATIVE_DOUBLE, aspace_id,
      &                  attr_id, error)
-     
+
       ! Write the attribute data.
       CALL h5awrite_f(attr_id, H5T_NATIVE_DOUBLE, avalue, adims, error)
-     
+
       ! Close the attribute.
       CALL h5aclose_f(attr_id, error)
 
@@ -173,8 +173,8 @@
 !-----------------------------------------------------------------------
 
 !***********************************************************************
-      Subroutine writeHydroBlock(Time_id, Ed, Sd, P, Temp, Vx, Vy, 
-     &   Pi00, Pi01, Pi02, Pi03, Pi11, Pi12, Pi13, Pi22, Pi23, Pi33, 
+      Subroutine writeHydroBlock(Time_id, Ed, Sd, P, Temp, Vx, Vy,
+     &   Pi00, Pi01, Pi02, Pi03, Pi11, Pi12, Pi13, Pi22, Pi23, Pi33,
      &   BulkPi)
 
       Use HDF5
@@ -201,18 +201,18 @@
       INTEGER(HID_T) :: group_frame_id
       INTEGER(HID_T) :: dataset_id    ! Dataset identifier
       INTEGER(HID_T) :: dataspace_id  ! Data space identifier
-      
+
       INTEGER     ::   error ! Error flag
 
       Integer :: Time_id, Frame_id
-      Double precision, Dimension(XL:XH, YL:YH, 1:1) :: Ed, Sd, 
+      Double precision, Dimension(XL:XH, YL:YH, 1:1) :: Ed, Sd,
      &                  P, Temp, Vx, Vy
       Double precision, Dimension(XL:XH, YL:YH, 1:1):: Pi00, Pi01,
      &            Pi02, Pi03, Pi11, Pi12, Pi13, Pi22, Pi23, Pi33
       Double precision, Dimension(XL:XH, YL:YH, 1:1):: BulkPi
-      
+
       INTEGER(HSIZE_T), DIMENSION(2) :: dims
-      
+
       if(LST_cur /= 0) then  !no writing action
          LST_cur = LST_cur - 1
          return
@@ -222,24 +222,24 @@
 
       dims(1) = (XH - XL - 2*XShift)/LSX + 1
       dims(2) = (YH - YL - 2*YShift)/LSY + 1
-      
+
       Frame_id = floor(DBLE(Time_id)/LST)
       write(unit=frame_id_string, fmt='(I4.4)') Frame_id
-      frameName = "Frame_" // frame_id_string 
+      frameName = "Frame_" // frame_id_string
 
       ! Initialize FORTRAN interface.
       CALL h5open_f(error)
 
       ! Open an existing file.
       CALL h5fopen_f (H5hydroFilename, H5F_ACC_RDWR_F, file_id, error)
-      
+
       ! Open an existing group in the specified file.
       CALL h5gopen_f(file_id, groupname, group_id, error)
 
       ! Create group "Frame_i" in group "Event" using relative name.
       CALL h5gcreate_f(group_id, frameName, group_frame_id, error)
-      
-      Call addGroupattributeDouble(group_frame_id, "Time", 
+
+      Call addGroupattributeDouble(group_frame_id, "Time",
      &                             Tau0 + dTau*LST*Frame_id)
 
       ! Dump data into h5 file
@@ -280,7 +280,7 @@
       subroutine CSH5dumpBlockdata(group_id, dims, DatasetName, Dataset)
       Use HDF5
       Implicit none
-      
+
       Character(Len=*) :: DatasetName
       Integer :: XL, XH, YL, YH
       Double precision :: DX, DY, Tau0, dTau
@@ -302,7 +302,7 @@
       Integer :: rank = 2
 
       Integer :: i, j
- 
+
       ! convert shape of the matrix to C style for output
       dims_Cstyle(1) = dims(2)
       dims_Cstyle(2) = dims(1)
@@ -316,10 +316,10 @@
       CALL h5screate_simple_f(rank, dims_Cstyle, dataspace_id, error)
 
       ! Create the dataset in group "Frame_i" with default properties.
-      CALL h5dcreate_f(group_id, DatasetName, H5T_NATIVE_DOUBLE, 
+      CALL h5dcreate_f(group_id, DatasetName, H5T_NATIVE_DOUBLE,
      &                 dataspace_id, dataset_id, error)
       ! Write the first dataset.
-      CALL h5dwrite_f(dataset_id, H5T_NATIVE_DOUBLE, 
+      CALL h5dwrite_f(dataset_id, H5T_NATIVE_DOUBLE,
      &  Dataset_Cstyle(YL+Yshift:YH-YShift:LSY,XL+XShift:XH-XShift:LSX,
      &                 1:1),dims, error)
 
@@ -341,7 +341,7 @@
 !-----------------------------------------------------------------------
 
 !***********************************************************************
-      Subroutine readHydroFiles_initial(H5hydroFilename_in, 
+      Subroutine readHydroFiles_initial(H5hydroFilename_in,
      &                              InputViscousFlag_in, bufferSize_in)
       Use HDF5
       Implicit none
@@ -409,10 +409,10 @@
       Double precision :: hydroGrid_Taumax
       Integer :: hydroGrid_numOfframes
 
-      Common /hydroGridinfo/ hydroGrid_XL, hydroGrid_XH, 
-     &                       hydroGrid_X0, hydroGrid_DX, 
-     &                       hydroGrid_YL, hydroGrid_YH, 
-     &                       hydroGrid_Y0, hydroGrid_DY, 
+      Common /hydroGridinfo/ hydroGrid_XL, hydroGrid_XH,
+     &                       hydroGrid_X0, hydroGrid_DX,
+     &                       hydroGrid_YL, hydroGrid_YH,
+     &                       hydroGrid_Y0, hydroGrid_DY,
      &                       hydroGrid_Tau0, hydroGrid_dTau,
      &                       hydroGrid_Taumax,
      &                       hydroGrid_numOfframes
@@ -434,13 +434,13 @@
       Call readH5Attribute_double(group_id, "Tau0", hydroGrid_Tau0)
       Call readH5Attribute_double(group_id, "dTau", hydroGrid_dTau)
       Call readH5Attribute_int(group_id, "OutputViscousFlag", IFlag)
-      
+
       hydroGrid_X0 = hydroGrid_XL*hydroGrid_DX
       hydroGrid_Y0 = hydroGrid_YL*hydroGrid_DY
-      
-      Call h5gn_members_f(group_id, groupEventname, 
+
+      Call h5gn_members_f(group_id, groupEventname,
      &                    hydroGrid_numOfframes, error)
-      hydroGrid_Taumax = hydroGrid_Tau0 
+      hydroGrid_Taumax = hydroGrid_Tau0
      &                   + (hydroGrid_numOfframes - 1)*hydroGrid_dTau
 
       InputViscousFlag = InputViscousFlag * IFlag
@@ -451,7 +451,7 @@
 !***********************************************************************
       Subroutine printHydrogridInfo()
       Implicit none
-      
+
       CHARACTER(LEN=10) :: hydroFileH5name ! File name
       CHARACTER(LEN=8) :: groupEventname ! Group name
 
@@ -464,14 +464,14 @@
       Double precision :: hydroGrid_Taumax
       Integer :: hydroGrid_numOfframes
 
-      Common /hydroGridinfo/ hydroGrid_XL, hydroGrid_XH, 
-     &                       hydroGrid_X0, hydroGrid_DX, 
-     &                       hydroGrid_YL, hydroGrid_YH, 
-     &                       hydroGrid_Y0, hydroGrid_DY, 
+      Common /hydroGridinfo/ hydroGrid_XL, hydroGrid_XH,
+     &                       hydroGrid_X0, hydroGrid_DX,
+     &                       hydroGrid_YL, hydroGrid_YH,
+     &                       hydroGrid_Y0, hydroGrid_DY,
      &                       hydroGrid_Tau0, hydroGrid_dTau,
      &                       hydroGrid_Taumax,
      &                       hydroGrid_numOfframes
-      
+
       Integer :: InputViscousFlag
       Common /InputCtl/ InputViscousFlag
 
@@ -507,12 +507,12 @@
       INTEGER(HID_T) :: attr_id       ! Attribute identifier
       INTEGER(HID_T) :: aspace_id     ! Attribute Dataspace identifier
       Integer(HID_T) :: atype_id
-      
+
       INTEGER(HSIZE_T), DIMENSION(1) :: adims = (/1/) ! Attribute dimension
       INTEGER     ::   arank = 1                      ! Attribure rank
-      
+
       INTEGER     ::   error ! Error flag
-      
+
       ! open an attribute
       Call h5aopen_name_f(group_id, aname, attr_id, error)
       ! read an attribute
@@ -535,12 +535,12 @@
       INTEGER(HID_T) :: attr_id       ! Attribute identifier
       INTEGER(HID_T) :: aspace_id     ! Attribute Dataspace identifier
       Integer(HID_T) :: atype_id
-      
+
       INTEGER(HSIZE_T), DIMENSION(1) :: adims = (/1/) ! Attribute dimension
       INTEGER     ::   arank = 1                      ! Attribure rank
-      
+
       INTEGER     ::   error ! Error flag
-      
+
       ! open an attribute
       Call h5aopen_name_f(group_id, aname, attr_id, error)
       ! read an attribute
@@ -554,17 +554,17 @@
 !***********************************************************************
       Subroutine readHydroinfoBuffered_initialization(bufferSize_in)
       Implicit None
-      
+
       Integer :: hydroGrid_XL, hydroGrid_XH, hydroGrid_YL, hydroGrid_YH
       Double precision :: hydroGrid_X0, hydroGrid_Y0
       Double precision :: hydroGrid_DX, hydroGrid_DY
       Double precision :: hydroGrid_Tau0, hydroGrid_dTau
       Double precision :: hydroGrid_Taumax
       Integer :: hydroGrid_numOfframes
-      Common /hydroGridinfo/ hydroGrid_XL, hydroGrid_XH, 
-     &                       hydroGrid_X0, hydroGrid_DX, 
-     &                       hydroGrid_YL, hydroGrid_YH, 
-     &                       hydroGrid_Y0, hydroGrid_DY, 
+      Common /hydroGridinfo/ hydroGrid_XL, hydroGrid_XH,
+     &                       hydroGrid_X0, hydroGrid_DX,
+     &                       hydroGrid_YL, hydroGrid_YH,
+     &                       hydroGrid_Y0, hydroGrid_DY,
      &                       hydroGrid_Tau0, hydroGrid_dTau,
      &                       hydroGrid_Taumax,
      &                       hydroGrid_numOfframes
@@ -574,51 +574,51 @@
 
       ! the last index is the buffer "layer" index that goes from 1 to bufferSize
       Double Precision, Pointer::
-     & eM(:,:,:), PM(:,:,:), sM(:,:,:), TM(:,:,:), vxM(:,:,:), 
+     & eM(:,:,:), PM(:,:,:), sM(:,:,:), TM(:,:,:), vxM(:,:,:),
      & vyM(:,:,:),
-     & pi00M(:,:,:), pi01M(:,:,:), pi02M(:,:,:), pi03M(:,:,:), 
+     & pi00M(:,:,:), pi01M(:,:,:), pi02M(:,:,:), pi03M(:,:,:),
      & pi11M(:,:,:), pi12M(:,:,:), pi13M(:,:,:), pi22M(:,:,:),
      & pi23M(:,:,:), pi33M(:,:,:), BulkPiM(:,:,:)
 
-      Common /bufferedData/ bufferSize, 
-     &  eM, PM, sM, TM, vxM, vyM, 
+      Common /bufferedData/ bufferSize,
+     &  eM, PM, sM, TM, vxM, vyM,
      &  pi00M, pi01M, pi02M, pi03M, pi11M, pi12M, pi13M, pi22M,
      &  pi23M, pi33M, BulkPiM
 
       bufferSize = bufferSize_in
-      Allocate(eM(hydroGrid_XL:hydroGrid_XH, hydroGrid_YL:hydroGrid_YH, 
+      Allocate(eM(hydroGrid_XL:hydroGrid_XH, hydroGrid_YL:hydroGrid_YH,
      &            1:bufferSize))
-      Allocate(PM(hydroGrid_XL:hydroGrid_XH, hydroGrid_YL:hydroGrid_YH, 
+      Allocate(PM(hydroGrid_XL:hydroGrid_XH, hydroGrid_YL:hydroGrid_YH,
      &            1:bufferSize))
-      Allocate(sM(hydroGrid_XL:hydroGrid_XH, hydroGrid_YL:hydroGrid_YH, 
+      Allocate(sM(hydroGrid_XL:hydroGrid_XH, hydroGrid_YL:hydroGrid_YH,
      &            1:bufferSize))
-      Allocate(TM(hydroGrid_XL:hydroGrid_XH, hydroGrid_YL:hydroGrid_YH, 
+      Allocate(TM(hydroGrid_XL:hydroGrid_XH, hydroGrid_YL:hydroGrid_YH,
      &            1:bufferSize))
       Allocate(vxM(hydroGrid_XL:hydroGrid_XH, hydroGrid_YL:hydroGrid_YH,
      &             1:bufferSize))
       Allocate(vyM(hydroGrid_XL:hydroGrid_XH, hydroGrid_YL:hydroGrid_YH,
      &             1:bufferSize))
-      Allocate(pi00M(hydroGrid_XL:hydroGrid_XH, 
+      Allocate(pi00M(hydroGrid_XL:hydroGrid_XH,
      &               hydroGrid_YL:hydroGrid_YH, 1:bufferSize))
-      Allocate(pi01M(hydroGrid_XL:hydroGrid_XH, 
+      Allocate(pi01M(hydroGrid_XL:hydroGrid_XH,
      &               hydroGrid_YL:hydroGrid_YH, 1:bufferSize))
-      Allocate(pi02M(hydroGrid_XL:hydroGrid_XH, 
+      Allocate(pi02M(hydroGrid_XL:hydroGrid_XH,
      &               hydroGrid_YL:hydroGrid_YH, 1:bufferSize))
-      Allocate(pi03M(hydroGrid_XL:hydroGrid_XH, 
+      Allocate(pi03M(hydroGrid_XL:hydroGrid_XH,
      &               hydroGrid_YL:hydroGrid_YH, 1:bufferSize))
-      Allocate(pi11M(hydroGrid_XL:hydroGrid_XH, 
+      Allocate(pi11M(hydroGrid_XL:hydroGrid_XH,
      &               hydroGrid_YL:hydroGrid_YH, 1:bufferSize))
-      Allocate(pi12M(hydroGrid_XL:hydroGrid_XH, 
+      Allocate(pi12M(hydroGrid_XL:hydroGrid_XH,
      &               hydroGrid_YL:hydroGrid_YH, 1:bufferSize))
-      Allocate(pi13M(hydroGrid_XL:hydroGrid_XH, 
+      Allocate(pi13M(hydroGrid_XL:hydroGrid_XH,
      &               hydroGrid_YL:hydroGrid_YH, 1:bufferSize))
-      Allocate(pi22M(hydroGrid_XL:hydroGrid_XH, 
+      Allocate(pi22M(hydroGrid_XL:hydroGrid_XH,
      &               hydroGrid_YL:hydroGrid_YH, 1:bufferSize))
-      Allocate(pi23M(hydroGrid_XL:hydroGrid_XH, 
+      Allocate(pi23M(hydroGrid_XL:hydroGrid_XH,
      &               hydroGrid_YL:hydroGrid_YH, 1:bufferSize))
-      Allocate(pi33M(hydroGrid_XL:hydroGrid_XH, 
+      Allocate(pi33M(hydroGrid_XL:hydroGrid_XH,
      &               hydroGrid_YL:hydroGrid_YH, 1:bufferSize))
-      Allocate(BulkPiM(hydroGrid_XL:hydroGrid_XH, 
+      Allocate(BulkPiM(hydroGrid_XL:hydroGrid_XH,
      &               hydroGrid_YL:hydroGrid_YH, 1:bufferSize))
 
       end
@@ -632,10 +632,10 @@
       CHARACTER(LEN=10) :: hydroFileH5name ! File name
       CHARACTER(LEN=8) :: groupEventname ! Group name
       Common /fileInfo/ hydroFileH5name, groupEventname
-      
+
       CHARACTER(LEN=10) :: frameName       ! Group frame name
       Character(Len=4) :: frame_id_string
-      
+
       INTEGER(HID_T) :: group_id      ! Group identifier
       INTEGER(HID_T) :: groupFrame_id ! Group identifier
       Integer :: error
@@ -646,10 +646,10 @@
       Double precision :: hydroGrid_Tau0, hydroGrid_dTau
       Double precision :: hydroGrid_Taumax
       Integer :: hydroGrid_numOfframes
-      Common /hydroGridinfo/ hydroGrid_XL, hydroGrid_XH, 
-     &                       hydroGrid_X0, hydroGrid_DX, 
-     &                       hydroGrid_YL, hydroGrid_YH, 
-     &                       hydroGrid_Y0, hydroGrid_DY, 
+      Common /hydroGridinfo/ hydroGrid_XL, hydroGrid_XH,
+     &                       hydroGrid_X0, hydroGrid_DX,
+     &                       hydroGrid_YL, hydroGrid_YH,
+     &                       hydroGrid_Y0, hydroGrid_DY,
      &                       hydroGrid_Tau0, hydroGrid_dTau,
      &                       hydroGrid_Taumax,
      &                       hydroGrid_numOfframes
@@ -668,30 +668,30 @@
 
       ! the last index is the buffer "layer" index that goes from 1 to bufferSize
       Double Precision, Pointer::
-     & eM(:,:,:), PM(:,:,:), sM(:,:,:), TM(:,:,:), vxM(:,:,:), 
+     & eM(:,:,:), PM(:,:,:), sM(:,:,:), TM(:,:,:), vxM(:,:,:),
      & vyM(:,:,:),
-     & pi00M(:,:,:), pi01M(:,:,:), pi02M(:,:,:), pi03M(:,:,:), 
+     & pi00M(:,:,:), pi01M(:,:,:), pi02M(:,:,:), pi03M(:,:,:),
      & pi11M(:,:,:), pi12M(:,:,:), pi13M(:,:,:), pi22M(:,:,:),
      & pi23M(:,:,:), pi33M(:,:,:), BulkPiM(:,:,:)
 
-      Common /bufferedData/ bufferSize, 
-     &  eM, PM, sM, TM, vxM, vyM, 
+      Common /bufferedData/ bufferSize,
+     &  eM, PM, sM, TM, vxM, vyM,
      &  pi00M, pi01M, pi02M, pi03M, pi11M, pi12M, pi13M, pi22M,
      &  pi23M, pi33M, BulkPiM
-       
+
       Integer :: J
       Integer :: xidx
 
       if(bufferSize .lt. hydroGrid_numOfframes) then
-         write(*,*) "BufferSize is too small, increase it to at least", 
+         write(*,*) "BufferSize is too small, increase it to at least",
      &              hydroGrid_numOfframes
          stop
       endif
       Do J = 1, hydroGrid_numOfframes
         write(unit=frame_id_string, fmt='(I4.4)') J-1
-        frameName = "Frame_" // frame_id_string 
+        frameName = "Frame_" // frame_id_string
         CALL h5gopen_f(group_id, frameName, groupFrame_id, error)
-        
+
         Call readH5Dataset_double(groupFrame_id, "e", Ed)
         Call readH5Dataset_double(groupFrame_id, "s", Sd)
         Call readH5Dataset_double(groupFrame_id, "P", P)
@@ -731,7 +731,7 @@
           pi33M(:,:,J) = pi33(:,:,1)
           BulkPiM(:,:,J) = BulkPi(:,:,1)
         endif
-      
+
       ! Close the groups.
       CALL h5gclose_f(groupFrame_id, error)
       EndDo
@@ -743,35 +743,35 @@
       Subroutine readH5Dataset_double(group_id, datasetName, dset_data)
       Use HDF5
       Implicit None
-      
+
       CHARACTER(LEN=*) :: datasetName       ! Dataset name
       INTEGER(HID_T) :: group_id      ! Group identifier
       INTEGER(HID_T) :: dset_id       ! Dataset identifier
-      
+
       Integer :: hydroGrid_XL, hydroGrid_XH, hydroGrid_YL, hydroGrid_YH
       Double precision :: hydroGrid_X0, hydroGrid_Y0
       Double precision :: hydroGrid_DX, hydroGrid_DY
       Double precision :: hydroGrid_Tau0, hydroGrid_dTau
       Double precision :: hydroGrid_Taumax
       Integer :: hydroGrid_numOfframes
-      Common /hydroGridinfo/ hydroGrid_XL, hydroGrid_XH, 
-     &                       hydroGrid_X0, hydroGrid_DX, 
-     &                       hydroGrid_YL, hydroGrid_YH, 
-     &                       hydroGrid_Y0, hydroGrid_DY, 
+      Common /hydroGridinfo/ hydroGrid_XL, hydroGrid_XH,
+     &                       hydroGrid_X0, hydroGrid_DX,
+     &                       hydroGrid_YL, hydroGrid_YH,
+     &                       hydroGrid_Y0, hydroGrid_DY,
      &                       hydroGrid_Tau0, hydroGrid_dTau,
      &                       hydroGrid_Taumax,
      &                       hydroGrid_numOfframes
-      
+
       INTEGER(HSIZE_T), DIMENSION(2) :: data_dims
       INTEGER(HSIZE_T), DIMENSION(2) :: data_dims_Cstyle
-      Double precision, Dimension(hydroGrid_XL:hydroGrid_XH, 
+      Double precision, Dimension(hydroGrid_XL:hydroGrid_XH,
      &  hydroGrid_YL:hydroGrid_YH, 1:1) :: dset_data
-      Double precision, Dimension(hydroGrid_YL:hydroGrid_YH, 
+      Double precision, Dimension(hydroGrid_YL:hydroGrid_YH,
      &  hydroGrid_XL:hydroGrid_XH, 1:1) :: dset_data_Cstyle
       Integer :: error
       Integer :: i, j
-      
-      ! read in data matrix assuming in C style 
+
+      ! read in data matrix assuming in C style
       ! need to perform transpose to convert it into fortran style
       data_dims(1) = hydroGrid_XH - hydroGrid_XL + 1
       data_dims(2) = hydroGrid_YH - hydroGrid_YL + 1
@@ -782,17 +782,17 @@
       CALL h5dopen_f(group_id, datasetName, dset_id, error)
 
       ! Read the dataset.
-      CALL h5dread_f(dset_id, H5T_NATIVE_DOUBLE, dset_data_Cstyle, 
+      CALL h5dread_f(dset_id, H5T_NATIVE_DOUBLE, dset_data_Cstyle,
      &               data_dims_Cstyle, error)
       do i = hydroGrid_XL, hydroGrid_XH, 1
         do j = hydroGrid_YL, hydroGrid_YH, 1
           dset_data(i, j, 1) = dset_data_Cstyle(j, i, 1)
         enddo
       enddo
-     
+
       ! Close the dataset.
       CALL h5dclose_f(dset_id, error)
-      
+
       end
 !-----------------------------------------------------------------------
 
@@ -811,10 +811,10 @@
       Double precision :: hydroGrid_Tau0, hydroGrid_dTau
       Double precision :: hydroGrid_Taumax
       Integer :: hydroGrid_numOfframes
-      Common /hydroGridinfo/ hydroGrid_XL, hydroGrid_XH, 
-     &                       hydroGrid_X0, hydroGrid_DX, 
-     &                       hydroGrid_YL, hydroGrid_YH, 
-     &                       hydroGrid_Y0, hydroGrid_DY, 
+      Common /hydroGridinfo/ hydroGrid_XL, hydroGrid_XH,
+     &                       hydroGrid_X0, hydroGrid_DX,
+     &                       hydroGrid_YL, hydroGrid_YH,
+     &                       hydroGrid_Y0, hydroGrid_DY,
      &                       hydroGrid_Tau0, hydroGrid_dTau,
      &                       hydroGrid_Taumax,
      &                       hydroGrid_numOfframes
@@ -902,10 +902,10 @@
       Double precision :: hydroGrid_Tau0, hydroGrid_dTau
       Double precision :: hydroGrid_Taumax
       Integer :: hydroGrid_numOfframes
-      Common /hydroGridinfo/ hydroGrid_XL, hydroGrid_XH, 
-     &                       hydroGrid_X0, hydroGrid_DX, 
-     &                       hydroGrid_YL, hydroGrid_YH, 
-     &                       hydroGrid_Y0, hydroGrid_DY, 
+      Common /hydroGridinfo/ hydroGrid_XL, hydroGrid_XH,
+     &                       hydroGrid_X0, hydroGrid_DX,
+     &                       hydroGrid_YL, hydroGrid_YH,
+     &                       hydroGrid_Y0, hydroGrid_DY,
      &                       hydroGrid_Tau0, hydroGrid_dTau,
      &                       hydroGrid_Taumax,
      &                       hydroGrid_numOfframes
@@ -919,18 +919,18 @@
 
       ! the last index is the buffer "layer" index that goes from 1 to bufferSize
       Double Precision, Pointer::
-     & eM(:,:,:), PM(:,:,:), sM(:,:,:), TM(:,:,:), vxM(:,:,:), 
+     & eM(:,:,:), PM(:,:,:), sM(:,:,:), TM(:,:,:), vxM(:,:,:),
      & vyM(:,:,:),
-     & pi00M(:,:,:), pi01M(:,:,:), pi02M(:,:,:), pi03M(:,:,:), 
+     & pi00M(:,:,:), pi01M(:,:,:), pi02M(:,:,:), pi03M(:,:,:),
      & pi11M(:,:,:), pi12M(:,:,:), pi13M(:,:,:), pi22M(:,:,:),
      & pi23M(:,:,:), pi33M(:,:,:), BulkPiM(:,:,:)
 
-      Common /bufferedData/ bufferSize, 
-     &  eM, PM, sM, TM, vxM, vyM, 
+      Common /bufferedData/ bufferSize,
+     &  eM, PM, sM, TM, vxM, vyM,
      &  pi00M, pi01M, pi02M, pi03M, pi11M, pi12M, pi13M, pi22M,
      &  pi23M, pi33M, BulkPiM
 
-      If (idxTau < 0 .OR. idxTau > bufferSize .or. 
+      If (idxTau < 0 .OR. idxTau > bufferSize .or.
      &    idxTau > hydroGrid_numOfframes) Then
         Ed22(:,:) = 0D0
         P22(:,:) = 0D0
@@ -1013,10 +1013,10 @@
       Double precision :: hydroGrid_Tau0, hydroGrid_dTau
       Double precision :: hydroGrid_Taumax
       Integer :: hydroGrid_numOfframes
-      Common /hydroGridinfo/ hydroGrid_XL, hydroGrid_XH, 
-     &                       hydroGrid_X0, hydroGrid_DX, 
-     &                       hydroGrid_YL, hydroGrid_YH, 
-     &                       hydroGrid_Y0, hydroGrid_DY, 
+      Common /hydroGridinfo/ hydroGrid_XL, hydroGrid_XH,
+     &                       hydroGrid_X0, hydroGrid_DX,
+     &                       hydroGrid_YL, hydroGrid_YH,
+     &                       hydroGrid_Y0, hydroGrid_DY,
      &                       hydroGrid_Tau0, hydroGrid_dTau,
      &                       hydroGrid_Taumax,
      &                       hydroGrid_numOfframes
@@ -1046,16 +1046,16 @@
       outputNY = floor((outputYH - outputYL)/outputDy) + 1
       outputNtau = floor((outputTauMax - outputTau0)/outputDtau) + 1
 
-      open(20, FILE='hydroinfoPlaintxtHuichaoFormat.dat', 
+      open(20, FILE='hydroinfoPlaintxtHuichaoFormat.dat',
      &     FORM='FORMATTED', STATUS='REPLACE')
-      
+
       do Itau = 1, outputNtau, 1
         local_Tau = outputTau0 + (Itau - 1)*outputDtau
         do Ix = 1, outputNX, 1
           local_x = outputXL + (Ix - 1)*outputDx
           do Iy = 1, outputNY, 1
              local_y = outputYL + (Iy - 1)*outputDy
-             call readHydroinfoBuffered_ideal(local_Tau, local_x, 
+             call readHydroinfoBuffered_ideal(local_Tau, local_x,
      &              local_y, e, p, s, T, vx, vy)
              write(20, '(3F10.2, 4F20.10)') local_x, local_y, local_Tau,
      &              e/hbarC, T/hbarC, vx, vy
@@ -1090,10 +1090,10 @@
       Double precision :: hydroGrid_Tau0, hydroGrid_dTau
       Double precision :: hydroGrid_Taumax
       Integer :: hydroGrid_numOfframes
-      Common /hydroGridinfo/ hydroGrid_XL, hydroGrid_XH, 
-     &                       hydroGrid_X0, hydroGrid_DX, 
-     &                       hydroGrid_YL, hydroGrid_YH, 
-     &                       hydroGrid_Y0, hydroGrid_DY, 
+      Common /hydroGridinfo/ hydroGrid_XL, hydroGrid_XH,
+     &                       hydroGrid_X0, hydroGrid_DX,
+     &                       hydroGrid_YL, hydroGrid_YH,
+     &                       hydroGrid_Y0, hydroGrid_DY,
      &                       hydroGrid_Tau0, hydroGrid_dTau,
      &                       hydroGrid_Taumax,
      &                       hydroGrid_numOfframes
@@ -1111,7 +1111,7 @@
 
       ! next, find intersections and length
       dirNorm = Sqrt(dirX*dirX+dirY*dirY)
-      
+
       If (dirX>=0) Then ! point to the right
         If (dirY>=0) Then ! point to the top
           If (dirY*(rXH-x0)>dirX*(rYH-y0)) Then
@@ -1147,9 +1147,9 @@
             ! intercept with the left
             deltaTau = (x0-rXL)/(-dirX)*dirNorm
           EndIf
-        EndIf      
+        EndIf
       EndIf
-      
+
       ! constrain from tau direction)
       deltaTau = Min(deltaTau, hydroGrid_dTau*(hydroGrid_numOfframes-1))
 
@@ -1182,15 +1182,15 @@
 !------------------------------------------------------------------------
 
 !***********************************************************************
-      Subroutine getJetavgLength_shell(cutT, Jet_maxlength, 
+      Subroutine getJetavgLength_shell(cutT, Jet_maxlength,
      &               Jet_avglength, Jet_avglength_in, Jet_avglength_out)
       Implicit none
       double precision :: cutT
-      double precision :: Jet_maxlength, Jet_avglength, 
+      double precision :: Jet_maxlength, Jet_avglength,
      &                    Jet_avglength_in, Jet_avglength_out
 
       call getJetavgLength_initial(cutT)
-      call getJetavgLengthfromMaxlength(Jet_maxlength, Jet_avglength, 
+      call getJetavgLengthfromMaxlength(Jet_maxlength, Jet_avglength,
      &                              Jet_avglength_in, Jet_avglength_out)
       return
       end
@@ -1198,9 +1198,9 @@
 
 !***********************************************************************
       Subroutine getJetavgLength_initial(cutT)
-!     For a given cut-off temperature, this subroutine performs the calculations 
-!     for test particles' path lengths inside hydro medium and build up tables 
-!     to store the averaged path lengths for test particles with some given 
+!     For a given cut-off temperature, this subroutine performs the calculations
+!     for test particles' path lengths inside hydro medium and build up tables
+!     to store the averaged path lengths for test particles with some given
 !     maximum allowed jet path lengths.
 !     Test particles are weighted by the local binary collision probabilities
 !     that provided by hydro simulation.
@@ -1218,7 +1218,7 @@ C=====variable for test particles====================================
       integer, parameter :: nphi = 100
       integer, parameter :: jetnum = 6812100     !Maximum number of testing jets
       double precision, parameter :: eps = 1D-4
-      
+
       double precision :: x0, y0, phi0   !the origin of the jet position
       double precision :: dx, dy, dphi!the step length
       double precision :: dirx, diry
@@ -1244,7 +1244,7 @@ C=====variable for test particles====================================
 
       common /testparticle_pathlength/avg_pathlength, avg_pathlength_in,
      &                                avg_pathlength_out, max_pathlength
-      common /testparticle_pathlength_coeff/max_pathlength0, 
+      common /testparticle_pathlength_coeff/max_pathlength0,
      &                                      dmax_pathlength0
 
 C=====variable for jet quenching output end================================
@@ -1254,7 +1254,7 @@ C=====variable for jet quenching output end================================
          read(1, *) (Binary_profile(I, J), J = NYPhy0, NYPhy, 1)
       enddo
       close(1)
-      
+
       dx = 0.1d0
       dy = 0.1d0
       dphi = 2.0d0*PI/nphi
@@ -1266,7 +1266,7 @@ C=====variable for jet quenching output end================================
          if(Binary_profile(I, J) .ge. eps) then
             x0 = I*dx
             y0 = J*dy
-            do K = 1, nphi, 1 
+            do K = 1, nphi, 1
                phi0 = 0. + (K - 1)*dphi
                dirx = cos(phi0)
                diry = sin(phi0)
@@ -1292,7 +1292,7 @@ C=====variable for jet quenching output end================================
             max_pathlength(J) = max_pathlength0
      &                        + (J-1)*dmax_pathlength0
             if(D_j(I) .le. max_pathlength(J)) then
-               avg_pathlength(J) = avg_pathlength(J) 
+               avg_pathlength(J) = avg_pathlength(J)
      &                           + D_j(I)*weight_j(I)
                norm_pathlength(J) = norm_pathlength(J) + weight_j(I)
                if((phi_j(I) .le. phi_boundary) .or.
@@ -1301,7 +1301,7 @@ C=====variable for jet quenching output end================================
      &             phi_j(I) .le. (PI + phi_boundary)) ) then
                  avg_pathlength_in(J) = avg_pathlength_in(J)
      &                                + D_j(I)*weight_j(I)
-                 norm_pathlength_in(J) = norm_pathlength_in(J) 
+                 norm_pathlength_in(J) = norm_pathlength_in(J)
      &                                 + weight_j(I)
                else if(((phi_j(I) .ge. (PI/2. - phi_boundary)) .and.
      &                  (phi_j(I) .le. (PI/2. + phi_boundary))) .or.
@@ -1309,7 +1309,7 @@ C=====variable for jet quenching output end================================
      &                  phi_j(I) .le. (3.*PI/2. + phi_boundary))) then
                  avg_pathlength_out(J) = avg_pathlength_out(J)
      &                                 + D_j(I)*weight_j(I)
-                 norm_pathlength_out(J) = norm_pathlength_out(J) 
+                 norm_pathlength_out(J) = norm_pathlength_out(J)
      &                                  + weight_j(I)
                endif
             endif
@@ -1328,16 +1328,16 @@ C=====variable for jet quenching output end================================
 !-----------------------------------------------------------------------
 
 !***********************************************************************
-      subroutine getJetavgLengthfromMaxlength(Maxlength, avglength, 
+      subroutine getJetavgLengthfromMaxlength(Maxlength, avglength,
      &                  avglength_in, avglength_out)
-!     Return the average test particles' path length (total mean, in-plane, 
-!     out-of-plane) for a given maximum allowed path length. 
-!     This subroutine must be called after the main program called 
+!     Return the average test particles' path length (total mean, in-plane,
+!     out-of-plane) for a given maximum allowed path length.
+!     This subroutine must be called after the main program called
 !     getJetavgLength_initial to initialize the calculations.
 !     This subroutine only perform a linear interpolation between the table
 !     of averaged length that calculated in getJetavgLength_initial.
       Implicit none
-      double precision :: Maxlength, avglength, avglength_in, 
+      double precision :: Maxlength, avglength, avglength_in,
      &                    avglength_out
 
       integer :: Idx
@@ -1349,10 +1349,10 @@ C=====variable for jet quenching output end================================
       double precision :: avg_pathlength(n_max_pathlength)
       double precision :: avg_pathlength_in(n_max_pathlength)
       double precision :: avg_pathlength_out(n_max_pathlength)
-      
+
       common /testparticle_pathlength/avg_pathlength, avg_pathlength_in,
      &                                avg_pathlength_out, max_pathlength
-      common /testparticle_pathlength_coeff/max_pathlength0, 
+      common /testparticle_pathlength_coeff/max_pathlength0,
      &                                      dmax_pathlength0
       if(Maxlength .lt. 0.0d0) then
          print*, "Max. allowed Jet length is < 0!"
@@ -1375,7 +1375,7 @@ C=====variable for jet quenching output end================================
          avglength = (avg_pathlength(Idx+1) - avg_pathlength(Idx))/
      &            dmax_pathlength0*dx + avg_pathlength(Idx)
          avglength_in = (avg_pathlength_in(Idx+1)
-     &                   - avg_pathlength_in(Idx))/dmax_pathlength0*dx 
+     &                   - avg_pathlength_in(Idx))/dmax_pathlength0*dx
      &                  + avg_pathlength_in(Idx)
          avglength_out = (avg_pathlength_out(Idx+1)
      &                    - avg_pathlength_out(Idx))/dmax_pathlength0*dx

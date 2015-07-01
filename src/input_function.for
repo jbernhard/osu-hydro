@@ -62,7 +62,7 @@
 
       Double Precision maxPiRatio ! used in tanh regulation method: Pi=Pi_max*tanh(Pi/Pi_max), Pi_max=maxPiRatio*(e+p)
       Common /maxPiRatio/ maxPiRatio
-      
+
       Double Precision maxBulkPiRatio ! used in tanh regulation method: Pi=Pi_max*tanh(Pi/Pi_max), Pi_max=maxPiRatio*(e+p)
       Common /maxBulkPiRatio/ maxBulkPiRatio
 
@@ -499,13 +499,13 @@
       Common /ViscousC/ ViscousC, VisBeta, IVisflag
       Integer IVisBulkFlag
       Common /ViscousBulk/ Visbulk, BulkTau, IRelaxBulk, IVisBulkFlag ! Related to bulk Visousity
-      
+
       Integer Initialpitensor
       Common/Initialpi/ Initialpitensor
 
       Integer :: ViscousEqsType
       double precision:: VisBulkNorm
-      Common/ViscousEqsControl/ ViscousEqsType, VisBulkNorm 
+      Common/ViscousEqsControl/ ViscousEqsType, VisBulkNorm
 
       Double Precision ITeta, b, ddx, ddy, TT0
       Common /ITeta/ ITeta
@@ -529,10 +529,10 @@
 
       Double Precision sFactor ! multiplicity factor on entropy density
       Common /sFactor/ sFactor
-       
+
       Integer :: IhydroJetoutput   ! Output control for hydro evolution history
       Common /hydroJetoutput/ IhydroJetoutput
-      
+
       Integer InitialURead
       Common/LDInitial/ InitialURead  ! IintURead =1 read initial velocity profile
 
@@ -633,7 +633,7 @@
         If (varName=="ndt") NDT=IResult
 
         If (varName=="visbeta") VisBeta=DResult ! VisBeta, used for proper time tau_pi
-        
+
         If (varName=="initialuread") InitialURead=IResult ! read in initial flow velocity profiles
         If (varName=="ihydrojetoutput") IhydroJetoutput=IResult ! output hydro evolution
 
@@ -895,7 +895,7 @@
       Double Precision Pi02(NX0:NX, NY0:NY, NZ0:NZ)    !Stress Tensor
       Double Precision Pi33(NX0:NX, NY0:NY, NZ0:NZ)    !Stress Tensor
       Double Precision Pi11(NX0:NX, NY0:NY, NZ0:NZ)    !Stress Tensor
-      Double Precision Pi12(NX0:NX, NY0:NY, NZ0:NZ)    !Stress Tensor 
+      Double Precision Pi12(NX0:NX, NY0:NY, NZ0:NZ)    !Stress Tensor
       Double Precision Pi22(NX0:NX, NY0:NY, NZ0:NZ)    !Stress Tensor
 
       Double Precision R0, Aeps
@@ -977,7 +977,7 @@
 
       Double Precision PPI(NX0:NX, NY0:NY, NZ0:NZ) ! Bulk Pressure Tensor
 
-      Double Precision BulkPi   
+      Double Precision BulkPi
 
       Integer regMethod
       Common /regMethod/ regMethod
@@ -1003,7 +1003,7 @@
         DO 3018 I=NX0,NX
 
         regStrength = 1D-30
-        
+
         pressure_scale = abs(PL(I,J,K))
 
         BulkPi = PPI(I,J,K)
@@ -1016,7 +1016,7 @@
         endif
 
         ! find regulation strength using largeness comparison
-        regStrength = max(bulkPi_scale/(maxBulkPiRatio*pressure_scale), 
+        regStrength = max(bulkPi_scale/(maxBulkPiRatio*pressure_scale),
      &                    regStrength)
 
         If ( say_level >=9 ) Then
@@ -1035,7 +1035,7 @@
             Print*, "maxPi=", maxBulkPiRatio*pressure_scale
             Print*, "PL=", PL(I,J,K)
             Print*, "Xsi0=", Xsi0
-          
+
           End If
         End If !If (debug>=9)
 
@@ -1156,7 +1156,7 @@
 
         ! first, tracelessness
         PiTr = p00-p11-p22-p33
-        regStrength = max(abs(PiTr)/(Xsi0*MaxPiRatio*pi_scale), 
+        regStrength = max(abs(PiTr)/(Xsi0*MaxPiRatio*pi_scale),
      &                    regStrength)
 
         !If (I==0.AND.J==0) Then
@@ -1166,13 +1166,13 @@
 
         ! next transversality
         trans = gamma_perp*(p01-vvx*p11-vvy*p12)
-        regStrength = max(abs(trans)/(Xsi0*MaxPiRatio*pi_scale), 
+        regStrength = max(abs(trans)/(Xsi0*MaxPiRatio*pi_scale),
      &                    regStrength)
         trans = gamma_perp*(p02-vvx*p12-vvy*p22)
         regStrength = max(abs(trans)/(Xsi0*MaxPiRatio*pi_scale),
      &                    regStrength)
         trans = gamma_perp*(p00-vvx*p01-vvy*p02)
-        regStrength = max(abs(trans)/(Xsi0*MaxPiRatio*pi_scale), 
+        regStrength = max(abs(trans)/(Xsi0*MaxPiRatio*pi_scale),
      &                    regStrength)
 
         !If (I==0.AND.J==0) Then

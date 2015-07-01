@@ -165,7 +165,7 @@ C-------------------------------------------------------------------------------
       Common/IEOS2dec/ IEOS2dec
       Common/R0Aeps/ R0,Aeps
 
-      Integer InitialURead   ! specify if read in more profiles 
+      Integer InitialURead   ! specify if read in more profiles
       Common/LDInitial/ InitialURead
 
       Common /Timestep/ DT_1, DT_2
@@ -213,7 +213,7 @@ C==========OSCAR2008H related parameters===================================
 CSHEN=========end==========================================================
       common /EOSdata/PEOSdata, SEOSdata, TEOSdata !CSHEN: for EOS from tables
       common /EOSdatastructure/ EOSe0, EOSde, EOSne
-      
+
       Integer Initialpitensor
       Common/Initialpi/ Initialpitensor
 
@@ -288,9 +288,9 @@ c----------------changed by J.Liu-----------------------------------------------
         tolerance = 1D-10
         ed_max = 0.0   !
         u_regulated = 0.D0
-        OPEN(UNIT = 21, FILE = 'Initial/ux_profile_kln.dat', 
+        OPEN(UNIT = 21, FILE = 'Initial/ux_profile_kln.dat',
      &      STATUS = 'OLD', FORM = 'FORMATTED') ! read from Landau matched profile
-        OPEN(UNIT = 22, FILE = 'Initial/uy_profile_kln.dat', 
+        OPEN(UNIT = 22, FILE = 'Initial/uy_profile_kln.dat',
      &      STATUS = 'OLD', FORM = 'FORMATTED') ! read from Landau matched profile
 
 c find maximum energy density to do the flow velocity regulation
@@ -302,21 +302,21 @@ C             ed_max = Ed(I,J,K)
 C c             write(*,*) ed_max, '  ', Ed(I,J,K)
 C           end if
 C 2607    continue
-C         write(*,*) 'Maximum energy density: ',ed_max, 
+C         write(*,*) 'Maximum energy density: ',ed_max,
 C      &   'tolerance for energy density: ', tolerance,
-C      &   'regulate u: ', u_regulated       
+C      &   'regulate u: ', u_regulated
 
         do 2561 K = NZ0,NZ
         do 2561 I = NXPhy0,NXPhy
           read(21,*)  (U1(I,J,K),J=NYPhy0,NYPhy)
-          read(22,*)  (U2(I,J,K),J=NYPhy0,NYPhy)        
+          read(22,*)  (U2(I,J,K),J=NYPhy0,NYPhy)
 
           do J=NYPhy0, NYPhy
 c Regulate dilute region where energy density is small but u_mu is very large
 c Ed(I,J,K) < Ed_max, dilute region
 !             if ((Ed(I,J,K)/ed_max) .lt. tolerance) then
 !               U1(I,J,K) = u_regulated
-!               U2(I,J,K) = u_regulated 
+!               U2(I,J,K) = u_regulated
 !             end if
 ! Regulation ends
 
@@ -332,7 +332,7 @@ c          write(210,'(261(D24.14))')  (U0(I,J,NZ0), J=NYPhy0, NYPhy) !add this 
 2561   continue
           close(21)
           close(22)
-      Endif  ! InitialURead 
+      Endif  ! InitialURead
 
 !------------------- Energy initialization -----------------------------
 
@@ -362,8 +362,8 @@ C====Input the initial condition from file====
           Else If (IEin==1 .AND. IEOS==7) Then
             If(InitialURead .eq. 0) then
               OPEN(2,file='Initial/InitialSd.dat',status='old') ! read from file first
-            else 
-              OPEN(2,file='Initial/sd_profile_kln.dat',status='old') ! read from file first  
+            else
+              OPEN(2,file='Initial/sd_profile_kln.dat',status='old') ! read from file first
             Endif
 
             Do I = NXPhy0,NXPhy
@@ -468,7 +468,7 @@ C Read in pi_mu nu and overwrite what TransportPi6() gives. Then scale this tens
             OPEN(201,file='Initial/Pi01_kln.dat',
      &         status='old', FORM = 'FORMATTED')
             OPEN(202,file='Initial/Pi02_kln.dat',
-     &         status='old', FORM = 'FORMATTED')                 
+     &         status='old', FORM = 'FORMATTED')
             OPEN(233,file='Initial/Pi33_kln.dat',
      &         status='old', FORM = 'FORMATTED')
             OPEN(211,file='Initial/Pi11_kln.dat',
@@ -476,9 +476,9 @@ C Read in pi_mu nu and overwrite what TransportPi6() gives. Then scale this tens
             OPEN(212,file='Initial/Pi12_kln.dat',
      &         status='old', FORM = 'FORMATTED')
             OPEN(222,file='Initial/Pi22_kln.dat',
-     &         status='old', FORM = 'FORMATTED')            
+     &         status='old', FORM = 'FORMATTED')
             OPEN(232,file='Initial/BulkPi_kln.dat',
-     &         status='old', FORM = 'FORMATTED')                            
+     &         status='old', FORM = 'FORMATTED')
             do 206 I = NXPhy0,NXPhy
               read(200,*)  (Pi00(I,J,NZ0), J=NYPhy0, NYPhy)
               read(201,*)  (Pi01(I,J,NZ0), J=NYPhy0, NYPhy)
@@ -490,7 +490,7 @@ C Read in pi_mu nu and overwrite what TransportPi6() gives. Then scale this tens
               read(232,*)  (PPI(I,J,NZ0), J=NYPhy0, NYPhy)
               If (IEOS==7) Then ! use sFactor
                 do J = NYPhy0, NYPhy
-                   Pi00(I,J,NZ0)=Pi00(I,J,NZ0)*sFactor/HbarC  
+                   Pi00(I,J,NZ0)=Pi00(I,J,NZ0)*sFactor/HbarC
                    Pi01(I,J,NZ0)=Pi01(I,J,NZ0)*sFactor/HbarC
                    Pi02(I,J,NZ0)=Pi02(I,J,NZ0)*sFactor/HbarC
                    Pi33(I,J,NZ0)=Pi33(I,J,NZ0)*sFactor/HbarC
@@ -498,8 +498,8 @@ C Read in pi_mu nu and overwrite what TransportPi6() gives. Then scale this tens
                    Pi12(I,J,NZ0)=Pi12(I,J,NZ0)*sFactor/HbarC
                    Pi22(I,J,NZ0)=Pi22(I,J,NZ0)*sFactor/HbarC
                    PPI(I,J,NZ0) =sfactor*PL_ori(I,J,NZ0)-PL(I,J,NZ0)
-     &                  + sFactor*PPI(I,J,NZ0)/HbarC                
-                end do              
+     &                  + sFactor*PPI(I,J,NZ0)/HbarC
+                end do
               End If
 206        continue
           close(200)
@@ -567,8 +567,8 @@ C         open(1830,File='results/U2.dat',status='REPLACE')
 
 C         open(1831,File='results/Pi00.dat',status='REPLACE')
 C         open(1832,File='results/Pi11.dat',status='REPLACE')
-C         open(1833,File='results/Pi22.dat',status='REPLACE')        
-   
+C         open(1833,File='results/Pi22.dat',status='REPLACE')
+
 C         do 2534 K = NZ0,NZ
 C         do 2534 I = NXPhy0,NXPhy
 C         do 2534 J = NYPhy0,NYPhy
@@ -582,9 +582,9 @@ C      &   +PPI(I,J,K)*U1(I,J,K)*U1(I,J,K)
 C         TTYY(I, J, K) = (Ed(I,J,K)+PL(I,J,K))*U2(I,J,K)*U2(I,J,K)
 C      &   +PL(I,J,K)+Pi22(I,J,K)+PPI(I,J,K)
 C      &   +PPI(I,J,K)*U2(I,J,K)*U2(I,J,K)
-C 2534    continue  
+C 2534    continue
 
-C         do 2535 I = NXPhy0, NXPhy           
+C         do 2535 I = NXPhy0, NXPhy
 C         write(1822,'(261e20.8)')(TToo(I, J, NZ0),J=NYPhy0, NYPhy)
 C         write(1823,'(261e20.8)')(TTXX(I, J, NZ0),J=NYPhy0, NYPhy)
 C         write(1824,'(261e20.8)')(TTYY(I, J, NZ0),J=NYPhy0, NYPhy)
@@ -598,19 +598,19 @@ C         write(1830,'(261e20.8)')(U2(I, J, NZ0),J=NYPhy0, NYPhy)
 
 C         write(1831,'(261e20.8)')(Pi00(I, J, NZ0),J=NYPhy0, NYPhy)
 C         write(1832,'(261e20.8)')(Pi11(I, J, NZ0),J=NYPhy0, NYPhy)
-C         write(1833,'(261e20.8)')(Pi22(I, J, NZ0),J=NYPhy0, NYPhy)        
+C         write(1833,'(261e20.8)')(Pi22(I, J, NZ0),J=NYPhy0, NYPhy)
 C 2535    continue
 
 C         close(1822)
 C         close(1823)
-C         close(1824) 
+C         close(1824)
 
 C         close(1825)
 C         close(1826)
 C         close(1827)
 C         close(1828)
 C         close(1829)
-C         close(1830)       
+C         close(1830)
 
 C         close(1831)
 C         close(1832)
