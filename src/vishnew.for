@@ -163,11 +163,11 @@ C *******************************J.Liu changes end***************************
 
       call prepareInputFun() ! this is the initialization function in InputFun.for
 
-      Print *, "Read parameters from Vishydro.inp file."
+      Print *, "read parameters from configuration file"
 
 !----------Start of reading parameters from file------------------------
 C========= Inputting Parameters ===========================================
-      OPEN(1,FILE='Vishydro.inp',STATUS='OLD')
+      OPEN(1,FILE='vishnew.conf',STATUS='OLD')
 
       READ(1,*) T0          !initial time (fm/c)
       READ(1,*) Edec        !Decoupling energy density   (GeV/fm^3)
