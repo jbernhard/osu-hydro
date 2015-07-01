@@ -82,20 +82,11 @@
       checkE = 0
 !----------------------------------------------------------------
 
-
-!     Read extraParas.inp file for these parameters
-      OPEN(391,FILE='extraParas.inp',STATUS='OLD') ! a file contains some extra parameters
-
-      READ(391,*) regMethod ! for the meaning of variables see their definitions
-      Print *, "regMethod=", regMethod
-      READ(391,*) PiRatio
-      Print *, "PiRatio=", PiRatio
-      READ(391,*) maxPiRatio
-      Print *, "maxPiRatio=", maxPiRatio
-      READ(391,*) maxBulkPiRatio
-      Print *, "maxBulkPiRatio=", maxBulkPiRatio
-
-      Close(391)
+      ! hard-code rather than read from extra file
+      regMethod = 2
+      PiRatio = 0.141421
+      maxPiRatio = 10.0
+      maxBulkPiRatio = 10.0
 
 !     Establish output files
       If (outPiTrace .eq. 1) Then
