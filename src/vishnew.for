@@ -160,16 +160,12 @@ C *******************************J.Liu changes end***************************
 
       call prepareInputFun() ! this is the initialization function in InputFun.for
 
-      Print *, "read parameters from configuration file"
-
 !----------Start of reading parameters from file------------------------
 C========= Inputting Parameters ===========================================
       OPEN(1,FILE='vishnew.conf',STATUS='OLD')
 
       READ(1,*) T0          !initial time (fm/c)
       READ(1,*) Edec        !Decoupling energy density   (GeV/fm^3)
-      READ(1,*) IEOS        !type of EOS  (EOSQ:0  EOSI: 2, SM-EOSQ: 5, EOSL: 4(Katz05 data) )
-      READ(1,*) IEOS2dec    !if IEOS=2 (EOSI),  0: decouple by gluon 1: decouple by pions
 C----------------------------------------------------------------------
       Read(1,*) Cha
       Read(1,*) Cha
@@ -238,8 +234,6 @@ C===========================================================================
 
 !-----------End of reading parameters from file-------------------------
 
-      Print *, "Now read parameters specified from CML"
-
       Call readInputFromCML2() ! check CML to see if there are any modifications on parameters
 
 C ***************************J.Liu changes*******************************
@@ -247,6 +241,10 @@ C ***************************J.Liu changes*******************************
         Visbulk = 0.D0
       endif
 C ***************************J.Liu changes end***************************
+
+      ! deprecated parameters
+      IEOS = 7
+      IEOS2dec = 1
 
       Write (*,*) "Have:", "IEOS=", IEOS, "A=", A, ! write out parameter for a check
      &    "IInit=", IInit, "dT=", dT_1,
@@ -333,8 +331,6 @@ C======output the chemical potential information at freeze out surface.====
 CSHEN======================================================================
 
       open(92,File='results/anisotropy.dat',status='REPLACE')
-
-      call InputEOSParameter !  EOS related parameter
 
       if(IEOS.eq.7) then      !CSHEN: input EOS from table
             call InputRegulatedEOS
@@ -2325,85 +2321,6 @@ C        end if
 
 
 
-
-C##################################################################
-C----------------        EOS      -----------------------------
-***************************************************************
-
-       Subroutine InputEOSParameter
-
-       Implicit Double Precision (A-H, O-Z)
-      COMMON /PAREOS/ BNP01,EPP01,DBNP1,DEPP1,NBNP1,NEPP1,
-     &                BNP02,EPP02,DBNP2,DEPP2,NBNP2,NEPP2,
-     &                PMAT1(0:300,0:250),PMAT2(0:300,0:250)
-      COMMON /TAREOS/ TBNP01,TEPP01,TDBNP1,TDEPP1,NTBNP1,NTEPP1,
-     &                TBNP02,TEPP02,TDBNP2,TDEPP2,NTBNP2,NTEPP2,
-     &                TMAT1(0:300,0:250),TMAT2(0:300,0:250)
-      COMMON /BAREOS/ BABNP01,BAEPP01,BADBNP1,BADEPP1,NBABNP1,NBAEPP1,
-     &                BABNP02,BAEPP02,BADBNP2,BADEPP2,NBABNP2,NBAEPP2,
-     &                BAMAT1(0:300,0:250),BAMAT2(0:300,0:250)
-
-      COMMON /EOSSEL/ IEOS
-
-
-*     Pressure(e,n)
-      OPEN(10,FILE='EOS/aa1_p.dat',STATUS='OLD')
-      READ(10,*) BNP01,EPP01
-      READ(10,*) DBNP1,DEPP1,NBNP1,NEPP1
-       DO J=0,NEPP1
-        READ(10,*) (PMAT1(I,J),I=0,NBNP1)
-       END DO
-      CLOSE(10)
-
-      OPEN(10,FILE='EOS/aa2_p.dat',STATUS='OLD')
-      READ(10,*) BNP02,EPP02
-      READ(10,*) DBNP2,DEPP2,NBNP2,NEPP2
-      DO J=0,NEPP2
-        READ(10,*) (PMAT2(I,J),I=0,NBNP2)
-      END DO
-      CLOSE(10)
-
-*     Temperature(e,n)
-      OPEN(10,FILE='EOS/aa1_t.dat',STATUS='OLD')
-      READ(10,*) TBNP01,TEPP01
-      READ(10,*) TDBNP1,TDEPP1,NTBNP1,NTEPP1
-      DO J=0,NTEPP1
-        READ(10,*) (TMAT1(I,J),I=0,NTBNP1)
-      END DO
-      CLOSE(10)
-
-      OPEN(10,FILE='EOS/aa2_t.dat',STATUS='OLD')
-      READ(10,*) TBNP02,TEPP02
-      READ(10,*) TDBNP2,TDEPP2,NTBNP2,NTEPP2
-      DO J=0,NTEPP2
-        READ(10,*) (TMAT2(I,J),I=0,NTBNP2)
-      END DO
-      CLOSE(10)
-
-*      baryon chemical potential (e,n)
-      OPEN(10,FILE='EOS/aa1_mb.dat',STATUS='OLD')
-      READ(10,*) BABNP01,BAEPP01
-      READ(10,*) BADBNP1,BADEPP1,NBABNP1,NBAEPP1
-      DO J=0,NBAEPP1
-        READ(10,*) (BAMAT1(I,J),I=0,NBABNP1)
-      END DO
-      CLOSE(10)
-
-      OPEN(10,FILE='EOS/aa2_mb.dat',STATUS='OLD')
-      READ(10,*) BABNP02,BAEPP02
-      READ(10,*) BADBNP2,BADEPP2,NBABNP2,NBAEPP2
-      DO J=0,NBAEPP2
-        READ(10,*) (BAMAT2(I,J),I=0,NBABNP2)
-      END DO
-      CLOSE(10)
-
-
-      Return
-      End
-
-
-
-C#############################################################################
        Subroutine StressTensorZero(Pi00,Pi01,Pi02,Pi33,Pi11,Pi12,Pi22,
      &                         PPI, NX0,NY0,NZ0,  NX,NY,NZ) !Set Zero ST for Ideal Hydro
 C-----------Used for Ideal Hydro related stress tensors are set zero-------------------

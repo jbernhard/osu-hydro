@@ -18,10 +18,11 @@
       double precision :: PEOSdata(RegEOSdatasize),
      &                    SEOSdata(RegEOSdatasize),
      &                    TEOSdata(RegEOSdatasize)
+      double precision :: x0, x1, y0, y1
       double precision :: Pcoeff1, Pcoeff2, Scoeff1, Scoeff2,
      &                    Tcoeff1, Tcoeff2
 
-      Integer :: Inumparticle       !number of stable particles in PCE, 0 for chemical equilibrium EOS
+      Integer :: Inumparticle = 0   !number of stable particles in PCE, 0 for chemical equilibrium EOS
       Integer :: EOS_Mu_ne = RegEOSMudatasize   !total rows in mu table
       double precision :: EOS_Mu_e0 = 0.0d0   !lowest energy density in mu table
       double precision :: EOS_Mu_de = 0.0d0   !spacing of energy density in mu table
@@ -41,35 +42,67 @@
      &                   Tcoeff1, Tcoeff2
 !=======common blocks end====================================================
 
+      ! The EOS table is finite -- it ends at energy density ~ 311
+      ! GeV/fm^3.  However, the hottest regions of the medium can exceed
+      ! this limit.  In this case we fit the thermodynamic functions
+      ! P(e), S(e), T(e) to power laws (a*x^p) and extrapolate.  Earlier
+      ! versions of this code saved the power law coefficients in a
+      ! table and read them in.  Now, we compute the coefficients at run
+      ! time from the end of the EOS table.
 
-      open(5,FILE='EOS/EOS_tables/EOS_PST.dat',STATUS='OLD')
+      open(5,FILE='eos.dat',STATUS='OLD')
       do I=1,EOSne
         read(5,*) ee, PEOSdata(I), SEOSdata(I), TEOSdata(I)
         if(I.eq.1) EOSe0 = ee
-        if(I.eq.2) EOSde = ee - EOSe0
+        ! record the lower endpoint for power law extrapolation
+        if(I.eq.(EOSne-10000)) x0 = ee
+        ! This is very dangerous!  Computing the step size like this,
+        ! from two adjacent entries, could cause significant error.
+        ! if(I.eq.2) EOSde = ee - EOSe0
+        ! It's ! much safer to divide the full range by the number of steps:
+        if(I.eq.EOSne) then
+          EOSde = (ee - EOSe0)/(EOSne-1)
+          EOSEend = ee
+          ! record the upper endpoint for power law extrapolation
+          x1 = ee
+        end if
       enddo
       close(5)
 
-      EOSEend = EOSe0 + EOSde*(EOSne-1)
+      ! This is even crazier!  Just read it from the last table entry...
+      ! EOSEend = EOSe0 + EOSde*(EOSne-1)
 
-      open(5,FILE='EOS/EOS_tables/EOS_particletable.dat', STATUS='OLD')
-      read(5,*) Inumparticle
-      close(5)
-      if(Inumparticle.ne.0) then
-         open(5,FILE='EOS/EOS_tables/EOS_Mu.dat', STATUS='OLD')
-         do I=1,EOS_Mu_ne
-            read(5,*) ee, (MuEOSdata(I,J), J=1, Inumparticle)
-            if(I.eq.1) EOS_Mu_e0 = ee
-            if(I.eq.2) EOS_Mu_de = ee - EOS_Mu_e0
-         enddo
-      endif
+      ! disable PCE
+      !open(5,FILE='EOS/EOS_tables/EOS_particletable.dat', STATUS='OLD')
+      !read(5,*) Inumparticle
+      !close(5)
+      !if(Inumparticle.ne.0) then
+      !   open(5,FILE='EOS/EOS_tables/EOS_Mu.dat', STATUS='OLD')
+      !   do I=1,EOS_Mu_ne
+      !      read(5,*) ee, (MuEOSdata(I,J), J=1, Inumparticle)
+      !      if(I.eq.1) EOS_Mu_e0 = ee
+      !      if(I.eq.2) EOS_Mu_de = ee - EOS_Mu_e0
+      !   enddo
+      !endif
 
-      open(5,FILE='EOS/EOS_tables/coeff.dat', STATUS='OLD')
-      read(5,*) Pcoeff1, Pcoeff2
-      read(5,*) Scoeff1, Scoeff2
-      read(5,*) Tcoeff1, Tcoeff2
-      close(5)
+      ! compute power law extrapolation coefficients
+      y0 = PEOSdata(EOSne - 10000)
+      y1 = PEOSdata(EOSne)
+      Pcoeff1 = exp((log(x0)*log(y1) - log(x1)*log(y0)) /
+     &              (log(x0) - log(x1)))
+      Pcoeff2 = (log(y0) - log(y1)) / (log(x0) - log(x1))
 
+      y0 = SEOSdata(EOSne - 10000)
+      y1 = SEOSdata(EOSne)
+      Scoeff1 = exp((log(x0)*log(y1) - log(x1)*log(y0)) /
+     &              (log(x0) - log(x1)))
+      Scoeff2 = (log(y0) - log(y1)) / (log(x0) - log(x1))
+
+      y0 = TEOSdata(EOSne - 10000)
+      y1 = TEOSdata(EOSne)
+      Tcoeff1 = exp((log(x0)*log(y1) - log(x1)*log(y0)) /
+     &              (log(x0) - log(x1)))
+      Tcoeff2 = (log(y0) - log(y1)) / (log(x0) - log(x1))
 
       end
 
