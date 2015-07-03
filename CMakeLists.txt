@@ -26,4 +26,5 @@ set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -cpp -fno-align-commons")
 
 install(FILES ${PROJECT_NAME}.conf DESTINATION ${PROJECT_NAME})
 
+add_subdirectory(eos)
 add_subdirectory(src)
