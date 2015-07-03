@@ -53,7 +53,6 @@ C===============================================================================
 ! change to 1 to ignore checks
 #define silent_checkPi 0
 #define outputPiviolation .false.
-#define outputMovie .false.
 
 #define echo_level 5
 
@@ -276,61 +275,22 @@ CSHEN===END================================================================
       EK  = EK/Hbarc  !center energy density unit convert to fm^-4
       TT0 = T0
 
-      CALL UNLINK ('results/surface.dat')
-      CALL UNLINK ('results/decdat2.dat')
-      CALL UNLINK ('results/decdat_mu.dat')   !CSHEN chemical potential for PCE
+      CALL UNLINK ('surface.dat')
+      CALL UNLINK ('decdat2.dat')
 
-      OPEN(98,FILE='results/surface.dat',FORM='FORMATTED',
+      OPEN(98,FILE='surface.dat',FORM='FORMATTED',
      &        STATUS='REPLACE')
-      OPEN(99,FILE='results/decdat2.dat',FORM='FORMATTED',
+      OPEN(99,FILE='decdat2.dat',FORM='FORMATTED',
      &        STATUS='REPLACE')
 
 CSHEN======================================================================
-C======output the chemical potential information at freeze out surface.====
-      open(81,FILE='results/decdat_mu.dat',FORM='FORMATTED',
-     &     STATUS='REPLACE')
-      open(82,FILE='results/SurfaceX.dat',FORM='FORMATTED',
-     &     STATUS='REPLACE')         !output the freeze-out surface along x-axis
-      open(83,FILE='results/SurfaceY.dat',FORM='FORMATTED',
-     &     STATUS='REPLACE')         !output the freeze-out surface along y-axis
-      open(91,File='results/Temp.dat',status='REPLACE')
-      open(93,File='results/Temp_evo.dat',status='REPLACE')
-      open(2293, File='results/PPI_over_PL_evo.dat',
-     &     STATUS='REPLACE')
-      open(2294, File='results/PPI_NS_evo.dat',
-     &     STATUS='REPLACE')
-      open(2295, File='results/pi_evo.dat', status='REPLACE')
-      open(90,File='results/APi.dat',status='REPLACE')
-      open(89,File='results/AScource.dat',status='REPLACE')
-      open(88,File='results/AScource2.dat',status='REPLACE')
-      Open(377, FILE='results/ecc-evolution.dat',STATUS='REPLACE') ! anisotropy moments evolution
-
-      !Open(3771,FILE='movie/DPc.dat',STATUS='REPLACE')
-      !Close(3771)
-      if (outputMovie) then
-         open(3773,FILE='movie/Evolution.dat',STATUS='REPLACE')
-      endif
-      !Open(3774,FILE='movie/U1.dat',STATUS='REPLACE')
-      !Close(3774)
-      !Open(3775,FILE='movie/Vy.dat',STATUS='REPLACE')
-      !Close(3775)
-      !Open(3776,FILE='movie/U2.dat',STATUS='REPLACE')
-      !Close(3776)
 
       If (IOSCAR) Then
         IOSCARWrite = 43
-        open(IOSCARWrite,File='results/OSCAR2008H.dat',Form='Formatted',
+        open(IOSCARWrite,File='oscar.dat',Form='Formatted',
      &     status='REPLACE')   !output standard format VISH2+1 results for further hydro movie and jet quenching purpose
       EndIf
-      if (outputPiviolation) then
-         open(583, File='results/piViolation.dat',
-     &        Form='Formatted', status='REPLACE')
-         open(584, File='results/BulkpiViolation.dat',
-     &        Form='Formatted', status='REPLACE')
-      endif
 CSHEN======================================================================
-
-      open(92,File='results/anisotropy.dat',status='REPLACE')
 
       if(IEOS.eq.7) then      !CSHEN: input EOS from table
             call InputRegulatedEOS
@@ -362,18 +322,9 @@ CSHEN======output OSCAR file Header end=====================================
 
       Close(98)
       Close(99)
-      Close(93)
-      Close(81)
-      Close(82)
-      Close(83)
-      close(IOSCARWrite)
-      Close(377)
-      Close(2293)
-      Close(2294)
-      Close(2295)
-      if(outputMovie) then
-         close(3773)
-      endif
+      If (IOSCAR) Then
+        close(IOSCARWrite)
+      EndIf
 
       End
 !-----------------------------------------------------------------------
@@ -615,75 +566,6 @@ CSHEN===EOS from tables end====================================================
 
 !=======================================================================
 
-      !output hydro parameters for current run
-      Open(111,File='./results/VISH2p1_tec.dat',status='Replace')
-       Write(111,'(A,T10,A3,I1,T30,A)')"IEOS", " = ", IEOS,
-     &                                            "!IEOS   type for EOS"
-       Write(111,'(A,T10,A3,F4.2,T30,A)')"Tau0", " = ", T0,
-     &                                "!tau0   initial time(unit: fm/c)"
-       Write(111,'(A,T10,A3,F5.3,T30,A)')"Edec", " = ", EDec,
-     &              "!Edec   Decoupling energy density (unit: GeV/fm^3)"
-       Write(111,'(A,T10,A3,F5.3,T30,A)')"Tdec", " = ", TFREEZ,
-     &                                  "!T_fo   freeze out temperature"
-       Write(111,'(A1)')"*"
-       Write(111,'(A,T10,A3,I1,T30,A)')"IInit", " = ", IInit,
-     &                                          "!Initialization method"
-       Write(111,'(A,T10,A3,E13.7,T30,A)')"Norm"," = ", sFactor,
-     &                       "!normalization factor for initial profile"
-       Write(111,'(A1)')"*"
-       Write(111,'(A,T10,A3,F5.3,T30,A)')"ViscousC", " = ", ViscousC,
-     &                                        "!ViscousC  eta/s(const.)"
-       Write(111,'(A,T10,A3,F5.3,T30,A)')"VisBeta", " = ", VisBeta,
-     &                        "!relaxation constant for shear viscosity"
-       Write(111,'(A,T10,A3,I1,T30,A)')"IVisflag", " = ", IVisflag,
-     &        "!flag for temperature dependent eta/s(T) (=0 for const.)"
-       Write(111,'(A,T10,A3,F5.3,T30,A)')"VisBulk", " = ", VisBulk,
-     &                                  "!Bulk viscosity zeta/s(const.)"
-       Write(111,'(A,T10,A3,I1,T30,A)')"IVisBulkFlag"," = ",
-     &        IVisBulkFlag,
-     &        "!flag for temperature dependent eta/s(T) (=0 for const.)"
-       Write(111,'(A,T10,A3,I1,T30,A)')"IRelaxBulk", " = ", IRelaxBulk,
-     &                          "!relaxtion constant for bulk viscosity"
-       Write(111,'(A1)')"*"
-       Write(111,'(A,T10,A3,F4.2,T30,A)')"DT", " = ", DT_1,
-     &                                                 "!dT   time step"
-       Write(111,'(A,T10,A3,F4.2,T30,A)')"DX", " = ", DX,
-     &                                   "!DX   lattice spacial spacing"
-       Write(111,'(A,T10,A3,F4.2,T30,A)')"DY", " = ", DY,
-     &                                   "!DY   lattice spacial spacing"
-       Write(111,'(A,T10,A3,I3,T30,A)')"ILS", " = ", NXPhy,
-     &                           "!lattice size (in positive direction)"
-       Write(111,'(A,T10,A3,I1,T30,A)')"NDX", " = ", NDX,
-     &                      "!NXD   freeze out skip step in x direction"
-       Write(111,'(A,T10,A3,I1,T30,A)')"NDY", " = ", NDY,
-     &                      "!NYD   freeze out skip step in y direction"
-       Write(111,'(A,T10,A3,I1,T30,A)')"NDT", " = ", NDT,
-     &                              "!NTD   freeze out skip step in tau"
-       Write(111,'(A,T10,A3,F4.1,T30,A)')"R0Bdry", " = ", R0Bdry,
-     &                                                    "!boundary R0"
-       Write(111,'(A,T11,A2,F5.3,T30,A)')"VisBulkNorm", "= " ,
-     &           VisBulkNorm, "!Bulk viscosity zeta/s norm factor"
-      Close(111)
-
-!     Output entropy and energy profiles:
-      Open(111,File='./Initial/init-entropy.dat',status='Replace')
-      Do I=NXPhy0,NXPhy
-      Do J=NYPhy0,NYPhy
-        Write (111,'(E20.8)',Advance="NO") Sd(I,J,1)
-      End Do
-        Write (111,*)
-      End Do
-      Close(111)
-
-      Open(111,File='./Initial/init-energy.dat',status='Replace')
-      Do I=NXPhy0,NXPhy
-      Do J=NYPhy0,NYPhy
-        Write (111,'(E20.8)',Advance="NO") Ed(I,J,1)
-      End Do
-        Write (111,*)
-      End Do
-      Close(111)
-
       ! output fluid cells outside the freeze out surface at initial time
       if(Ifreez .ne. 0) then
       DA0=(dx*NDX)*(dy*NDY)
@@ -730,284 +612,10 @@ CSHEN===EOS from tables end====================================================
 
 
           EDEC2 = Ed(I,J,1)*HbarC
-          IF (IEOS.EQ.7) then
-             do L=1,Inumparticle
-                call interpCubic(MuEOSdata(:,L), RegEOSMudatasize,
-     &                   EOS_Mu_e0, EOS_Mu_de, EDEC2, XMufreezetemp)
-                XMufreeze(L) = XMufreezetemp
-             end do
-             write(81,'(E15.6)', Advance='NO') EDEC2
-             do L=1,Inumparticle
-               write(81,'(E15.6)', Advance='NO') XMufreeze(L)
-             enddo
-             write(81,*)
-          end if
         End If
        End Do
        End Do
        End If  !Ifreez
-CSHEN=====================================================================
-!=======================================================================
-!=======================================================================
-!----------- Initial profile related output starts here ----------------
-
-      Print *, "-----------------------------------------------------"
-      Print *, "Info for initial energy density profile..."
-
-      ! First, check center:
-      Print *
-      Print *, "First, check where the center is:"
-      XC = 0D0
-      YC = 0D0
-      TotalE = 0D0
-      Do K = NZ0, NZ
-      Do I = NXPhy0, NXPhy
-      Do J = NYPhy0, NYPhy
-        !If (Ed(I,J,K)<EDec) Cycle ! Sum only inside the freeze-out surface
-        XX = I*DX
-        YY = J*DY
-        XC = XC + XX*Ed(I,J,K)
-        YC = YC + YY*Ed(I,J,K)
-        TotalE = TotalE + Ed(I,J,K)
-      End Do
-      End Do
-      End Do
-      XC = XC/TotalE
-      YC = YC/TotalE
-      Print *, "Centered at X=", XC, "Y=", YC
-
-      ! Next, calculate eccentricity moments for different N:
-      Print *
-      Print *, "Next, moments that give minor axes (see 1007.5469)."
-      Print *, "They are calcualted as -X(N)/X(0), -Y(N)/X(0)."
-      Print *, "They are caluclated assuming the center is origin."
-      Print *
-
-      ! first, conventional eccentricities
-      Open(375, FILE='results/ecc-init.dat',STATUS='REPLACE')
-      Do NN = 1, 9
-        Weight = 0D0
-        WeightP = 0D0
-        XN(NN) = 0D0
-        YN(NN) = 0D0
-        XNP(NN) = 0D0
-        YNP(NN) = 0D0
-        Do K = NZ0, NZ
-        Do I = NXPhy0, NXPhy
-        Do J = NYPhy0, NYPhy
-          !If (Ed(I,J,K)<EDec) Cycle ! Sum only inside the freeze-out surface
-          XX = I*DX - XC ! shift to the real center
-          YY = J*DY - YC
-
-          angle = NN*atan2(YY,XX)
-          RR = sqrt(XX*XX+YY*YY)
-
-          ! eccentricity, defined using r^2 as weight function:
-          Weight=Weight+RR*RR*Ed(I,J,K) ! Note that this weight is repeatedly calculated. But since it is much cleaner written this way and it is very fast...
-          XN(NN)=XN(NN)+RR*RR*cos(angle)*Ed(I,J,K)
-          YN(NN)=YN(NN)+RR*RR*sin(angle)*Ed(I,J,K)
-          ! eccentricity, defined using r^n as weight function:
-          WeightP = WeightP+RR**NN*Ed(I,J,K)
-          XNP(NN) = XNP(NN)+RR**NN*cos(angle)*Ed(I,J,K)
-          YNP(NN) = YNP(NN)+RR**NN*sin(angle)*Ed(I,J,K)
-        End Do
-        End Do
-        End Do
-        Print *, "The",NN,"-th eccentricity moment:"
-        Print *, "X:", -XN(NN)/Weight, "Y:", -YN(NN)/Weight
-        print *, "   Norm:", sqrt(XN(NN)*XN(NN)+YN(NN)*YN(NN))/Weight
-        Print *, "X':", -XNP(NN)/WeightP, "Y':", -YNP(NN)/WeightP
-        Print *, "   Norm':",
-     &    sqrt(XNP(NN)*XNP(NN)+YNP(NN)*YNP(NN))/WeightP
-        !Print *, "WeightP=", WeightP
-        Write (375,'(6E20.8)') -XN(NN)/Weight, -YN(NN)/Weight, ! Note that I use minor axis to define eccentricity
-     &            sqrt(XN(NN)*XN(NN)+YN(NN)*YN(NN))/Weight,
-     &            -XNP(NN)/WeightP, -YNP(NN)/WeightP,
-     &            sqrt(XNP(NN)*XNP(NN)+YNP(NN)*YNP(NN))/WeightP
-      End Do ! NN=1, 9
-      Close(375)
-
-      ! next, repeat but using different weight-angle combinations
-      Do r_power = 0, 9
-      write(filename_buffer, '(a25,i1,a4)')
-     &     'results/ecc-init-r_power-', r_power, '.dat'
-      Open(375, FILE=filename_buffer,STATUS='REPLACE')
-      Do NN = 1, 9
-        Weight = 0D0
-        WeightP = 0D0
-        XN(NN) = 0D0
-        YN(NN) = 0D0
-        XNP(NN) = 0D0
-        YNP(NN) = 0D0
-        Do K = NZ0, NZ
-        Do I = NXPhy0, NXPhy
-        Do J = NYPhy0, NYPhy
-          !If (Ed(I,J,K)<EDec) Cycle ! Sum only inside the freeze-out surface
-          XX = I*DX - XC ! shift to the real center
-          YY = J*DY - YC
-
-          angle = NN*atan2(YY,XX)
-          RR = sqrt(XX*XX+YY*YY)
-
-          ! eccentricity, defined using r^2 as weight function:
-          Weight=Weight+RR**r_power*Ed(I,J,K) ! Note that this weight is repeatedly calculated. But since it is much cleaner written this way and it is very fast...
-          XN(NN)=XN(NN)+RR**r_power*cos(angle)*Ed(I,J,K)
-          YN(NN)=YN(NN)+RR**r_power*sin(angle)*Ed(I,J,K)
-        End Do
-        End Do
-        End Do
-        Write (375,'(4E20.8)') -XN(NN)/Weight, -YN(NN)/Weight, ! Note that I use minor axis to define eccentricity
-     &            sqrt(XN(NN)*XN(NN)+YN(NN)*YN(NN))/Weight, Weight*DX*DY
-      End Do ! NN=1, 9
-      Close(375)
-      End Do ! r_power
-
-      Print *, "-----------------------------------------------------"
-
-!-----------------------------------------------------------------------
-      ! Then repeat above eccentricity calculation for entropy-defined eccentricities
-      ! first center
-      XC = 0D0
-      YC = 0D0
-      TotalE = 0D0
-      Do K = NZ0, NZ
-      Do I = NXPhy0, NXPhy
-      Do J = NYPhy0, NYPhy
-        !If (Ed(I,J,K)<EDec) Cycle ! Sum only inside the freeze-out surface
-        XX = I*DX
-        YY = J*DY
-        XC = XC + XX*Sd(I,J,K)
-        YC = YC + YY*Sd(I,J,K)
-        TotalE = TotalE + Sd(I,J,K)
-      End Do
-      End Do
-      End Do
-      XC = XC/TotalE
-      YC = YC/TotalE
-
-      ! first conventional eccentricities
-      Open(379, FILE='results/ecc-init-sd.dat',STATUS='REPLACE')
-      Do NN = 1, 9
-        Weight = 0D0
-        WeightP = 0D0
-        XN(NN) = 0D0
-        YN(NN) = 0D0
-        XNP(NN) = 0D0
-        YNP(NN) = 0D0
-        Do K = NZ0, NZ
-        Do I = NXPhy0, NXPhy
-        Do J = NYPhy0, NYPhy
-          !If (Ed(I,J,K)<EDec) Cycle ! Sum only inside the freeze-out surface
-          XX = I*DX - XC ! shift to the real center
-          YY = J*DY - YC
-
-          angle = NN*atan2(YY,XX)
-          RR = sqrt(XX*XX+YY*YY)
-
-          ! eccentricity, defined using r^2 as weight function:
-          Weight=Weight+RR*RR*Sd(I,J,K) ! Note that this weight is repeatedly calculated. But since it is much cleaner written this way and it is very fast...
-          XN(NN)=XN(NN)+RR*RR*cos(angle)*Sd(I,J,K)
-          YN(NN)=YN(NN)+RR*RR*sin(angle)*Sd(I,J,K)
-          ! eccentricity, defined using r^n as weight function:
-          WeightP = WeightP+RR**NN*Sd(I,J,K)
-          XNP(NN) = XNP(NN)+RR**NN*cos(angle)*Sd(I,J,K)
-          YNP(NN) = YNP(NN)+RR**NN*sin(angle)*Sd(I,J,K)
-        End Do
-        End Do
-        End Do
-        !Print *, "WeightP=", WeightP
-        Write (379,381) -XN(NN)/Weight, -YN(NN)/Weight, ! Note that I use minor axis to define eccentricity
-     &            sqrt(XN(NN)*XN(NN)+YN(NN)*YN(NN))/Weight,
-     &            -XNP(NN)/WeightP, -YNP(NN)/WeightP,
-     &            sqrt(XNP(NN)*XNP(NN)+YNP(NN)*YNP(NN))/WeightP
- 381    Format(6(E20.8))
-      End Do ! NN=1, 9
-      Close(379)
-
-      ! next, repeat but using different weight-angle combinations
-      Do r_power = 0, 9
-      write(filename_buffer, '(a28,i1,a4)')
-     &     'results/ecc-init-sd-r_power-', r_power, '.dat'
-      Open(379, FILE=filename_buffer,STATUS='REPLACE')
-      Do NN = 1, 9
-        Weight = 0D0
-        WeightP = 0D0
-        XN(NN) = 0D0
-        YN(NN) = 0D0
-        XNP(NN) = 0D0
-        YNP(NN) = 0D0
-        Do K = NZ0, NZ
-        Do I = NXPhy0, NXPhy
-        Do J = NYPhy0, NYPhy
-          !If (Ed(I,J,K)<EDec) Cycle ! Sum only inside the freeze-out surface
-          XX = I*DX - XC ! shift to the real center
-          YY = J*DY - YC
-
-          angle = NN*atan2(YY,XX)
-          RR = sqrt(XX*XX+YY*YY)
-
-          ! eccentricity, defined using r^2 as weight function:
-          Weight=Weight+RR**r_power*Sd(I,J,K) ! Note that this weight is repeatedly calculated. But since it is much cleaner written this way and it is very fast...
-          XN(NN)=XN(NN)+RR**r_power*cos(angle)*Sd(I,J,K)
-          YN(NN)=YN(NN)+RR**r_power*sin(angle)*Sd(I,J,K)
-        End Do
-        End Do
-        End Do
-        Write (379,'(4E20.8)') -XN(NN)/Weight, -YN(NN)/Weight, ! Note that I use minor axis to define eccentricity
-     &            sqrt(XN(NN)*XN(NN)+YN(NN)*YN(NN))/Weight, Weight*DX*DY
-      End Do ! NN=1, 9
-      Close(379)
-      End Do ! r_power
-
-!-----------------------------------------------------------------------
-
-      ! Finally, calculate the "overlap" area
-      XC = 0D0
-      YC = 0D0
-      TotalE = 0D0
-      Do K = NZ0, NZ
-      Do I = NXPhy0, NXPhy
-      Do J = NYPhy0, NYPhy
-        !If (Ed(I,J,K)<EDec) Cycle ! Sum only inside the freeze-out surface
-        XX = I*DX
-        YY = J*DY
-        XC = XC + XX*Ed(I,J,K)
-        YC = YC + YY*Ed(I,J,K)
-        TotalE = TotalE + Ed(I,J,K)
-      End Do
-      End Do
-      End Do
-      XC = XC/TotalE
-      YC = YC/TotalE
-
-      ! Next, calculate <x^2> and <y^2>
-      XN(2) = 0D0
-      YN(2) = 0D0
-      Weight = 0D0
-      Do K = NZ0, NZ
-      Do I = NXPhy0, NXPhy
-      Do J = NYPhy0, NYPhy
-        !If (Ed(I,J,K)<EDec) Cycle ! Sum only inside the freeze-out surface
-        XX = I*DX - XC ! shift to the real center
-        YY = J*DY - YC
-        XN(2)=XN(2)+XX*XX*Ed(I,J,K)
-        YN(2)=YN(2)+YY*YY*Ed(I,J,K)
-        Weight=Weight+Ed(I,J,K)
-      End Do
-      End Do
-      End Do
-
-      XN(2) = XN(2)/Weight ! <x^2>
-      YN(2) = YN(2)/Weight ! <y^2>
-
-      ! Output overlap area
-      Open(383, FILE='results/overlap.dat',STATUS='REPLACE')
-      Write (383, '(E20.12)') CONSTPI*sqrt(XN(2)*YN(2))
-      Close (383)
-
-!----------- Initial profile related output finishes here --------------
-!=======================================================================
-!=======================================================================
 
 
        IW = 0
@@ -1081,17 +689,6 @@ CSHEN====END====================================================================
      &  U0,U1,U2, PU0,PU1,PU2,SxyT,Stotal,StotalBv,StotalSv,
      &  Ed,PL,Bd,Sd,Temp0,Temp,CMu, T00,T01,T02, IAA,CofAA,Time,DX,DY,
      &  DZ,DT,NXPhy0,NYPhy0,NXPhy,NYPhy,NX0,NX,NY0,NY,NZ0,NZ,PNEW,NNEW)  !PNEW NNEW  related to root finding
-
-      Do J=0,NXPhy,NXPhy+1
-      Do I=NYPhy0,NYPhy,10
-        write(2295, '(12e15.5)')Time, I*DX, J*DY,
-     &                  Ed(I,J,NZ0)*Hbarc,   Temp(I,J,NZ0)*Hbarc,
-     &                  PI00(I,J,NZ0)*Hbarc, PI01(I,J,NZ0)*Hbarc,
-     &                  PI02(I,J,NZ0)*Hbarc, PI11(I,J,NZ0)*Hbarc,
-     &                  PI12(I,J,NZ0)*Hbarc, PI22(I,J,NZ0)*Hbarc,
-     &                  pi33(I,J,NZ0)*Hbarc
-      enddo
-      enddo
 
         DIFFC = 0.125D0
         !DIFFC = 0D0
@@ -1238,19 +835,6 @@ CSHEN====END====================================================================
       End Do
       End Do
 
-      if(outputMovie) then
-         DO K=NZ0,NZ
-         DO J=NYPhy0,NYPhy
-         DO I=NXPhy0,NXPhy
-           if(mod(I, 5) .eq. 0 .and. mod(J, 5) .eq. 0) then
-             write(3773, '(4F18.8)')Time, I*Dx, J*Dy,
-     &             Temp(I, J, K)*0.19733D0
-           endif
-         enddo
-         enddo
-         enddo
-      endif
-
 CSHEN===========================================================================
 C====output the OSCAR body file from hydro evolution============ ===============
       if(IOSCAR) then
@@ -1266,21 +850,6 @@ CSHEN===end=====================================================================
 
 
       Hc = HbarC
-
-      Do J=0,NXPhy,NXPhy+1
-      Do I=NYPhy0,NYPhy,10
-        write(93, '(5e15.5)')Time, I*DX, J*DY, Temp(I,J,NZ0)*HBarC,
-     &                       Ed(I,J,NZ0)*Hc
-      enddo
-      enddo
-
-      Do J=0,NXPhy,NXPhy+1
-      Do I=NYPhy0,NYPhy,10
-        write(2293, '(5e15.5)')Time, I*DX, J*DY,
-     &                  PPI(I,J,NZ0)/Dmax1(1e-30, PL(I,J,NZ0)),
-     &                  Ed(I,J,NZ0)*Hc
-      enddo
-      enddo
 
       DO 203 I=0,NXPhy,20
          Write(*,'(500e12.3)')(Temp(I,J,NZ0)*Hc,J=0,NYPhy,20 )
@@ -1697,14 +1266,6 @@ c                 BAMU = EOUT(BN,EDEC,0.0,
          WRITE(98,2553) T-DTD+DT, TM, XM,YM,
      &                  Sqrt(XM**2+YM**2), R0,Aeps    !surface
 
-         IF (WRITINGX) THEN
-            write(82,2553) TM, Sqrt(XM**2+YM**2),
-     &                   Sqrt(VZCM**2+VRCM**2),XM,VZCM,YM,VRCM
-         end if
-         if (WRITINGY) THEN
-            write(83,2553) TM, Sqrt(XM**2+YM**2),
-     &                   Sqrt(VZCM**2+VRCM**2),XM,VZCM,YM,VRCM
-         end if
          IW = IW+1   !count the number in surface written file
          if(Sqrt(XM**2+YM**2).le.Rdec1) Rdec1=Sqrt(XM**2+YM**2)
          if(Sqrt(XM**2+YM**2).ge.Rdec1) Rdec2=Sqrt(XM**2+YM**2)
@@ -1972,14 +1533,6 @@ CSHEN======================================================================
      &                      CPi00*HbarC,CPi01*HbarC,CPi02*HbarC,
      &                      CPi11*HbarC,CPi12*HbarC,CPi22*HbarC,
      &                      CPPI*HbarC
-             IF (WRITINGX) THEN  !write to SurfaceX.dat
-                write(82,2553) Tmid, Sqrt(Xmid**2+Ymid**2),
-     &                Sqrt(v1mid**2+v2mid**2), Xmid, v1mid, Ymid, v2mid
-             end if
-             if (WRITINGY) THEN  !write to SurfaceY.dat
-                write(83,2553) Tmid, Sqrt(Xmid**2+Ymid**2),
-     &                Sqrt(v1mid**2+v2mid**2), Xmid, v1mid, Ymid, v2mid
-             end if
              IW = IW+1   !count the number in surface written file
              !output chemical potential for EOS-PCE
              IF (((IEOS.EQ.6).or.(IEOS.eq.7)).and.(IMuflag.eq.0)) then
@@ -3704,29 +3257,6 @@ C--------------------------------------
       End Do
       End Do
 
-      !Open(3773,FILE='movie/Vx.dat',STATUS='old',ACCESS='APPEND')
-      !Open(3774,FILE='movie/U1.dat',STATUS='old',ACCESS='APPEND')
-      !Open(3775,FILE='movie/Vy.dat',STATUS='old',ACCESS='APPEND')
-      !Open(3776,FILE='movie/U2.dat',STATUS='old',ACCESS='APPEND')
-      !Do I=NXPhy0, NXPhy
-      !Do J=NYPhy0, NYPhy
-      !Do K=NZ0, NZ
-      !  Write(3773,'(f25.8)',ADVANCE='NO') Vx(I,J,K)
-      !  Write(3774,'(f25.8)',ADVANCE='NO') U1(I,J,K)
-      !  Write(3775,'(f25.8)',ADVANCE='NO') Vy(I,J,K)
-      !  Write(3776,'(f25.8)',ADVANCE='NO') U2(I,J,K)
-      !End Do
-      !End Do
-      !  Write(3773,*)
-      !  Write(3774,*)
-      !  Write(3775,*)
-      !  Write(3776,*)
-      !End Do
-      !Close(3773)
-      !Close(3774)
-      !Close(3775)
-      !Close(3776)
-
       call VSBdary3(U1,U2,NX0,NY0,NZ0,NX,NY,NZ, ! smearing and extrapolation
      & NXPhy0,NYPhy0, NXPhy,NYPhy,AAC0)
 
@@ -4530,30 +4060,9 @@ C            Print *, 'time',time,'Stotal', Stotal,StotalSv,StotalBv
       AMV=Hbarc*1000.0 !fm-1 change to MEV
       GV=Hbarc !fm-1 change to GEV
 
-      Write(92,'(2f8.3,9e14.4)') Time-TT0, VAver,
-     &   EpsX,EpsP,TEpsP,Stotal
-
-      Call snapshotEccentricity(Time-TT0,Vx,Vy,Ed,9,DX,DY,
-     &  NXPhy0, NXPhy, NYPhy0, NYPhy, NX0, NX, NY0, NY, NZ0, NZ)
-
-      Write(91,'(f8.3,5e14.4 )') Time-TT0,ATemp,APL,
-     &   Temp(0,0,NZ0)*AMV, Temp(0,90,NZ0)*AMV, Temp(90,0,NZ0)*AMV
-
-      Write(90,'(f8.3,7e12.3)') Time-TT0,
-     &    AP33*GV,AP00*GV,AP01*GV,AP02*GV,AP11*GV,AP22*GV,AP12*GV
-
-      Write(89,'(f8.3,10e14.4)') Time-TT0,-AScT00*GV,-AScT01*GV,
-     &  -AScT02*GV, -PaScT00*GV, -PaScT01*GV, -PaScT02*GV
-
-      Write(88,'(f8.3,10e14.4)') Time-TT0,-difScT0102*GV ,-difPLxy*GV,
-     &  -difPixy*GV, -APL*GV, -APLdx*GV, -APLdy*GV,
-     &   AP11dx*GV, AP22dy*GV
-
       Do J=0,NXPhy,NXPhy+1
       Do I=NYPhy0,NYPhy,10
         PPI_NS = (-1.0)*VBulk(I,J,NZ0)*SiLoc(I,J,NZ0) ! Navier-Stokes limit
-        write(2294, '(6e15.5)')Time, I*DX, J*DY,
-     &           PPI_NS*Hbarc, PL(I,J,K)*Hbarc, Ed(I,J,NZ0)*Hbarc
       enddo
       enddo
 
@@ -5004,93 +4513,6 @@ C----------------------------------------------------------------
 
       findU0Hook = U0 - 1/sqrt(1-v*v)
       End Function
-!----------------------------------------------------------------------
-
-
-!======================================================================
-      Subroutine snapshotEccentricity(relTime,Vx,Vy,Ed,nmoments,
-     &  DX, DY,
-     &  NXPhy0, NXPhy, NYPhy0, NYPhy, NX0, NX, NY0, NY, NZ0, NZ)
-      Implicit None
-
-      Integer NXPhy0, NXPhy, NYPhy0, NYPhy, NX0, NX, NY0, NY, NZ0, NZ
-      Integer nmoments
-      Double Precision relTime, Edec, DX, DY
-      Common /EDec/ EDec
-      Double Precision Vx(NX0:NX,NY0:NY,NZ0:NZ)
-      Double Precision Vy(NX0:NX,NY0:NY,NZ0:NZ)
-      Double Precision Ed(NX0:NX,NY0:NY,NZ0:NZ)
-      Double Precision XN(1:nmoments), YN(1:nmoments), Weight
-      Double Precision XNP(1:nmoments), YNP(1:nmoments), WeightP
-
-      Double Precision XX, YY, gammaE, angle, RR, XC, YC, TotalE
-      Integer I, J, K, NN
-
-      Open(377,FILE='results/ecc-evolution.dat',
-     &          STATUS='old',ACCESS='APPEND')
-
-      Write (377,378,ADVANCE='NO') relTime
-
-!     Calculate where the real center is:
-      XC = 0D0
-      YC = 0D0
-      TotalE = 0D0
-      Do K = NZ0, NZ
-      Do I = NXPhy0, NXPhy
-      Do J = NYPhy0, NYPhy
-        !If (Ed(I,J,K)<EDec) Cycle ! Sum only inside the freeze-out surface
-        XX = I*DX
-        YY = J*DY
-        XC = XC + XX*Ed(I,J,K)
-        YC = YC + YY*Ed(I,J,K)
-        TotalE = TotalE + Ed(I,J,K)
-      End Do
-      End Do
-      End Do
-      XC = XC/TotalE
-      YC = YC/TotalE
-
-      Do NN = 1, nmoments
-        Weight = 0D0
-        WeightP = 0D0
-        XN(NN) = 0D0
-        YN(NN) = 0D0
-        XNP(NN) = 0D0
-        YNP(NN) = 0D0
-        Do K = NZ0, NZ
-        Do I = NXPhy0, NXPhy
-        Do J = NYPhy0, NYPhy
-          !If (Ed(I,J,K)<EDec) Cycle ! Sum only inside the freeze-out surface
-          XX = I*DX - XC ! shift to the real center
-          YY = J*DY - YC
-
-          angle = NN*atan2(YY,XX)
-          RR = sqrt(XX*XX+YY*YY)
-
-          gammaE=1.0/sqrt(1-Vx(I,J,K)**2-Vy(I,J,K)**2)*Ed(I,J,K)
-
-          ! eccentricity, defined using r^2 as weight function:
-          Weight=Weight+RR*RR*gammaE ! Note that this weight is repeatedly calculated. But since it is much cleaner written this way and it is very fast...
-          XN(NN)=XN(NN)+RR*RR*cos(angle)*gammaE
-          YN(NN)=YN(NN)+RR*RR*sin(angle)*gammaE
-          ! eccentricity, defined using r^n as weight function:
-          WeightP = WeightP+RR**NN*gammaE
-          XNP(NN) = XNP(NN)+RR**NN*cos(angle)*gammaE
-          YNP(NN) = YNP(NN)+RR**NN*sin(angle)*gammaE
-        End Do
-        End Do
-        End Do
-        Write (377,378,ADVANCE='NO')
-     &          -XN(NN)/Weight, -YN(NN)/Weight, ! Note that I use minor axis to define eccentricity
-     &          sqrt(XN(NN)*XN(NN)+YN(NN)*YN(NN))/Weight,
-     &          -XNP(NN)/WeightP, -YNP(NN)/WeightP,
-     &          sqrt(XNP(NN)*XNP(NN)+YNP(NN)*YNP(NN))/WeightP
- 378    Format(7(E20.8))
-      End Do ! NN=1, nmoments
-
-      Close(377)
-
-      End Subroutine
 !----------------------------------------------------------------------
 
 
@@ -5586,16 +5008,12 @@ C----------------------------------------------------------------
 
         if(violationType > 0D0) then
            iFlag = 1
-           write(583, '(4F18.8)')Time, violationType, I*DX, J*DY
         endif
 
       End Do
       End Do
       End Do
 
-      if(iFlag .eq. 0) then
-         write(583, '(4F18.8)')Time, 0D0, 10D0, 10D0
-      endif
       End Subroutine
 !-----------------------------------------------------------------------
 
@@ -5690,11 +5108,6 @@ C----------------------------------------------------------------
         !Largeness of bulk pressure
         pressure_scale = abs(PL(I,J,K))
         bulkPi_scale = abs(PPI(I,J,K))
-
-        If (bulkPi_scale > max(maxBulkPiRatio*pressure_scale,
-     &      absNumericalzero)) Then
-          write(584, '(3F18.8)')Time, I*DX, J*DY
-        End If
 
       End Do
       End Do
