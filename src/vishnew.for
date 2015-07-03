@@ -278,10 +278,7 @@ CSHEN===END================================================================
       CALL UNLINK ('surface.dat')
       CALL UNLINK ('decdat2.dat')
 
-      OPEN(98,FILE='surface.dat',FORM='FORMATTED',
-     &        STATUS='REPLACE')
-      OPEN(99,FILE='decdat2.dat',FORM='FORMATTED',
-     &        STATUS='REPLACE')
+      OPEN(99,FILE='surface.dat',FORM='FORMATTED',STATUS='REPLACE')
 
 CSHEN======================================================================
 
@@ -320,7 +317,6 @@ CSHEN======output OSCAR file Header end=====================================
       CALL CPU_TIME(cpu_end) ! Toc
       Print *, "Finished in", cpu_end-cpu_start, "seconds."
 
-      Close(98)
       Close(99)
       If (IOSCAR) Then
         close(IOSCARWrite)
@@ -579,11 +575,6 @@ CSHEN===EOS from tables end====================================================
         IF (MOD(I, NDX) .NE. 0) cycle
         XX = I * DX
         If(Ed(I,J,1)*HbarC.lt.Edec .and. Ed(I,J,1)*HbarC.ge.Edec0) then
-          VZCM = Vx(I,J,1)
-          VRCM = Vy(I,J,1)
-          BN = 0.0
-          BAMU = 0.0
-          SMU  = 0.0
           PDec2 = PL(I,J,1)
 
           CPi00 = Pi00(I,J,1)
@@ -595,21 +586,14 @@ CSHEN===EOS from tables end====================================================
           CPi33 = Pi33(I,J,1)
           CPPI = PPI(I,J,1)
 
-          WRITE(99,'(99E20.8E3)') Time,DA0,DA1,DA2,VZCM,VRCM,
-     &                  Ed(I,J,1)*HbarC,BN,
-     &                  Temp(I,J,1)*HbarC,BAMU,SMU, PDec2*HbarC,
-     &                  CPi33*HbarC,
-     &                  CPi00*HbarC,CPi01*HbarC,CPi02*HbarC,
-     &                  CPi11*HbarC,CPi12*HbarC,CPi22*HbarC
-     &                  CPPI*HbarC
-
-          TM = Time
-          XM = XX
-          YM = YY
-
-          WRITE(98,'(99E20.8)') Time, TM, XM,YM,
-     &                  Sqrt(XM**2+YM**2), R0,Aeps    !surface
-
+          WRITE(99,'(19E20.8E3)')
+     &      Time, XX, YY,
+     &      DA0, DA1, DA2,
+     &      Vx(I,J,1), Vy(I,J,1),
+     &      Ed(I,J,1)*HbarC, PDec2*HbarC, Temp(I,J,1)*HbarC,
+     &      CPi00*HbarC, CPi01*HbarC, CPi02*HbarC,
+     &      CPi11*HbarC, CPi12*HbarC, CPi22*HbarC
+     &      CPi33*HbarC, CPPI*HbarC
 
           EDEC2 = Ed(I,J,1)*HbarC
         End If
@@ -900,12 +884,6 @@ C      NDT = 5
 
 5300  CONTINUE
 
-!      Call FreezeoutPro9 (EDEC,TFREEZ, TFLAG, IEOS,NDX,NDY,NDT,
-!     &     EPS0,EPS1,TEM0,TEM1, V10,V20,V11,V21, EINS,NINT, IW,
-!     &     F0Pi00,F0Pi01,F0Pi02,F0Pi33, F0Pi11,F0Pi12,F0Pi22,
-!     &     FPi00,FPi01,FPi02,FPi33,FPi11,FPi12,FPi22, N,T,X0,Y0,
-!     &     DX,DY,DT,NXPhy,NYPhy,NX0,NX,NY0,NY,NZ0,NZ)
-
       Call FreezeoutPro10 (EDEC, IEOS, NDX, NDY, NDT,
      &     EPS0,EPS1,V10,V20,V11,V21, NINT, IW,
      &     F0Pi00,F0Pi01,F0Pi02,F0Pi33,F0Pi11,F0Pi12,F0Pi22,
@@ -979,355 +957,6 @@ CSHEN===End=====================================================================
       Return
       End
 
-C##################################################################################
-      Subroutine FreezeoutPro9 (EDEC,TFREEZ, TFLAG,IEOS, NDX,NDY,NDT,
-     &     EPS0,EPS1,TEM0,TEM1, V10,V20,V11,V21, EINS,NINT, IW,
-     &     F0Pi00,F0Pi01,F0Pi02,F0Pi33, F0Pi11,F0Pi12,F0Pi22,
-     &     FPi00,FPi01,FPi02,FPi33,FPi11,FPi12,FPi22, N,T,X0,Y0,
-     &     DX,DY,DT,NXPhy,NYPhy,NX0,NX,NY0,NY,NZ0,NZ)
-*    a subroutine to calculate the freezeout surface which is changed from Peter  Azhydro0P2
-*     TFLAG=0:      TFLAG=0 constant energy        (I)
-*     EDEC: decoupling energy (TFLAG=0)            (I)
-*     T=Time   N,Timestep for the largest Loop.     X0=0.0 Y0=0.0
-      Implicit Double Precision (A-H, O-Z)
-
-      DIMENSION EPS0(NX0:NX,NY0:NY),EPS1(NX0:NX,NY0:NY) ! Energy density in previous and current step
-      DIMENSION TEM0(NX0:NX,NY0:NY),TEM1(NX0:NX,NY0:NY) ! Temperature density in previous and current step
-      DIMENSION V10(NX0:NX,NY0:NY),V20(NX0:NX,NY0:NY)   !velocity in X Y in Previous step
-      DIMENSION V11(NX0:NX,NY0:NY),V21(NX0:NX,NY0:NY)   !velocity in X Y in current step
-
-      DIMENSION F0Pi00(NX0:NX,NY0:NY),FPi00(NX0:NX,NY0:NY)   !Stress Tensor in previous and current step
-      DIMENSION F0Pi01(NX0:NX,NY0:NY),FPi01(NX0:NX,NY0:NY)   !Stress Tensor in previous and current step
-      DIMENSION F0Pi02(NX0:NX,NY0:NY),FPi02(NX0:NX,NY0:NY)   !Stress Tensor in previous and current step
-      DIMENSION F0Pi11(NX0:NX,NY0:NY),FPi11(NX0:NX,NY0:NY)   !Stress Tensor in previous and current step
-      DIMENSION F0Pi12(NX0:NX,NY0:NY),FPi12(NX0:NX,NY0:NY)   !Stress Tensor in previous and current step
-      DIMENSION F0Pi22(NX0:NX,NY0:NY),FPi22(NX0:NX,NY0:NY)   !Stress Tensor in previous and current step
-      DIMENSION F0Pi33(NX0:NX,NY0:NY),FPi33(NX0:NX,NY0:NY)   !Stress Tensor in previous and current step
-
-      DIMENSION EPCUB(8),SURFS(12,0:2),VMID(0:2)
-      Double Precision EpcubP(8), SSurfs(12,0:2), SVmid(0:2)! permuted EPCUB, to be averaged to get more accurate results for, e.g, VMID; summed unsigned Surfs and Vmid
-      Double Precision signSurfs(12,0:2), signVmid(0:2) ! store signs, used in the averaging process
-      DIMENSION IBIT(12,12)
-C      Parameter(NDX=2,NDY=2, NDT=5)!
-C      Common /Nfreeze/ NDX, NDY, NDT
-
-      Parameter(MAXERR=150 )!Max Number erro in Cubcal
-      PARAMETER (PI=3.141592653d0, HBARC=.19733d0)
-
-      Logical INTERSECT, WRITING, WRITINGX, WRITINGY
-      INTEGER TFLAG, EINS
-      INTEGER NXPHY,NYPHY
-
-!** Zhi ***
-      Integer absI, absJ ! abs(I) and abs(J) used in the loop
-      Integer tmpI
-
-* ----------------------------------------------------------------------
-*   ** A 'BITCHART' USED BY SUBROUINE 'CUBCAL' TO FIND AN APPROXIMATION
-*   ** FOR A SEGMENT OF THE DECOUPLING SURFACE INTERSECTING A
-*   ** ((dt)x(dx)x(dy)) 'CUBE'.
-      DATA (IBIT(1,I),I=1,12)/  0,1,2,1,1,1,0,0,2,0,0,0/
-      DATA (IBIT(2,I),I=1,12)/  1,0,1,2,0,1,1,0,0,2,0,0/
-      DATA (IBIT(3,I),I=1,12)/  2,1,0,1,0,0,1,1,0,0,2,0/
-      DATA (IBIT(4,I),I=1,12)/  1,2,1,0,1,0,0,1,0,0,0,2/
-      DATA (IBIT(5,I),I=1,12)/  1,0,0,1,0,2,0,2,1,0,0,1/
-      DATA (IBIT(6,I),I=1,12)/  1,1,0,0,2,0,2,0,1,1,0,0/
-      DATA (IBIT(7,I),I=1,12)/  0,1,1,0,0,2,0,2,0,1,1,0/
-      DATA (IBIT(8,I),I=1,12)/  0,0,1,1,2,0,2,0,0,0,1,1/
-      DATA (IBIT(9,I),I=1,12)/  2,0,0,0,1,1,0,0,0,1,2,1/
-      DATA (IBIT(10,I),I=1,12)/ 0,2,0,0,0,1,1,0,1,0,1,2/
-      DATA (IBIT(11,I),I=1,12)/ 0,0,2,0,0,0,1,1,2,1,0,1/
-      DATA (IBIT(12,I),I=1,12)/ 0,0,0,2,1,0,0,1,1,2,1,0/
-
-      COMMON /TAREOS/ TBNP01,TEPP01,TDBNP1,TDEPP1,NTBNP1,NTEPP1,
-     &                TBNP02,TEPP02,TDBNP2,TDEPP2,NTBNP2,NTEPP2,
-     &                TMAT1(0:300,0:250),TMAT2(0:300,0:250)
-
-      Integer IEOS2dec
-      Common/IEOS2dec/ IEOS2dec  ! IEOS=2 decouple by gluon/pion
-
-c      IF (MOD(N+1,NDT).EQ.0) THEN   !** N+1 *******************************************************************
-       Common /Tde/ Tde, Rdec1, Rdec2,TempIni !Decoupling Temperature !decoupling redious
-       Common/R0Aeps/ R0,Aeps
-
-CSHEN======================================================================
-C=============add chemical potential for EOS-PCE
-      Integer, Parameter :: RegEOSMudatasize = EOSMUDATALENGTH   !converted EOS Mu table data size
-      Integer, Parameter :: IMax_Mu = EOSMUMAXPARTICLE        !maximum allowed stable particles for partially chemical equilibrium EOS
-      Integer :: Inumparticle       !number of stable particles in PCE, 0 for chemical equilibrium EOS
-      Integer :: EOS_Mu_ne            !total rows in mu table
-      double precision :: EOS_Mu_e0   !lowest energy density in mu table
-      double precision :: EOS_Mu_de   !spacing of energy density in mu table
-      double precision :: MuEOSdata(RegEOSMudatasize, IMax_Mu)
-      Integer :: IMuflag
-
-      double precision :: XMufreeze(1:IMax_Mu)
-      double precision :: XMufreezetemp
-
-      common /EOSMudata/MuEOSdata, IMuflag
-      common /EOSMudatastructure/ EOS_Mu_e0, EOS_Mu_de, EOS_Mu_ne,
-     &                            Inumparticle
-CSHEN======================================================================
-
-
-      Rdec1=DX*NXPhy*1.414
-      Rdec2=0.0
-
-      DTD=NDT*DT
-
-      NYFUL=NYPhy+2
-      NXFUl=NXPhy+2
-
-      NINT=0
-      NINT2=0
-      DO 1234 J=-NYFUL,NYFUL
-        Y=Y0+J*DY
-      DO 1235 I=-NXFUL,NXFUL
-        IF (IEOS .EQ. 2) THEN
-          if(IEOS2dec.eq.0) then ! decouple to gluons
-            TEM1(I,J) =
-     &          ((EPS1(I,J)-0.0)*120./(PI**2.)/169. *(HBARC**3.))**(.25) !changed by Evan  gluon
-          else                   !decouple to poins
-            TEM1(I,J)=SQRT(HBARC*SQRT(10.0*HBARC*EPS1(I,J))/PI)  !Ideal pion gas temperature
-          end if
-        ELSE IF (IEOS.EQ.0) THEN  !EOS=0 with phase transition
-             BBBNN = 0.0  !  BNR1(I,J)
-             EEENN = EPS1(I,J)
-             IF (EEENN.GT.24) THEN
-             TEM1(I,J) =((EEENN-.3642)*120./(PI**2.) /169.
-     &              *(HBARC**3.))**(.25)
-             ELSE
-             TEM1(I,J) = EOUT(BBBNN,EEENN,0.0d0,
-     &              TBNP01,TEPP01,TDBNP1,TDEPP1,NTBNP1,NTEPP1,
-     &              TBNP02,TEPP02,TDBNP2,TDEPP2,NTBNP2,NTEPP2,
-     &              TMAT1,TMAT2)
-             END IF
-        ELSE IF (IEOS.EQ.99) THEN
-        ELSE
-        END IF
- 1235 CONTINUE
- 1234 CONTINUE
-
-
-
-      IF (TFLAG .EQ. 1) THEN
-       FREEZ = TFREEZ
-      ELSE
-       FREEZ = EDEC
-      END IF
-
-
-      DO 500 absJ=0,NYFUL-NDY,NDY
-      DO 510 absI=0,NXFUL-NDX,NDX
-
-      Do 1911 tmpI=1,4 ! change this to tmpI=1,1 will output freeze-out data only in the 1st quadrant
-
-      If (tmpI == 1) Then
-        I = absI
-        J = absJ
-      ElseIf (tmpI == 2) Then
-        I = -absI - NDX
-        J = absJ
-      ElseIf (tmpI == 3) Then
-        I = -absI - NDX
-        J = -absJ - NDY
-      ElseIf (tmpI == 4) Then
-        I = absI
-        J = -absJ - NDY
-      Else
-        Print *, "You kidding. tmpI=", tmpI
-        Stop
-      End If
-
-      Y = J*DY
-      X = I*DX
-
-      DXD = NDX*DX
-      DYD = NDY*DY
-
-      ! The cubic returned by SECTIO3 have the same orientation in all quadrants, determined by the order of x and y values of the vertices.
-      IF (TFLAG .EQ. 1) THEN !freeze out by constant T
-        CALL SECTIO2(FREEZ,INTERSECT,EPCUB,TEM0,TEM1,
-     &        I,J,NDX,NDY,NX0,NY0,NX,NY)
-      ELSE
-        CALL SECTIO2(FREEZ,INTERSECT,EPCUB,EPS0,EPS1,
-     &        I,J,NDX,NDY,NX0,NY0,NX,NY)
-      ENDIF
-
-      IF (INTERSECT) THEN   !***(INTERSECT)
-
-      NINT    = NINT+1
-      NINT2   = NINT2+1
-      WRITING = .TRUE.
-      if(absJ.eq.0) then
-        WRITINGX = .TRUE.     !output freeze-out surface along x-axis
-      else
-        WRITINGX = .FALSE.
-      endif
-      if(absI.eq.0) then
-        WRITINGY = .TRUE.     !output freeze-out surface along y-axis
-      else
-        WRITINGY = .FALSE.
-      endif
-
-
-      CALL CUBCAL(FREEZ,EPCUB,SURFS,NSURFS,VMID,IBIT,
-     &             DTD,DXD,DYD,NERR,MAXERR)
-
-      DAH0 = SURFS(1,0)
-      DAH1 = SURFS(1,1)
-      DAH2 = SURFS(1,2)
-
-      DO 520 NS = 2,NSURFS
-        DAH0 = DAH0+SURFS(NS,0)
-        DAH1 = DAH1+SURFS(NS,1)
-        DAH2 = DAH2+SURFS(NS,2)
-520   CONTINUE
-
-       TM = T-DTD+DT+VMID(0)
-       XM = X+VMID(1)
-       YM = Y+VMID(2)
-
-      CALL P4(I,J,NDX,NDY,NDT,VMID,V10,V11,
-     &        NX0,NY0,NX,NY,DTD,DXD,DYD,V1,0)
-      CALL P4(I,J,NDX,NDY,NDT,VMID,V20,V21,
-     &        NX0,NY0,NX,NY,DTD,DXD,DYD,V2,0)
-      CALL P4(I,J,NDX,NDY,NDT,VMID,F0Pi00,FPi00,
-     &        NX0,NY0,NX,NY,DTD,DXD,DYD,CPi00,0)
-      CALL P4(I,J,NDX,NDY,NDT,VMID,F0Pi01,FPi01,
-     &        NX0,NY0,NX,NY,DTD,DXD,DYD,CPi01,0)
-      CALL P4(I,J,NDX,NDY,NDT,VMID,F0Pi02,FPi02,
-     &        NX0,NY0,NX,NY,DTD,DXD,DYD,CPi02,0)
-      CALL P4(I,J,NDX,NDY,NDT,VMID,F0Pi11,FPi11,
-     &        NX0,NY0,NX,NY,DTD,DXD,DYD,CPi11,0)
-      CALL P4(I,J,NDX,NDY,NDT,VMID,F0Pi12,FPi12,
-     &        NX0,NY0,NX,NY,DTD,DXD,DYD,CPi12,0)
-      CALL P4(I,J,NDX,NDY,NDT,VMID,F0Pi22,FPi22,
-     &        NX0,NY0,NX,NY,DTD,DXD,DYD,CPi22,0)
-      CALL P4(I,J,NDX,NDY,NDT,VMID,F0Pi33,FPi33,
-     &        NX0,NY0,NX,NY,DTD,DXD,DYD,CPi33,0)
-
-
-       BN   = 0.0
-       PDec = PEPS(0.0d0,Edec)
-
-       IF (TFLAG .EQ. 1) THEN   !freeze out by constant T
-          CALL P4(I,J,NDX,NDY,NDT,VMID,EPS0,EPS1,
-     &           NX0,NY0,NX,NY,DTD,DXD,DYD,EDEC,0)
-          TDEC = FREEZ
-       ELSE                    !freeze out by constant E
-         IF (IEOS .EQ. 2) THEN  !freeze out by const.energy density EDec then find out TDec
-             !Print *, "IEOS2dec=", IEOS2dec
-             if(IEOS2dec.eq.0) then ! decouple to gluons
-              TDEc=((EDEC-0.0)*120./(PI**2.)/169.
-     &              *(HBARC**3.))**(.25)  !changed by Evan  !gluon
-             else  ! decouple to pions
-              TDEC=SQRT(HBARC*SQRT(10.0*HBARC*EDEC)/PI)
-             end if
-         ELSE IF (IEOS.EQ.0) THEN
-               BN   = 0.0                 !FREEZ=EDec
-               TDEC = EOUT(BN,FREEZ,0.0d0,
-     &                     TBNP01,TEPP01,TDBNP1,TDEPP1,NTBNP1,NTEPP1,
-     &                     TBNP02,TEPP02,TDBNP2,TDEPP2,NTBNP2,NTEPP2,
-     &                     TMAT1,TMAT2)
-         Else if (IEOS.eq.4) Then
-               ee   = EDEC/HbarC          !chenge to fm
-               TDEC = TEIEOS4(ee)*HBarC   !change to GEV
-         ELSE IF (IEOS.eq.5) then         !CSHEN SM-EOS Q
-               ee   = EDEC/HbarC          !1/fm^4
-               TDEC = TEIEOS5pp(ee)*HbarC !GeV
-         ELSE IF (IEOS.EQ.6) THEN         !CSHEN New EOS
-               ee   = EDEC                !GeV/fm^3
-               TDEC = TEOSL6(ee)          !GeV
-         else if (IEOS.eq.7) then         !CSHEN EOS from table
-               ee   = EDEC                !GeV/fm^3
-               TDEC = TEOSL7(ee)          !GeV
-         ELSE IF (IEOS.EQ.10) THEN
-         ELSE IF (IEOS.EQ.99) THEN
-         ELSE
-         END IF
-       END IF
-
-
-c                 BAMU = EOUT(BN,EDEC,0.0,
-
-
-       BAMU = 0.0
-       SMU  = 0.0
-
-       DA0  = DAH0*1.
-       DA1  = DAH1*1.
-       DA2  = DAH2*1.
-
-       VZCM = V1
-       VRCM = V2
-
-       IF (WRITING) THEN   !---
-         WRITE(98,2553) T-DTD+DT, TM, XM,YM,
-     &                  Sqrt(XM**2+YM**2), R0,Aeps    !surface
-
-         IW = IW+1   !count the number in surface written file
-         if(Sqrt(XM**2+YM**2).le.Rdec1) Rdec1=Sqrt(XM**2+YM**2)
-         if(Sqrt(XM**2+YM**2).ge.Rdec1) Rdec2=Sqrt(XM**2+YM**2)
-
-         IF (IEOS.EQ.99) THEN
-         ELSE
-C--------- ---with the same physical unit as energt dencity              EPS1(I,J)=Ed(I,J,NZ0)*HbarC
-           WRITE(99,2555) TM,DA0,DA1,DA2,VZCM,VRCM,EDEC,BN, !
-     &                  TDEC,BAMU,SMU, PDec, CPi33*HbarC,
-     &                  CPi00*HbarC,CPi01*HbarC,CPi02*HbarC,
-     &                  CPi11*HbarC,CPi12*HbarC,CPi22*HbarC
-         END IF
-
-CSHEN=====================================================================
-C===============output chemcial potential for EOS-PCE=====================
-         IF (((IEOS.EQ.6).or.(IEOS.eq.7)).and.(IMuflag.eq.0)) then
-           if(Inumparticle.ne.0) then
-            do L=1,Inumparticle
-               call interpCubic(MuEOSdata(:,L), RegEOSMudatasize,
-     &                  EOS_Mu_e0, EOS_Mu_de, EDEC, XMufreezetemp)
-               XMufreeze(L) = XMufreezetemp
-            end do
-            write(81,'(E15.6)', Advance='NO') EDEC
-            do L=1,Inumparticle
-              write(81,'(E15.6)', Advance='NO') XMufreeze(L)
-            enddo
-            write(81,*)
-            IMuflag = 1
-           endif
-         endif
-CSHEN==========end========================================================
-
-         ep = Edec+Pdec
-C         Write(79,2555)TM,XM,YM,V1,V2, CPi11/ep, CPi12/ep,CPi22/ep,
-C     &                 CPi33/ep, CPi00/ep, CPi01/ep, CPi02/ep
-C         Write(78,2555)TM,Sqrt(XM**2+YM**2),Sqrt(V1**2+V2**2),
-C     &                 (CPi11+CPi22)/ep, CPi33/ep, CPi00/ep
-
-       ELSE               !---
-         NINT = NINT - 1
-       END IF             !---
-
-       END IF      !***(INTERSECT)
-
-1911    Continue
- 510    CONTINUE
- 500    CONTINUE
-
-
-
-c          END IF    !   IF (MOD(N+1,NDT).EQ.0) THEN   !** N+1 *******************************************************************
-C          EINS=EINS+1
-
-
-
-2553   FORMAT(8F20.8)
-2555   FORMAT(19E20.8E3)
-2565   FORMAT(14E14.6)
-
-
-      Return
-      End
 
 C##################################################################################
       Subroutine FreezeoutPro10(Edec, IEOS, NDX, NDY, NDT,
@@ -1457,16 +1086,6 @@ CSHEN======================================================================
        IF (INTERSECT) THEN   !***(INTERSECT)
          NINT = NINT+1
          WRITING = .TRUE.
-         if(absJ.eq.0) then
-           WRITINGX = .TRUE.     !output freeze-out surface along x-axis
-         else
-           WRITINGX = .FALSE.
-         endif
-         if(absI.eq.0) then
-           WRITINGY = .TRUE.     !output freeze-out surface along y-axis
-         else
-           WRITINGY = .FALSE.
-         endif
          dSigma = 0.0d0
          Nsurf = 0
          Vmid = 0.0d0
@@ -1499,7 +1118,6 @@ CSHEN======================================================================
      &             NX0,NY0,NX,NY,DTFreeze,DXFreeze,DYFreeze,CPi33,0)
            CALL P4(I,J,NDX,NDY,NDT,Vmidpoint,F0PPI,FPPI,
      &             NX0,NY0,NX,NY,DTFreeze,DXFreeze,DYFreeze,CPPI,0)
-           BN   = 0.0
            Pdec = PEPS(0.0d0,Edec)
 
            if (IEOS.eq.4) Then
@@ -1516,23 +1134,20 @@ CSHEN======================================================================
               Tdec = TEOSL7(ee)          !GeV
            ELSE
            END IF
-           BAMU = 0.0
-           SMU  = 0.0
 
            DA0  = dSigma(0, iSurf)
            DA1  = dSigma(1, iSurf)
            DA2  = dSigma(2, iSurf)
 
            IF (WRITING) THEN   !---
-             ! write to surface.dat
-             WRITE(98,2553) T-DTFreeze+DT, Tmid, Xmid, Ymid,
-     &                      Sqrt(Xmid**2+Ymid**2), R0,Aeps
-             ! write to decdat2.dat
-             WRITE(99,2555) Tmid, DA0, DA1, DA2, v1mid, v2mid, Edec, BN,
-     &                      Tdec, BAMU, SMU, Pdec, CPi33*HbarC,
-     &                      CPi00*HbarC,CPi01*HbarC,CPi02*HbarC,
-     &                      CPi11*HbarC,CPi12*HbarC,CPi22*HbarC,
-     &                      CPPI*HbarC
+             WRITE(99,'(19E20.8E3)')
+     &         Tmid, Xmid, Ymid,
+     &         DA0, DA1, DA2,
+     &         v1mid, v2mid,
+     &         Edec, Pdec, Tdec,
+     &         CPi00*HbarC, CPi01*HbarC, CPi02*HbarC,
+     &         CPi11*HbarC, CPi12*HbarC, CPi22*HbarC,
+     &         CPi33*HbarC, CPPI*HbarC
              IW = IW+1   !count the number in surface written file
              !output chemical potential for EOS-PCE
              IF (((IEOS.EQ.6).or.(IEOS.eq.7)).and.(IMuflag.eq.0)) then
@@ -1561,7 +1176,6 @@ CSHEN======================================================================
  500    CONTINUE
 
 2553   FORMAT(8F20.8)
-2555   FORMAT(20E20.8E3)
 2565   FORMAT(14E14.6)
 
       Return
