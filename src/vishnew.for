@@ -159,67 +159,55 @@ C *******************************J.Liu changes end***************************
 
 !----------Start of reading parameters from file------------------------
 C========= Inputting Parameters ===========================================
-      OPEN(1,FILE='vishnew.conf',STATUS='OLD')
+      Open(1,FILE='vishnew.conf',STATUS='OLD')
 
-      READ(1,*) T0          !initial time (fm/c)
-      READ(1,*) Edec        !Decoupling energy density   (GeV/fm^3)
-C----------------------------------------------------------------------
-      Read(1,*) Cha
-      Read(1,*) Cha
-
-      READ(1,*) IEin        !type of initialization  0:initialize by energy density 1: initialize by entropy density
-
-C------- Parameter for viscous coeficients  ------------------------
-      Read(1,*) Cha
-      Read(1,*) Cha
-
-      READ(1,*) ViscousC    ! eta/s  (constant)    (0: no shear vis )
-      READ(1,*) VisBeta     !\tau_Pi=VisBeta*6.0\eta /(ST)
-      READ(1,*) IVisflag     !Flag for temperature dependent eta/s(T)
-
-      READ(1,*) VisBulk     !VisBulk=C;  Xi/s= C* (Xi/S)_min  (C=0, no bulk vis; or C>1 )
-      READ(1,*) IVisBulkFlag !Flag for temperature dependent zeta/s(T)
-      READ(1,*) IRelaxBulk  !type of bulk relaxation time (0: critical slowing down; 1: contant Relax Time
-                            !2: \tau_PI=1.5/(2\piT))
-      READ(1,*) BulkTau !constant relaxation time (fm/c) (require input IRelaxBulk=1)
-
-C------- Parameter for freeze-out  ------------------------
-      Read(1,*) Cha
-      Read(1,*) Cha
-
-      READ(1,*) NDX,NDY   ! freeze-out step in x and y dirction
-      READ(1,*) NDT       ! freeze-out step in \tau dirction
-
-
-C------ Lattice size and boundary R0 ----------------------------
-      Read(1,*) Cha
-      Read(1,*) Cha
-
-      READ(1,*) DT_1      ! time step
-      READ(1,*) LS        ! lattice size
-      READ(1,*) R0Bdry    ! <x^2> and <y^2> for Gaussian initial condition
-
-C------ Some uncommon parameters ----------------------------
-      Read(1,*) Cha
-      Read(1,*) Cha
-
-C------ freeze out at first time below Edec  ----------------------------
-      Read(1,*) Ifreez
-      Read(1,*) Edec0
-
-C ***************************J.Liu changes***************************
-C------- Parameters for initial profile from Laudan matching-----------------------
-      Read(1,*) Cha
-      Read(1,*) Cha
-      Read(1,*) InitialURead
-C ***************************J.Liu changes end***************************
+      ! initialization
+      Read(1,*) T0               ! initial time [fm]
+      Read(1,*) IEin             ! read initial condition as energy (0) or entropy (1) density
 
       Read(1,*) Cha
+
+      ! basic stuff
+      Read(1,*) DT_1             ! timestep [fm]
+      Read(1,*) LS               ! lattice size in positive direction (total size = 2*LS + 1)
+      Read(1,*) R0Bdry           ! boundary for viscous regulation [fm]
+
       Read(1,*) Cha
-      Read(1,*) Initialpitensor
-      Read(1,*) ViscousEqsType
-      Read(1,*) VisBulkNorm
-      CLOSE(1)
+
+      ! freeze-out
+      Read(1,*) Edec             ! decoupling energy density [GeV/fm^3]
+      Read(1,*) Ifreez           ! whether to freeze-out regions initially below Edec
+      Read(1,*) Edec0            ! minimum energy density for Ifreez == 1
+      Read(1,*) NDX,NDY          ! freeze-out step in x, y directions
+      Read(1,*) NDT              ! freeze-out step in tau direction
+
+      Read(1,*) Cha
+
+      ! viscous equations
+      Read(1,*) ViscousEqsType   ! Israel-Stewart (1) or 14-moment approximation (2)
+
+      Read(1,*) Cha
+
+      ! shear viscosity
+      Read(1,*) ViscousC         ! shear viscosity eta/s
+      Read(1,*) IVisflag         ! flag for temperature-dependent (eta/s)(T)
+      Read(1,*) VisBeta          ! shear relaxation time tau_pi = 6*VisBeta*eta/(sT)
+      Read(1,*) Initialpitensor  ! initialize shear tensor with zeros (0) or by Navier-Stokes (1)
+
+      Read(1,*) Cha
+
+      ! bulk viscosity
+      Read(1,*) VisBulk          ! Xi/s = VisBulk * (Xi/s)_min
+      Read(1,*) IVisBulkFlag     ! flag for temperature-dependent (zeta/s)(T)
+      Read(1,*) VisBulkNorm      ! normalization for (zeta/s)(T) function
+      Read(1,*) IRelaxBulk       ! bulk relaxation time: critical slowing down (0), constant (1), 1.5/(2*pi*T) (2), ?? (3), ?? (4)
+      Read(1,*) BulkTau          ! constant bulk relaxation time for IRelaxBulk == 1
+
+      Read(1,*) Cha
+
+      Read(1,*) InitialURead     ! read initial flow profile (currently broken)
+
+      Close(1)
 C===========================================================================
 
       DX=0.1d0
