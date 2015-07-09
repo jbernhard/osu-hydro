@@ -167,7 +167,6 @@ C----------------------------------------------------------------------
       Read(1,*) Cha
       Read(1,*) Cha
 
-      READ(1,*) IInit       !initialization by Glauber or CGC  (0:Gaussian, 1:Glauber, 2:read from file )
       READ(1,*) IEin        !type of initialization  0:initialize by energy density 1: initialize by entropy density
 
 C------- Parameter for viscous coeficients  ------------------------
@@ -204,10 +203,7 @@ C------ Some uncommon parameters ----------------------------
       Read(1,*) Cha
       Read(1,*) Cha
 
-      READ(1,*) Rx2,Ry2   ! <x^2> and <y^2> for Gaussian initial condition
-
 C------ freeze out at first time below Edec  ----------------------------
-      Read(1,*) Cha
       Read(1,*) Ifreez
       Read(1,*) Edec0
 
@@ -242,6 +238,9 @@ C ***************************J.Liu changes end***************************
       ! deprecated parameters
       IEOS = 7
       IEOS2dec = 1
+      IInit = 2
+      Rx2 = 4.0
+      Ry2 = 6.0
 
       If (echo_level>=3) Then
         Write (*,*) "Have:", "IEOS=", IEOS, "A=", A, ! write out parameter for a check
@@ -1782,172 +1781,6 @@ C     &          *(1-Cper)  !HRG
        end
 
 
-C#######################################################
-      Subroutine initialES2( Ed,Bd,Sd, DX,DY,DZ,DT,
-     &    NX0,NY0,NZ0, NX,NY,NZ,NXPhy0,NYPhy0 ,NXPhy,NYPhy)
-      Implicit Double Precision (A-H, O-Z)
-      Dimension Ed(NX0:NX, NY0:NY, NZ0:NZ) !energy density
-      Dimension Bd(NX0:NX, NY0:NY, NZ0:NZ) !Baryon density
-      Dimension Sd(NX0:NX, NY0:NY, NZ0:NZ) !entropy density
-
-      Dimension PL(NX0:NX, NY0:NY, NZ0:NZ) !Pressure
-      Dimension Temp(NX0:NX, NY0:NY, NZ0:NZ) !Local Temperature
-      Dimension CMu(NX0:NX, NY0:NY, NZ0:NZ) !Local chemical potential
-
-      Parameter (HbarC=0.19733d0) !for changcing between fm and GeV ! Hbarc=0.19733=GeV*fm
-      Parameter (pi=3.1415926d0)
-      Parameter (gt=169.0d0/4.0d0)!total freedom of Quarks and Gluond  Nf=2.5 !change another in EntropyTEm
-
-      Double Precision resultingEd
-
-      COMMON /EOSSEL/ IEOS   !Type of EOS
-      COMMON /IEin/ IEin  !parameter for initializtion by entropy 1 or energy 0
-      Common /bb/ b  !impact parameter
-      Common /EK/ EK, HWN !EK(T0) constant related to energy density
-                           !HWN percent of Wounded Nucleon
-      Common /RxyBlock/ Rx2, Ry2
-
-      Integer, Parameter :: RegEOSdatasize = EOSDATALENGTH  !converted EOS table size
-      double precision :: PEOSdata(RegEOSdatasize),
-     &                    SEOSdata(RegEOSdatasize),
-     &                    TEOSdata(RegEOSdatasize)
-      double precision :: EOSe0         !lowest energy density
-      double precision :: EOSde         !spacing of energy density
-      Integer :: EOSne                 !total rows of energy density
-
-      Double Precision, External :: SEOSL7
-
-      common /EOSdata/PEOSdata, SEOSdata, TEOSdata !CSHEN: for EOS from tables
-      common /EOSdatastructure/ EOSe0, EOSde, EOSne
-
-
-      HBC=1.0-HWN       !HBC Percent of Binary Collision
-
-      DN00=HWN*CWNBC (0.0d0,0.0d0,0.0d0,1.0d0)
-     &           +HBC*CWNBC (0.0d0,0.0d0,0.0d0,2.0d0)
-      Con1=EK/DN00  !factor K
-
-
-      ConsG=gt*Pi**2/30.0
-      ConsS0=(4.0/3.0)*ConsG**(0.25)
-      ConsE1=(0.75)**(4.0/3.0)*(1.0/ConsG)*1.0/3.0
-
-      If(IEin.eq.0 ) then  ! intialliztion by energy then find entropy
-        Print*,'Con1,Ek,DN00', Con1,EK,DN00
-        do 5 k=1,1
-        do 5 j=NYPhy0,NYPhy
-        do 5 i=NXPhy0,NXPhy
-          xx=DX*i
-          yy=DY*j
-          zz=DZ*K
-          Ed(i,j,k)=Con1*(HWN*CWNBC (xx,yy,b,1.0d0) !WN   !changed for 2d
-     &                    +HBC*CWNBC (xx,yy,b,2.0d0))!BC
-          If(IEOS.eq.2) then
-            Sd(i,j,K)=ConsS0*ED(i,j,k)**(0.75)
-          End if
- 5      continue
-        If(IEOS.ne.2) then
-          call EntropyTemp3 (Ed,PL, Temp,CMu,Sd,
-     &      NX0,NY0,NZ0, NX,NY,NZ, NXPhy0,NYPhy0, NXPhy,NYPhy)
-        End if
-      End if ! IEin.eq.0
-
-
-      If(IEin.eq.1 ) then !initializtion by entropy then find energy
-
-        ! Ek is used as "Sk", where the conversion from GeV/fm^3 to fm^-4 is unneccessary.
-        ! Here the unit for "Ek" from the input should be fm^-3.
-        ! Note that "Ek" at the initialization stage is this "Ek/HbarC".
-        Con1 = Con1*HbarC
-        Print*,'Con1,Sk,DN00', Con1,EK*HbarC,DN00
-        Do 15 k=1,1
-        Do 15 j=NYPhy0,NYPhy
-        Do 15 i=NXPhy0,NXPhy
-          xx=DX*i
-          yy=DY*j
-          zz=DZ*K
-          Sd(i,j,k)=Con1*(HWN*CWNBC (xx,yy,b,1.0d0) !WN   !changed for 2d
-     &                    +HBC*CWNBC (xx,yy,b,2.0d0))!BC
-          If(IEOS.eq.2) then
-            Ed(i,j,k)=ConE1*Sd(i,j,k)**(4.0/3.0)
-          End if
-15      Continue
-        If(IEOS==7) Then
-          Do I = NXPhy0,NXPhy
-          Do J = NYPhy0,NYPhy
-            Call invertFunctionD(SEOSL7, 0D0, 1000D0, 1D-3, 0D0,
-     &                        Sd(I,J,NZ0), resultingEd)
-            Ed(I,J,NZ0) = resultingEd/HbarC ! to fm^(-4)
-          End Do
-          End Do
-        End If
-        Print *, Ed(0,0,NZ0)
-      End if ! IEin.eq.7
-
-       Return
-       End
-
-
-
-C#######################################################
-       Subroutine initialES2Gaussian(Ed,Bd,Sd, DX,DY,DZ,DT,
-     &    NX0,NY0,NZ0, NX,NY,NZ,NXPhy0,NYPhy0 ,NXPhy,NYPhy)
-        Implicit Double Precision (A-H, O-Z)
-       Dimension Ed(NX0:NX, NY0:NY, NZ0:NZ) !energy density
-       Dimension Bd(NX0:NX, NY0:NY, NZ0:NZ) !Baryon density
-       Dimension Sd(NX0:NX, NY0:NY, NZ0:NZ) !entropy density
-
-       Dimension PL(NX0:NX, NY0:NY, NZ0:NZ) !Pressure
-       Dimension Temp(NX0:NX, NY0:NY, NZ0:NZ) !Local Temperature
-       Dimension CMu(NX0:NX, NY0:NY, NZ0:NZ) !Local chemical potential
-
-       Parameter (HbarC=0.19733d0) !for changcing between fm and GeV ! Hbarc=0.19733=GeV*fm
-       Parameter (pi=3.1415926d0)
-       Parameter (gt=169.0d0/4.0d0)!total freedom of Quarks and Gluond  Nf=2.5 !change another in EntropyTEm
-
-       COMMON /EOSSEL/ IEOS   !Type of EOS
-       COMMON /IEin/ IEin  !parameter for initializtion by entropy 1 or energy 0
-       Common /bb/ b  !impact parameter
-       Common /EK/ EK, HWN !EK(T0) constant related to energy density
-                            !HWN percent of Wounded Nucleon
-        Common /RxyBlock/ Rx2, Ry2
-          HBC=1.0-HWN       !HBC Percent of Binary Collision
-
-        DN00=HWN*CWNBC (0.0d0,0.0d0,0.0d0,1.0d0)
-     &           +HBC*CWNBC (0.0d0,0.0d0,0.0d0,2.0d0)
-        Con1=EK/DN00  !factor K
-        Print*,'Con1,Ek,DN00', Con1,EK,DN00
-
-        ConsG=gt*Pi**2/30.0
-        ConsS0=(4.0/3.0)*ConsG**(0.25)
-        ConsE1=(0.75)**(4.0/3.0)*(1.0/ConsG)*1.0/3.0
-
-      If(IEin.eq.0 ) then  ! intialliztion by energy then find entropy
-        do 5 k=1,1
-         do 5 j=NYPhy0,NYPhy
-          do 5 i=NXPhy0,NXPhy
-                 xx=DX*i
-                 yy=DY*j
-                 zz=DZ*K
-             Ed(i,j,k)=Ek*1.0
-     &               *Exp(-xx*xx/(Rx2*2.0)-yy*yy/(Ry2*2.0))
-            If(IEOS.eq.2) then
-            Sd(i,j,K)=ConsS0*ED(i,j,k)**(0.75)
-            End if
- 5      continue
-        If(IEOS.ne.2) then
-            call EntropyTemp3 (Ed,PL, Temp,CMu,Sd,
-     &      NX0,NY0,NZ0, NX,NY,NZ, NXPhy0,NYPhy0, NXPhy,NYPhy)
-        End if
-      end if
-
-      If(IEin.eq.1 ) then !initializtion by entropy then find energy
-        Print *, "Gaussain initialization by entropy not surpported."
-        Stop
-      End if ! IEin.eq.7
-
-       Return
-       End
 C###########################################################################
        Subroutine EntropyTemp3 (Ed,PL, Temp,CMu,Sd,
      &       NX0,NY0,NZ0, NX,NY,NZ, NXPhy0,NYPhy0, NXPhy,NYPhy)

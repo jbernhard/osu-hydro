@@ -332,40 +332,19 @@ c          write(210,'(261(D24.14))')  (U0(I,J,NZ0), J=NYPhy0, NYPhy) !add this 
 
 !------------------- Energy initialization -----------------------------
 
-        If(IInit.eq.0) then ! Gaussian initial condition
-            call initialES2Gaussian(Ed,Bd,Sd, DX,DY,DZ,DT,      !Gaussain initial condition
-     &      NX0,NY0,NZ0, NX,NY,NZ, NXPhy0,NYPhy0, NXPhy,NYPhy)
-        elseif(IInit.eq.1) then
-            call initialES2(Ed,Bd,Sd, DX,DY,DZ,DT,      !Origin Glauber initial condition
-     &      NX0,NY0,NZ0, NX,NY,NZ, NXPhy0,NYPhy0, NXPhy,NYPhy)
-        elseif (IInit.eq.2) then
 C====Input the initial condition from file====
-!           Unit: fm^-4
-          If (IEin==0) Then
-            If (InitialURead .eq. 0) then
-              OPEN(2,file='Initial/InitialEd.dat',status='old')
-            else
-              OPEN(2,file='Initial/ed_profile_kln.dat',
-     &         status='old', FORM = 'FORMATTED')
-            Endif
+          open(2,file='initial.dat',status='old')
 
+          If (IEin==0) Then  ! read as energy density
             do 2562 I = NXPhy0,NXPhy
               read(2,*)  (Ed(I,J,NZ0), J=NYPhy0,NYPhy)
 2562        continue
-            Ed=Ed/HbarC
-            close(2)
-
-          Else If (IEin==1 .AND. IEOS==7) Then
-            If(InitialURead .eq. 0) then
-              OPEN(2,file='Initial/InitialSd.dat',status='old') ! read from file first
-            else
-              OPEN(2,file='Initial/sd_profile_kln.dat',status='old') ! read from file first
-            Endif
-
+            Ed = Ed/HbarC  ! convert to fm^-4
+          Else If (IEin==1) Then  ! read as entropy density
             Do I = NXPhy0,NXPhy
               read(2,*)  (Sd(I,J,NZ0), J=NYPhy0,NYPhy)
             End Do
-            Close(2)
+            Sd = sFactor*Sd  ! rescale initial entropy
             Do I = NXPhy0,NXPhy
             Do J = NYPhy0,NYPhy
 !              Call invertFunctionD(SEOSL7, 0D0, 315D0, 1D-3, 0D0,
@@ -373,14 +352,12 @@ C====Input the initial condition from file====
               Call invertFunction_binary(
      &                 SEOSL7, 0D0, 315D0, 1d-16, 1D-6,
      &                 Sd(I, J, NZ0), resultingEd)
-              Ed(I,J,NZ0) = resultingEd/HbarC ! to fm^(-4)
+              Ed(I,J,NZ0) = resultingEd/HbarC  ! convert to fm^-4
             End Do
             End Do
           End If ! IEin==0
-        else
-            Print*,'Init=',IInit,' is not supported by this version.'! ---Zhi-Changes---
-            Stop
-      end if
+
+          close(2)
 
 
       Ed = Ed + 1D-10
@@ -389,43 +366,6 @@ C====Input the initial condition from file====
 !---------- Then convert energy to pressure, entropy, temperature ------
       call EntropyTemp3 (Ed,PL, Temp,CMu,Sd,
      &         NX0,NY0,NZ0, NX,NY,NZ, NXPhy0,NYPhy0, NXPhy,NYPhy)
-
-!---------- Use sFactor ------------------------------------------------
-! VER-1.03: add support for sFactor parameter
-      If (IEin==1 .AND. IEOS==7) Then ! use sFactor. J.Liu: add condition IEin==0
-        Sd = Sd*sFactor
-        Print*, "sFactor=", sFactor
-        Do I = NXPhy0,NXPhy
-        Do J = NYPhy0,NYPhy
-C           Call invertFunctionD(SEOSL7, 0D0, 315D0, 1D-3, 0D0,
-C      &                        Sd(I,J,NZ0), resultingEd)
-           Call invertFunction_binary(
-     &              SEOSL7, 0D0, 315D0, 1d-16, 1D-6,
-     &              Sd(I, J, NZ0), resultingEd)
-
-          Ed(I,J,NZ0) = resultingEd/HbarC ! to fm^(-4)
-        End Do
-        End Do
-        call EntropyTemp3 (Ed,PL, Temp,CMu,Sd,
-     &         NX0,NY0,NZ0, NX,NY,NZ, NXPhy0,NYPhy0, NXPhy,NYPhy)
-      End If
-
-
-C *************************J.Liu changes************************************
-C support rescaling factor if initialized by reading energy density
-      If (IEin==0 .AND. IEOS==7) Then ! use sFactor
-
-C calculate pressure table for rescaling bulk pressure
-        call EntropyTemp3 (Ed,PL_ori, Temp,CMu,Sd,
-     &         NX0,NY0,NZ0, NX,NY,NZ, NXPhy0,NYPhy0, NXPhy,NYPhy)
-
-C recalculate the temperature etc. using scaled energy density
-        Ed = Ed*sFactor
-        Print*, "sFactor=", sFactor
-        call EntropyTemp3 (Ed,PL, Temp,CMu,Sd,
-     &         NX0,NY0,NZ0, NX,NY,NZ, NXPhy0,NYPhy0, NXPhy,NYPhy)
-      End If
-C *************************J.Liu changes end********************************
 
 
       do 2571 K = NZ0,NZ
@@ -548,72 +488,6 @@ C       End If
 
 
 
-C C ****************************J.Liu changes********************************
-C C inspect initial profiles: output T00, T11 and T22 right after initalization
-C         open(1822,File='results/T00.dat',status='REPLACE')
-C         open(1823,File='results/T11.dat',status='REPLACE')
-C         open(1824,File='results/T22.dat',status='REPLACE')
-
-C         open(1825,File='results/Ed.dat',status='REPLACE')
-C         open(1826,File='results/PPI.dat',status='REPLACE')
-C         open(1827,File='results/PL.dat',status='REPLACE')
-C         open(1828,File='results/U0.dat',status='REPLACE')
-C         open(1829,File='results/U1.dat',status='REPLACE')
-C         open(1830,File='results/U2.dat',status='REPLACE')
-
-C         open(1831,File='results/Pi00.dat',status='REPLACE')
-C         open(1832,File='results/Pi11.dat',status='REPLACE')
-C         open(1833,File='results/Pi22.dat',status='REPLACE')
-
-C         do 2534 K = NZ0,NZ
-C         do 2534 I = NXPhy0,NXPhy
-C         do 2534 J = NYPhy0,NYPhy
-C         TToo(I, J, K) = (Ed(I,J,K)+PL(I,J,K)+PPI(I,J,K))*U0(I,J,K)
-C      &  *U0(I,J,K) - (PL(I,J,K)+PPI(I,J,K)) +Pi00(I,J,K)
-
-C         TTXX(I, J, K) = (Ed(I,J,K)+PL(I,J,K))*U1(I,J,K)*U1(I,J,K)
-C      &   +PL(I,J,K)+Pi11(I,J,K)+PPI(I,J,K)
-C      &   +PPI(I,J,K)*U1(I,J,K)*U1(I,J,K)
-
-C         TTYY(I, J, K) = (Ed(I,J,K)+PL(I,J,K))*U2(I,J,K)*U2(I,J,K)
-C      &   +PL(I,J,K)+Pi22(I,J,K)+PPI(I,J,K)
-C      &   +PPI(I,J,K)*U2(I,J,K)*U2(I,J,K)
-C 2534    continue
-
-C         do 2535 I = NXPhy0, NXPhy
-C         write(1822,'(261e20.8)')(TToo(I, J, NZ0),J=NYPhy0, NYPhy)
-C         write(1823,'(261e20.8)')(TTXX(I, J, NZ0),J=NYPhy0, NYPhy)
-C         write(1824,'(261e20.8)')(TTYY(I, J, NZ0),J=NYPhy0, NYPhy)
-
-C         write(1825,'(261e20.8)')(Ed(I, J, NZ0),J=NYPhy0, NYPhy)
-C         write(1826,'(261e20.8)')(PPI(I, J, NZ0),J=NYPhy0, NYPhy)
-C         write(1827,'(261e20.8)')(PL(I, J, NZ0),J=NYPhy0, NYPhy)
-C         write(1828,'(261e20.8)')(U0(I, J, NZ0),J=NYPhy0, NYPhy)
-C         write(1829,'(261e20.8)')(U1(I, J, NZ0),J=NYPhy0, NYPhy)
-C         write(1830,'(261e20.8)')(U2(I, J, NZ0),J=NYPhy0, NYPhy)
-
-C         write(1831,'(261e20.8)')(Pi00(I, J, NZ0),J=NYPhy0, NYPhy)
-C         write(1832,'(261e20.8)')(Pi11(I, J, NZ0),J=NYPhy0, NYPhy)
-C         write(1833,'(261e20.8)')(Pi22(I, J, NZ0),J=NYPhy0, NYPhy)
-C 2535    continue
-
-C         close(1822)
-C         close(1823)
-C         close(1824)
-
-C         close(1825)
-C         close(1826)
-C         close(1827)
-C         close(1828)
-C         close(1829)
-C         close(1830)
-
-C         close(1831)
-C         close(1832)
-C         close(1833)
-C C ****************************J.Liu changes end****************************
-
-
        call dpSc8(TT00,TT01,TT02,ScT00,ScT01,ScT02,Vx,Vy,
      &  Pi00,Pi01,Pi02,Pi33,Pi11,Pi12,Pi22, PScT00,PScT01,PScT02,PScT33,
      &  PScT11,PScT12,PScT22,etaTtp0,etaTtp,  PPI,PISc, XiTtP0,XiTtP,
@@ -650,19 +524,5 @@ C C ****************************J.Liu changes end****************************
                 ATEM0(I,J) = Temp(I,J,NZ0)
 2610        CONTINUE
 
-         Print*,'after initializtion, 2d Time  ',Time
-
-
-       Print*, 'Ed',Ed(0,0,NZ0), Ed(30,30,NZ0),
-     &           Ed(50,50,NZ0),  Ed(60,60,NZ0),
-     &           Ed(70,70,NZ0),  Ed(80,80,NZ0)
-C     &           Ed(90,90,NZ0),  Ed(100,100,NZ0),
-C     &           Ed(110,110,NZ0),  Ed(120,120,NZ0),
-C     &           Ed(130,130,NZ0)
-
-C       write(*,'(f6.3, 12f10.5)')Time,PPI(30,30,NZ0),PPI(40,40,NZ0),
-C     &           PPI(50,50,NZ0),  PPI(60,60,NZ0),
-C     &           PPI(70,70,NZ0),  PPI(80,80,NZ0),
-C     &           PPI(90,90,NZ0),  PPI(100,100,NZ0)
 
       End Subroutine
