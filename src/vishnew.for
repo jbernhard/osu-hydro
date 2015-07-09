@@ -54,7 +54,7 @@ C===============================================================================
 #define silent_checkPi 0
 #define outputPiviolation .false.
 
-#define echo_level 5
+#define echo_level 1
 
 !=======================================================================
 
@@ -142,8 +142,6 @@ C *******************************J.Liu changes end***************************
        Character Cha
 
        Integer MaxT
-
-      Double Precision :: cpu_start, cpu_end ! timing the application
 
 ***********************************************************************************
 ! ---Zhi-Changes---
@@ -245,7 +243,8 @@ C ***************************J.Liu changes end***************************
       IEOS = 7
       IEOS2dec = 1
 
-      Write (*,*) "Have:", "IEOS=", IEOS, "A=", A, ! write out parameter for a check
+      If (echo_level>=3) Then
+        Write (*,*) "Have:", "IEOS=", IEOS, "A=", A, ! write out parameter for a check
      &    "IInit=", IInit, "dT=", dT_1,
      &    "eta/s=",ViscousC,"b=",b,"Rx2=",Rx2,"Ry2=",Ry2,
      &    "EK=", EK, "tau0=", T0, "EDec=", EDec, ! energy unit: GeV/fm^3
@@ -257,6 +256,7 @@ C ***************************J.Liu changes end***************************
      &    "Initialpitensor=", Initialpitensor,
      &    "ViscousEqsType=", ViscousEqsType,
      &    "VisBulkNorm=", VisBulkNorm
+      EndIf
 
       ddx=dx
       ddy=dy
@@ -276,7 +276,6 @@ CSHEN===END================================================================
       TT0 = T0
 
       CALL UNLINK ('surface.dat')
-      CALL UNLINK ('decdat2.dat')
 
       OPEN(99,FILE='surface.dat',FORM='FORMATTED',STATUS='REPLACE')
 
@@ -289,9 +288,7 @@ CSHEN======================================================================
       EndIf
 CSHEN======================================================================
 
-      if(IEOS.eq.7) then      !CSHEN: input EOS from table
-            call InputRegulatedEOS
-      endif
+      call InputRegulatedEOS
 
       NXPhy0=-LS
       NYPhy0=-LS
@@ -311,11 +308,8 @@ CSHEN======output OSCAR file Header=========================================
       endif
 CSHEN======output OSCAR file Header end=====================================
 
-      CALL CPU_TIME(cpu_start) !Tic
       Call Mainpro(NX0,NY0,NZ0,NX,NY,NZ,NXPhy0,NYPhy0,
      &          NXPhy,NYPhy,T0,DX,DY,DZ,DT,MaxT,NDX,NDY,NDT)   ! main program
-      CALL CPU_TIME(cpu_end) ! Toc
-      Print *, "Finished in", cpu_end-cpu_start, "seconds."
 
       Close(99)
       If (IOSCAR) Then
@@ -605,7 +599,6 @@ CSHEN===EOS from tables end====================================================
        IW = 0
        do 9999 ITime = 1,MaxT
 !***********************  Begin  Time Loop ********************************
-        Print *,ITime ,' time= ', Time
 CSHEN===========================================================================
 C======Using a smaller time step for short initialization time \tau_0
             if (Time .lt. 0.59) then
@@ -835,21 +828,9 @@ CSHEN===end=====================================================================
 
       Hc = HbarC
 
-      DO 203 I=0,NXPhy,20
-         Write(*,'(500e12.3)')(Temp(I,J,NZ0)*Hc,J=0,NYPhy,20 )
-203   continue
-         Write(*,*)
 
-
-      Print*, 'Center Energy Density',  Ed(0,0,NZ0)*HBarC
-      Print*, 'Center T',   Temp(0,0,NZ0)*HBarC
-      Print*, '   '
-      Print*, '   '
-
-C      write(*,'(f6.3, 12f10.5)') PL(10,10,NZ0), PL(30,30,NZ0),
-C     &           PL(50,50,NZ0),  PL(70,70,NZ0),
-C     &           PL(80,80,NZ0),  PL(90,90,NZ0),
-C     &           PL(100,100,NZ0),  PL(110,110,NZ0), PL(120,120,NZ0)
+      Print '(I3, 2X, F5.2, 2X, F8.5, 2X, F8.5)',
+     &      ITime, Time, maxval(Ed)*HBarC, maxval(Temp)*HBarC
 
 
 C~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -891,8 +872,6 @@ C      NDT = 5
      &     F0PPI, FPPI,
      &     N,T,DX,DY,DT,NXPhy,NYPhy,NX0,NX,NY0,NY)
 
-      print*,'after freezeout'
-
       DO 5400 J=NY0,NY
       DO 5400 I=NX0,NX
 c                IF (TFLAG .EQ. 1) THEN
@@ -917,16 +896,8 @@ c                END IF
           endif
 5400  CONTINUE
 
-      Print*, 'NINT', NINT
-
       IF (NINT.EQ.0) THEN
-        WRITE(*,*) 'Decoupling all done at proper time,  T=',T
         goto 10000
-C        IF (EARTERM.EQ.'EARLY') THEN
-C           WRITE(*,*) '    Early termination of program.'
-C           GOTO 10000
-C        End if
-
       END IF
 
       END IF    !  IF (MOD(N+1,NDT).EQ.0) THEN
@@ -1266,7 +1237,6 @@ C------- Transport Pi00,Pi01,Pi02,Pi03,Pi11, Pi12,Pi22 by first order theory
      & DPc00,DPc01,DPc02,DPc33, DPc11,DPc22,DPc12, DDU0,DDU1,DDU2,
      & Temp,Temp0,  SiLoc,DLnT, Time, NXPhy0,NYPhy0,NXPhy,NYPhy,
      & NX0,NX,NY0,NY,NZ0,NZ, Ed,Sd,PL,VCoefi)
-       Write (*,*) "After R0 initialization: R0=",R0
 !   ---Zhi-End---
 
         call ViscousCoefi8(Ed,Sd,PL,Temp,

@@ -251,10 +251,6 @@ CSHEN=========end==========================================================
 
          eed    = EDec/Hbarc              !fm^(-4)
 
-      Print *,'TFREEZ, Tde',TFREEZ,'GEV', TFREEZ/HbarC,'fm-1',
-     &         Tde ,'fm-1'
-      Print *,'EDec, ',EDec,'GEV', eed,'fm-1'
-
        Time = T0
 
 CSHEN===================================================================
