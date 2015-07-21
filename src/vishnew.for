@@ -1537,12 +1537,17 @@ CSHEN======end=================================================================
       If (ViscousC.ge.1D-6) then
         VCoefi(i,j,k)=ViscousC*Sd(i,j,k)
         VCBeta(i,j,k)=1.D0/dmax1(Ed(i,j,k)+PL(i,j,k),1e-30)
-        VRelaxT(i,j,k)=1.0/dmax1(5.0*VCoefi(i,j,k)*VCBeta(i,j,k),1e-30)
 
-        if(ViscousEqsType .eq. 2) then   ! 14-moments results
+        if(ViscousEqsType .eq. 1) then
+          VRelaxT(i,j,k)=1.0
+     &      /dmax1(5.0*VCoefi(i,j,k)*VCBeta(i,j,k),1e-30)
+        else if(ViscousEqsType .eq. 2) then   ! 14-moment result
           VRelaxT(i,j,k)=(Ed(i,j,k)+PL(i,j,k))
      &      /dMax1(VCoefi(i,j,k)*5.D0,1e-30)
-        EndIf
+        else
+          write(*, *) "No such viscous equation type:",ViscousEqsType
+          stop
+        end if
 
         etaTtp(i,j,k)=(VCoefi(i,j,k)*Temp(i,j,k))*VRelaxT(i,j,k)  ! A(e+p)T/6 !(eta T/tau_Pi) for extra term in full I-S
         etaTtp(i,j,k)=dmax1(etaTtp(i,j,k),1e-30)
