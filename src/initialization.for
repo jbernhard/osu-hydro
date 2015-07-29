@@ -212,7 +212,7 @@ C==========OSCAR2008H related parameters===================================
       Common/OSCAR/ IOSCAR,IOSCARWrite
 CSHEN=========end==========================================================
       common /EOSdata/PEOSdata, SEOSdata, TEOSdata !CSHEN: for EOS from tables
-      common /EOSdatastructure/ EOSe0, EOSde, EOSne
+      common /EOSdatastructure/ EOSe0, EOSde, EOSne, EOSEend
 
       Integer Initialpitensor
       Common/Initialpi/ Initialpitensor
