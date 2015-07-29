@@ -66,27 +66,32 @@ def main():
         description=__doc__,
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
-    parser.add_argument('--min', type=float, default=1e-3,
-                        help='minimum energy density')
-    parser.add_argument('--max', type=float, default=3.10999e2,
-                        help='maximum energy density')
+    parser.add_argument('--min', type=float, default=0.050,
+                        help='minimum temperature')
+    parser.add_argument('--blend-low', type=float, default=0.110,
+                        help='lower bound temperature for blending')
+    parser.add_argument('--blend-high', type=float, default=0.130,
+                        help='upper bound temperature for blending')
+    parser.add_argument('--max', type=float, default=0.600,
+                        help='maximum temperature')
     parser.add_argument('--nsteps', type=int, default=155500,
                         help='number of energy density steps')
     parser.add_argument('--plot', action='store_true',
                         help='plot thermodynamic quantities')
     args = parser.parse_args()
 
-    # temperature points
-    Ta = 0.110  # lower bound of overlap region
-    Tb = 0.130  # upper bound
-    Tc = 2.000  # maximum
+    # read temperature points from arguments
+    T_min = args.min
+    T_blend_low = args.blend_low
+    T_blend_high = args.blend_high
+    T_max = args.max
 
     # get HRG EOS data
-    hrg_T, hrg_e3p_T4, _, hrg_p_T4, _ = hrg(Tstep=0.001, Tmax=Tb).T
+    hrg_T, hrg_e3p_T4 = hrg(Tstep=0.001, Tmax=T_blend_high).T[:2]
 
     # divide HRG data into parts below and within the overlap region
-    hrg_low_cut = hrg_T <= Ta
-    hrg_mid_cut = (Ta < hrg_T) & (hrg_T < Tb)
+    hrg_low_cut = hrg_T <= T_blend_low
+    hrg_mid_cut = (T_blend_low < hrg_T) & (hrg_T < T_blend_high)
 
     # construct table of (T, (e-3p)/T^4) points
 
@@ -102,7 +107,7 @@ def main():
     e3p_T4_mid = hrg_e3p_T4_mid*(1-w) + hotqcd_e3p_T4_mid*w
 
     # use pure HotQCD for T above overlap region
-    T_high = np.linspace(Tb, Tc, 10000)
+    T_high = np.linspace(T_blend_high, T_max, 10000)
     e3p_T4_high = hotqcd_e3p_T4(T_high)
 
     # concatenate the three segments together
@@ -120,7 +125,7 @@ def main():
 
         fig, (ax0, ax1) = plt.subplots(nrows=2, figsize=(6, 10))
 
-        T_plot = np.linspace(0.10, 0.14, 1000)
+        T_plot = np.linspace(T_blend_low - 0.01, T_blend_high + 0.01, 1000)
 
         hrg_T_plot, hrg_e3p_T4_plot = hrg(Tstep=0.001, Tmax=T_plot.max()).T[:2]
 
@@ -138,19 +143,20 @@ def main():
         ax0.set_title(r'blending trace anomaly $(\epsilon-3p)/T^4$')
         ax0.legend(loc='best')
 
-        p_T4 = p_T4_interp(blend_T)
-        e_T4 = blend_e3p_T4 + 3*p_T4
+        T_plot = np.linspace(0, T_max, 1000)
+        e3p_T4 = e3p_T4_interp(T_plot)
+        p_T4 = p_T4_interp(T_plot)
+        e_T4 = e3p_T4 + 3*p_T4
 
         for y, label, cmap in [
-                (blend_e3p_T4, r'$(\epsilon-3p)/T^4$', plt.cm.Blues),
+                (e3p_T4, r'$(\epsilon-3p)/T^4$', plt.cm.Blues),
                 (e_T4, r'$\epsilon/T^4$', plt.cm.Greens),
                 (p_T4, r'$p/T^4$', plt.cm.Oranges),
         ]:
-            ax1.plot(blend_T, y, color=cmap(0.8), label=label)
+            ax1.plot(T_plot, y, color=cmap(0.8), label=label)
 
         ax1.set_xlabel(r'$T$ [GeV]')
-        ax1.set_xlim(0, 1)
-        ax1.set_ylim(0, 17)
+        ax1.set_ylim(ymin=0)
         ax1.set_title('blended EOS thermodynamic quantities')
         ax1.legend(loc='best')
 
@@ -177,7 +183,7 @@ def main():
         return (e3p_T4_interp(T) + 4*p_T4_interp(T))*T**3 / HBARC**3
 
     # generate evenly-spaced energy density values
-    e = np.linspace(args.min, args.max, args.nsteps)
+    e = np.linspace(e_interp(T_min), e_interp(T_max), args.nsteps)
 
     # compute pressure, entropy density, temperature for each energy density
     p = p_interp(e)
