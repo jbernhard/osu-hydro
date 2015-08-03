@@ -131,341 +131,8 @@
       EndIf
 
       End Subroutine
-!-----------------------------------------------------------------------
 
 
-
-************************************************************************
-      Subroutine readInputFromCML()
-!     Purpose:
-!     Read inputs from command line.
-
-      Implicit None ! enforce explicit variable declaration
-
-      Integer debug
-      Common /debug/ debug
-
-      Integer readFromCML ! variable for return value. 1: no CML argument; 0: succeeded in reading CML; stop otherwise
-      Common /readFromCML/ readFromCML
-
-      Integer IEOS, IEin, IInit
-      Common /EOSSEL/ IEOS   !Type of EOS
-      Common /IEin/ IEin     !  type of initialization  entropy/enrgy
-      Common /Initialization/ IInit     ! type of initialization CGC/Glauber
-
-      Double Precision A, Si0, EK, HWN, TRo0, TEta, TRA
-      Common /AWNBC/ A,Si0 !A Nuclei Number  Si0, Cross Section for NN
-      Common /EK/ EK, HWN  !EK(T0) constant related to energy density,HWN percent of Wounded Nucleon
-      Common /thick/ TRo0, TEta, TRA  !Para in Nuclear Thickness Function
-
-      Integer IVisflag
-      Integer IVisBulkFlag
-      Double Precision ViscousC, VisBeta, Visbulk, BulkTau, IRelaxBulk
-      Common /ViscousC/ ViscousC, VIsBeta, IVisflag ! Related to Shear Viscosity
-      Common /ViscousBulk/ Visbulk, BulkTau, IRelaxBulk, IVisBulkFlag  ! Related to bulk Visousity
-
-      Double Precision ITeta, b, ddx, ddy, TT0
-      Common /ITeta/ ITeta
-      Common /bb/ b  !impact parameter
-      Common/dxdy/ ddx, ddy
-      Common /TT0/ TT0   ! T0, or tau_0
-
-      Double Precision DT_1, DT_2 ! DT_1 is the standard time step, DT_2 is used as time step for early time (t<0.6 fm/c)
-      Common /Timestep/ DT_1, DT_2
-
-      Double Precision Edec
-      Common/Edec/Edec    !decoupling temperature
-
-      Integer IEOS2dec
-      Common/IEOS2dec/ IEOS2dec  ! IEOS=2 decouple by gluon/pion
-
-      Double Precision Rx2, Ry2 ! <x^2> and <y^2> used in Gaussian initial condition
-      Common /RxyBlock/ Rx2, Ry2
-
-      Integer NDX, NDY, NDT
-      Common /NXYTD/ NDX, NDY, NDT
-
-      Double Precision T0
-      Common /T0/ T0
-
-      Double Precision R0Bdry
-      Common /R0Bdry/ R0Bdry
-      Integer LS
-      Common /LS/ LS
-
-      Integer QNum, ArgIndex ! QNum is the total number of arguments, ArgIndex gives the index to the one currently reading
-
-      Integer Qkind
-
-!     Warning: when adding more parameters, be aware that fortran does not allow a line with more than (roughly) 73 Characters
-!     Warning: float argument needs to have a period, so 1 should be written as 1.0 instead
-      Character(len=40) :: ViscousCStr,bStr,T0Str,Rx2Str,Ry2Str
-      Character(len=40) :: EKStr, EDecStr, dTStr
-      Character(len=40) :: IInitStr,IEOSStr
-      Character(len=40) :: MovieDtStr, QkindStr
-      Character(len=40) :: LSStr, R0BdryStr, VisBetaStr
-
-      If (debug>=3) Print *, "* readInputFromCML started"
-
-      QNum = iargc ()
-
-      readFromCML = 0 ! default to read from command line
-
-      If (QNum .eq. 0) Then
-        If (debug>=5) Print *, "-- No arguments."
-        readFromCML = 1
-      ElseIf (QNum .eq. 11) Then
-
-        ArgIndex = 0
-
-!       Read values from command line
-
-        If (debug>=5) Print *,"-- Read command line parameters: 11"
-
-        ArgIndex = ArgIndex + 1
-        Call getarg(ArgIndex, IEOSStr)
-        Read(unit=IEOSStr, fmt='(I5)') IEOS
-
-        ArgIndex = ArgIndex + 1
-        Call getarg(ArgIndex, QkindStr)
-        Read(unit=QkindStr, fmt='(I5)') Qkind
-        If (Qkind .eq. 1) Then
-          A = 63.546
-        ElseIf (Qkind .eq. 2) Then
-          A = 196.96655
-        EndIf
-
-        ArgIndex = ArgIndex + 1
-        Call getarg(ArgIndex, IInitStr)
-        Read(unit=IInitStr, fmt='(I5)') IInit
-
-        ArgIndex = ArgIndex + 1
-        Call getarg(ArgIndex, dTStr)
-        Read(unit=dTStr, fmt='(f15.8)') dT_1
-
-        ArgIndex = ArgIndex + 1
-        Call getarg(ArgIndex, ViscousCStr)
-        Read(unit=ViscousCStr, fmt='(f15.8)') ViscousC
-
-        ArgIndex = ArgIndex + 1
-        Call getarg(ArgIndex, bStr)
-        Read(unit=bStr, fmt='(f15.8)') b
-
-        ArgIndex = ArgIndex + 1
-        Call getarg(ArgIndex, Rx2Str)
-        Read(unit=Rx2Str, fmt='(f15.8)') Rx2
-
-        ArgIndex = ArgIndex + 1
-        Call getarg(ArgIndex, Ry2Str)
-        Read(unit=Ry2Str, fmt='(f15.8)') Ry2
-
-        ArgIndex = ArgIndex + 1
-        Call getarg(ArgIndex, EKStr)
-        Read(unit=EKStr, fmt='(f15.8)') EK
-
-        ArgIndex = ArgIndex + 1
-        Call getarg(ArgIndex, T0Str)
-        Read(unit=T0Str, fmt='(f15.8)') T0
-
-        ArgIndex = ArgIndex + 1
-        Call getarg(ArgIndex, EDecStr)
-        Read(unit=EDecStr, fmt='(f15.8)') EDec
-
-        ! give default values to LS and R0Bdry
-        LS = 130
-        R0Bdry = 12.0
-        VisBeta = 0.5   !\tau_Pi=VisBeta*6.0\eta /(ST)
-
-
-      ElseIf (QNum .eq. 13) Then ! read futher
-
-
-        ArgIndex = 0
-
-!       Read values from command line
-
-        If (debug>=5) Print *,"-- Read command line parameters: 13"
-
-        ArgIndex = ArgIndex + 1
-        Call getarg(ArgIndex, IEOSStr)
-        Read(unit=IEOSStr, fmt='(I5)') IEOS
-
-        ArgIndex = ArgIndex + 1
-        Call getarg(ArgIndex, QkindStr)
-        Read(unit=QkindStr, fmt='(I5)') Qkind
-        If (Qkind .eq. 1) Then
-          A = 63.546
-        ElseIf (Qkind .eq. 2) Then
-          A = 196.96655
-        EndIf
-
-        ArgIndex = ArgIndex + 1
-        Call getarg(ArgIndex, IInitStr)
-        Read(unit=IInitStr, fmt='(I5)') IInit
-
-        ArgIndex = ArgIndex + 1
-        Call getarg(ArgIndex, dTStr)
-        Read(unit=dTStr, fmt='(f15.8)') dT_1
-
-        ArgIndex = ArgIndex + 1
-        Call getarg(ArgIndex, ViscousCStr)
-        Read(unit=ViscousCStr, fmt='(f15.8)') ViscousC
-
-        ArgIndex = ArgIndex + 1
-        Call getarg(ArgIndex, bStr)
-        Read(unit=bStr, fmt='(f15.8)') b
-
-        ArgIndex = ArgIndex + 1
-        Call getarg(ArgIndex, Rx2Str)
-        Read(unit=Rx2Str, fmt='(f15.8)') Rx2
-
-        ArgIndex = ArgIndex + 1
-        Call getarg(ArgIndex, Ry2Str)
-        Read(unit=Ry2Str, fmt='(f15.8)') Ry2
-
-        ArgIndex = ArgIndex + 1
-        Call getarg(ArgIndex, EKStr)
-        Read(unit=EKStr, fmt='(f15.8)') EK
-
-        ArgIndex = ArgIndex + 1
-        Call getarg(ArgIndex, T0Str)
-        Read(unit=T0Str, fmt='(f15.8)') T0
-
-        ArgIndex = ArgIndex + 1
-        Call getarg(ArgIndex, EDecStr)
-        Read(unit=EDecStr, fmt='(f15.8)') EDec
-
-        ArgIndex = ArgIndex + 1
-        Call getarg(ArgIndex, LSStr)
-        Read(unit=LSStr, fmt='(I5)') LS
-
-        ArgIndex = ArgIndex + 1
-        Call getarg(ArgIndex, R0BdryStr)
-        Read(unit=R0BdryStr, fmt='(f15.8)') R0Bdry
-
-        VisBeta = 0.5   !\tau_Pi=VisBeta*6.0\eta /(ST)
-
-      ElseIf (QNum .eq. 14) Then ! read futher, includes tau_pi (VisBeta)
-
-
-        ArgIndex = 0
-
-!       Read values from command line
-
-        If (debug>=5) Print *,"-- Read command line parameters: 14"
-
-        ArgIndex = ArgIndex + 1
-        Call getarg(ArgIndex, IEOSStr)
-        Read(unit=IEOSStr, fmt='(I5)') IEOS
-
-        ArgIndex = ArgIndex + 1
-        Call getarg(ArgIndex, QkindStr)
-        Read(unit=QkindStr, fmt='(I5)') Qkind
-        If (Qkind .eq. 1) Then
-          A = 63.546
-        ElseIf (Qkind .eq. 2) Then
-          A = 196.96655
-        EndIf
-
-        ArgIndex = ArgIndex + 1
-        Call getarg(ArgIndex, IInitStr)
-        Read(unit=IInitStr, fmt='(I5)') IInit
-
-        ArgIndex = ArgIndex + 1
-        Call getarg(ArgIndex, dTStr)
-        Read(unit=dTStr, fmt='(f15.8)') dT_1
-
-        ArgIndex = ArgIndex + 1
-        Call getarg(ArgIndex, ViscousCStr)
-        Read(unit=ViscousCStr, fmt='(f15.8)') ViscousC
-
-        ArgIndex = ArgIndex + 1
-        Call getarg(ArgIndex, bStr)
-        Read(unit=bStr, fmt='(f15.8)') b
-
-        ArgIndex = ArgIndex + 1
-        Call getarg(ArgIndex, Rx2Str)
-        Read(unit=Rx2Str, fmt='(f15.8)') Rx2
-
-        ArgIndex = ArgIndex + 1
-        Call getarg(ArgIndex, Ry2Str)
-        Read(unit=Ry2Str, fmt='(f15.8)') Ry2
-
-        ArgIndex = ArgIndex + 1
-        Call getarg(ArgIndex, EKStr)
-        Read(unit=EKStr, fmt='(f15.8)') EK
-
-        ArgIndex = ArgIndex + 1
-        Call getarg(ArgIndex, T0Str)
-        Read(unit=T0Str, fmt='(f15.8)') T0
-
-        ArgIndex = ArgIndex + 1
-        Call getarg(ArgIndex, EDecStr)
-        Read(unit=EDecStr, fmt='(f15.8)') EDec
-
-        ArgIndex = ArgIndex + 1
-        Call getarg(ArgIndex, LSStr)
-        Read(unit=LSStr, fmt='(I5)') LS
-
-        ArgIndex = ArgIndex + 1
-        Call getarg(ArgIndex, R0BdryStr)
-        Read(unit=R0BdryStr, fmt='(f15.8)') R0Bdry
-
-        ArgIndex = ArgIndex + 1
-        Call getarg(ArgIndex, VisBetaStr)
-        Read(unit=VisBetaStr, fmt='(f15.8)') VisBeta !\tau_Pi=VisBeta*6.0\eta /(ST)
-
-      Else
-
-        Print*,"Need: IEOS(Integer)",
-     &    "(EOSQ:0  EOSI: 2, SM-EOSQ: 5, EOSL: 4(Katz05 data)), ",
-     &    "Qkind(I)(1:Cu, 2:Au), ",
-     &    "IInit(I)(0:Gaussian, 1:Glauber, 2:CGC), ",
-     &    "dT(Double), ",
-     &    "ViscousC(Double), b(D), Rx2(D), Ry2(D), EK(D), T0(D), ",
-     &    "EDec(D), [LS(I), R0Bdry(D)], [VisBeta(D)]"
-        Stop
-
-      EndIf
-
-
-
-
-!     Use default values for the rest of the parameters
-        If (debug>=5) Print *, "-- Assign values to other parameters"
-        IEOS2dec = 1    !If IEOS=2 (EOSI),  0: decouple by gluon 1: decouple by pions
-        IEin = 0        !type of initialization  0:initialize by energy density 1: initialize by entropy density
-        HWN = 1.0       !HWN  % of WN   (1-HWN) % of BC
-        Si0 = 4.0       !cross section for NN
-        TRo0 = 0.17     !nuclear density  (unit: fm^-3)
-        TEta = 0.54     !dIffussion parameter of nuclear radii  (unit: fm)
-        TRA = 6.37      !nuclear radii (unit: fm)
-
-        VisBulk = 0.0   !VisBulk=C;  Xi/s= C* (Xi/S)_min  (C=0, no bulk vis; or C>1 )
-        IRelaxBulk = 2  !type of bulk relaxation time (0: critical slowing down; 1: constant Relax Time
-                            !2: \tau_PI=1.5/(2\piT))
-        BulkTau = 5.0 !constant relaxation time (fm/c) (require input IRelaxBulk=1)
-
-        NDX = 2
-        NDY = 2     ! freeze-out step in x and y direction
-        NDT = 5       ! freeze-out step in \tau direction
-
-        Write (*,*) "Have:", "EOS=", IEOS, "Qkind=", Qkind, ! write out parameter for a check
-     &    "Initialization=", IInit, "dT=", dT_1,
-     &    "eta/s=",ViscousC,"b=",b,"Rx2=",Rx2,"Ry2=",Ry2,
-     &    "EK=", EK, "tau0=", T0, "EDec=", EDec,
-     &    "LS=", LS, "R0Bdry", R0Bdry, "VisBeta=", VisBeta
-
-
-      If (debug>=3) Print *, "* readInputFromCML finished"
-
-      End Subroutine
-!-----------------------------------------------------------------------
-
-
-
-
-************************************************************************
       Subroutine readInputFromCML2()
 !     Purpose:
 !     Read inputs from command line.
@@ -485,9 +152,10 @@
       Common /EK/ EK, HWN  !EK(T0) constant related to energy density,HWN percent of Wounded Nucleon
       Common /thick/ TRo0, TEta, TRA  !Para in Nuclear Thickness Function
 
-      Double Precision ViscousC, VisBeta, Visbulk, BulkTau, IRelaxBulk
+      Double Precision ViscousC, VisBeta, VisMin, VisSlope,
+     &                 Visbulk, BulkTau, IRelaxBulk
       Integer IVisflag
-      Common /ViscousC/ ViscousC, VisBeta, IVisflag
+      Common /ViscousC/ ViscousC, VisBeta, IVisflag, VisMin, VisSlope  ! Related to Shear Viscosity
       Integer IVisBulkFlag
       Common /ViscousBulk/ Visbulk, BulkTau, IRelaxBulk, IVisBulkFlag ! Related to bulk Visousity
 
@@ -612,6 +280,11 @@
         If (varName=="eta_s") ViscousC=DResult
         If (varName=="vis") ViscousC=DResult
         If (varName=="viscousc") ViscousC=DResult
+
+        If (varName=="visslope") VisSlope=DResult
+        If (varName=="etasslope") VisSlope=DResult
+        If (varName=="etas_slope") VisSlope=DResult
+        If (varName=="eta_s_slope") VisSlope=DResult
 
         If (varName=="ils") LS=IResult ! Lattice size and R0Boudary
         If (varName=="r0") R0Bdry=DResult
@@ -754,8 +427,8 @@
       Double Precision RMin, PiEPRatio, SigmaLargeness, EAndP
 
       Integer IVisflag
-      Double Precision ViscousC, VisBeta
-      Common /ViscousC/ ViscousC, VisBeta, IVisflag
+      Double Precision ViscousC, VisBeta, VisMin, VisSlope
+      Common /ViscousC/ ViscousC, VisBeta, IVisflag, VisMin, VisSlope  ! Related to Shear Viscosity
 
       Double Precision PiRatio ! used to determine R0; within r<R0, Pi/(e+p) < PiRatio
       Common /PiRatio/ PiRatio ! should already be setuped in prepareInputFun function
