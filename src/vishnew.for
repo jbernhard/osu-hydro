@@ -1726,15 +1726,16 @@ C---J.Liu-----------------------------------------------------------------------
       double precision :: sigma1=0.025D0, sigma2=0.13D0
       double precision :: sigma3=0.0025D0, sigma4=0.022D0
 
-      dummy = Temp_now/T_cr
-      bulk = A1*dummy*dummy + A2*dummy - A3
+      x = Temp_now/T_cr
 
-      if(Temp_now < 0.995D0*T_cr) Then
-        bulk = lambda3*exp((dummy-1.D0)/sigma3)
-     &         + lambda4*exp((dummy-1.D0)/sigma4)+0.03D0
-      Else If(Temp_now > 1.05D0 * T_cr) then
-        bulk = lambda1*exp(-(dummy-1.D0)/sigma1)
-     &         + lambda2*exp(-(dummy-1.D0)/sigma2)+0.001D0
+      if(x < 0.995D0) Then
+        bulk = lambda3*exp((x-1.D0)/sigma3)
+     &       + lambda4*exp((x-1.D0)/sigma4) + 0.03D0
+      Else If(x > 1.05D0) then
+        bulk = lambda1*exp(-(x-1.D0)/sigma1)
+     &       + lambda2*exp(-(x-1.D0)/sigma2) + 0.001D0
+      Else
+        bulk = A1*x*x + A2*x - A3
       EndIf
 
       ViscousZetasTempParametrized = bulk*zetas_normFactor
