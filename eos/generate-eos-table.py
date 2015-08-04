@@ -126,9 +126,9 @@ def main():
 
         plt.rc('lines', linewidth=1.5)
 
-        fig, (ax0, ax1) = plt.subplots(nrows=2, figsize=(6, 10))
+        fig, (ax0, ax1, ax2) = plt.subplots(nrows=3, figsize=(6, 15))
 
-        T_plot = np.linspace(T_blend_low - 0.01, T_blend_high + 0.01, 1000)
+        T_plot = np.linspace(T_blend_low - 0.005, T_blend_high + 0.005, 1000)
 
         hrg_T_plot, hrg_e3p_T4_plot = hrg(Tstep=0.001, Tmax=T_plot.max()).T[:2]
 
@@ -138,10 +138,12 @@ def main():
         ax0.plot(T_plot, hotqcd_e3p_T4(T_plot), label='HotQCD',
                  color=plt.cm.coolwarm(.9))
 
-        ax0.plot(T_plot, e3p_T4_interp(T_plot), label='blend',
+        e3p_T4_plot = e3p_T4_interp(T_plot)
+        ax0.plot(T_plot, e3p_T4_plot, label='blend',
                  color='.3', dashes=[5, 2])
 
         ax0.set_xlim(T_plot.min(), T_plot.max())
+        ax0.set_ylim(e3p_T4_plot.min(), e3p_T4_plot.max())
         ax0.set_xlabel(r'$T$ [GeV]')
         ax0.set_title(r'blending trace anomaly $(\epsilon-3p)/T^4$')
         ax0.legend(loc='best')
@@ -162,6 +164,16 @@ def main():
         ax1.set_ylim(ymin=0)
         ax1.set_title('blended EOS thermodynamic quantities')
         ax1.legend(loc='best')
+
+        e = e_T4*T_plot**4
+        p = p_T4*T_plot**4
+        cs2 = Spline(e, p)(e, nu=1)
+        ax2.plot(T_plot, cs2, color=plt.cm.Blues(0.8))
+
+        ax2.set_xlabel(r'$T$ [GeV]')
+        ax2.set_ylabel(r'$c_s^2$')
+        ax2.set_ylim(0, 1/3)
+        ax2.set_title('blended EOS speed of sound')
 
         fig.tight_layout(pad=.2, h_pad=1.)
         plt.show()
