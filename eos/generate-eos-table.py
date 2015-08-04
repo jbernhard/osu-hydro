@@ -103,8 +103,11 @@ def main():
     T_mid = hrg_T[hrg_mid_cut]
     hrg_e3p_T4_mid = hrg_e3p_T4[hrg_mid_cut]
     hotqcd_e3p_T4_mid = hotqcd_e3p_T4(T_mid)
+    # join the two curves using the "smoothstep" function
+    # https://en.wikipedia.org/wiki/Smoothstep
     w = np.linspace(0, 1, T_mid.size)
-    e3p_T4_mid = hrg_e3p_T4_mid*(1-w) + hotqcd_e3p_T4_mid*w
+    ss = w*w*(3 - 2*w)
+    e3p_T4_mid = hrg_e3p_T4_mid*(1-ss) + hotqcd_e3p_T4_mid*ss
 
     # use pure HotQCD for T above overlap region
     T_high = np.linspace(T_blend_high, T_max, 10000)
