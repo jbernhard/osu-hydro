@@ -118,7 +118,8 @@ C *******************************J.Liu changes end***************************
        Common /AWNBC/ A,Si0 !A Nuclei Number  Si0, Cross Section for NN
        Common /EK/ EK, HWN  !EK(T0) constant related to energy density,HWN percent of Wounded Nucleon
        Common /thick/ TRo0, TEta, TRA  !Para in Nuclear Thickness Function
-       Common /ViscousC/ ViscousC, VisBeta, IVisflag, VisMin, VisSlope  ! Related to Shear Viscosity
+       Common /ViscousC/ ViscousC, IVisflag, VisHRG, VisMin, VisSlope,
+     &                   VisBeta  ! Related to Shear Viscosity
        Common /bb/ b  !impact parameter
        Common/dxdy/ ddx, ddy
        Common /TT0/ TT0   !T0
@@ -190,6 +191,7 @@ C========= Inputting Parameters ===========================================
       ! shear viscosity
       Read(1,*) ViscousC         ! shear viscosity eta/s
       Read(1,*) IVisflag         ! flag for temperature-dependent (eta/s)(T)
+      Read(1,*) VisHRG           ! constant eta/s below Tc
       Read(1,*) VisSlope         ! slope of (eta/s)(T) above Tc [GeV^-1]
       Read(1,*) VisBeta          ! shear relaxation time tau_pi = 6*VisBeta*eta/(sT)
       Read(1,*) Initialpitensor  ! initialize shear tensor with zeros (0) or by Navier-Stokes (1)
@@ -477,7 +479,8 @@ C-------------------------------------------------------------------------------
       Double Precision XN(0:9), YN(0:9), Weight ! For initial anisotropy calculation
       Double Precision XNP(0:9), YNP(0:9), WeightP ! XN' and YN', the one using r^n in the weight
 
-      Common /ViscousC/ ViscousC, VisBeta, IVisflag, VisMin, VisSlope  ! Related to Shear Viscosity
+      Common /ViscousC/ ViscousC, IVisflag, VisHRG, VisMin, VisSlope,
+     &                  VisBeta  ! Related to Shear Viscosity
       Common /ViscousBulk/ Visbulk,BulkTau,IRelaxBulk,IVisBulkFlag  ! Related to bulk Viscosity
       Common /sFactor/ sFactor
 
@@ -1512,7 +1515,8 @@ C#####################################################
        Integer :: IVisflag
        Integer :: IVisBulkFlag
 
-       Common /ViscousC/ ViscousC, VisBeta, IVisflag, VisMin, VisSlope  ! Related to Shear Viscosity
+       Common /ViscousC/ ViscousC, IVisflag, VisHRG, VisMin, VisSlope,
+     &                   VisBeta  ! Related to Shear Viscosity
        Common /ViscousBulk/ Visbulk, BulkTau,IRelaxBulk, IVisBulkFlag  ! Related to bulk Viscous Coefficient Xi and beta0
 
        Common /Tde/ Tde, Rdec1, Rdec2,TempIni !Decoupling Temperature !decoupling radius
@@ -1635,7 +1639,8 @@ C====eta/s dependent on local temperature==================================
       Implicit double precision (A-H, O-Z)
       parameter (HbarC=0.19733d0)
 
-      Common /ViscousC/ ViscousC, VisBeta, IVisflag, VisMin, VisSlope  ! Related to Shear Viscosity
+      Common /ViscousC/ ViscousC, IVisflag, VisHRG, VisMin, VisSlope,
+     &                  VisBeta  ! Related to Shear Viscosity
 
       TT_GeV = TT*HbarC
       Ttr = 0.154
@@ -1643,7 +1648,7 @@ C====eta/s dependent on local temperature==================================
       if(TT_GeV .gt. Ttr) then
           ViscousCTemp = VisMin + VisSlope*(TT_GeV - Ttr)
       else
-          ViscousCTemp = VisMin + 15.*(Ttr - TT_GeV)
+          ViscousCTemp = VisHRG
       endif
 
       return
@@ -2448,7 +2453,8 @@ C-------------------------------------------
        Integer :: IVisflag
        Integer :: IVisBulkFlag
 
-       Common /ViscousC/ ViscousC, VisBeta, IVisflag, VisMin, VisSlope  ! Related to Shear Viscosity
+       Common /ViscousC/ ViscousC, IVisflag, VisHRG, VisMin, VisSlope,
+     &                   VisBeta  ! Related to Shear Viscosity
        Common /ViscousBulk/ Visbulk, BulkTau,IRelaxBulk, IVisBulkFlag
 
         DIMENSION PNEW(NNEW)!something related to root finding

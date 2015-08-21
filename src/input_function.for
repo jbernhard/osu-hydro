@@ -152,10 +152,11 @@
       Common /EK/ EK, HWN  !EK(T0) constant related to energy density,HWN percent of Wounded Nucleon
       Common /thick/ TRo0, TEta, TRA  !Para in Nuclear Thickness Function
 
-      Double Precision ViscousC, VisBeta, VisMin, VisSlope,
+      Double Precision ViscousC, VisBeta, VisHRG, VisMin, VisSlope,
      &                 Visbulk, BulkTau, IRelaxBulk
       Integer IVisflag
-      Common /ViscousC/ ViscousC, VisBeta, IVisflag, VisMin, VisSlope  ! Related to Shear Viscosity
+      Common /ViscousC/ ViscousC, IVisflag, VisHRG, VisMin, VisSlope,
+     &                  VisBeta  ! Related to Shear Viscosity
       Integer IVisBulkFlag
       Common /ViscousBulk/ Visbulk, BulkTau, IRelaxBulk, IVisBulkFlag ! Related to bulk Visousity
 
@@ -280,6 +281,11 @@
         If (varName=="eta_s") ViscousC=DResult
         If (varName=="vis") ViscousC=DResult
         If (varName=="viscousc") ViscousC=DResult
+
+        If (varName=="vishrg") VisHRG=DResult
+        If (varName=="etashrg") VisHRG=DResult
+        If (varName=="etas_hrg") VisHRG=DResult
+        If (varName=="eta_s_hrg") VisHRG=DResult
 
         If (varName=="visslope") VisSlope=DResult
         If (varName=="etasslope") VisSlope=DResult
@@ -427,8 +433,9 @@
       Double Precision RMin, PiEPRatio, SigmaLargeness, EAndP
 
       Integer IVisflag
-      Double Precision ViscousC, VisBeta, VisMin, VisSlope
-      Common /ViscousC/ ViscousC, VisBeta, IVisflag, VisMin, VisSlope  ! Related to Shear Viscosity
+      Double Precision ViscousC, VisBeta, VisHRG, VisMin, VisSlope
+      Common /ViscousC/ ViscousC, IVisflag, VisHRG, VisMin, VisSlope,
+     &                  VisBeta  ! Related to Shear Viscosity
 
       Double Precision PiRatio ! used to determine R0; within r<R0, Pi/(e+p) < PiRatio
       Common /PiRatio/ PiRatio ! should already be setuped in prepareInputFun function
