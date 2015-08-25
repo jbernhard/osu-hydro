@@ -1040,7 +1040,7 @@ CSHEN======================================================================
          J = -absJ - NDY
        Else
          Print *, "You kidding. tmpI=", tmpI
-         Stop
+         call exit(1)
        End If
        Y = J*DY
        X = I*DX
@@ -1554,7 +1554,7 @@ CSHEN======end=================================================================
      &      /dMax1(VCoefi(i,j,k)*5.D0,1e-30)
         else
           write(*, *) "No such viscous equation type:",ViscousEqsType
-          stop
+          call exit(1)
         end if
 
         etaTtp(i,j,k)=(VCoefi(i,j,k)*Temp(i,j,k))*VRelaxT(i,j,k)  ! A(e+p)T/6 !(eta T/tau_Pi) for extra term in full I-S
@@ -1613,7 +1613,7 @@ CSHEN======end=================================================================
         else
           Print*,'This option is not supported by this version'
           Print*,'IRelaxBulk'
-          Stop
+          call exit(1)
         end if
         VCBeta0(i,j,k)=VisBulkBeta*6.0/(Sd(i,j,k)*Temp(i,j,k))
         XiTtP(i,j,k)=(VBulk(i,j,k)*Temp(i,j,k))*VRelaxT0(i,j,k)  !(Xi T/tau_Pi)  for extra term in full I-S
@@ -2489,7 +2489,7 @@ C-------------------------------------------
 
         if(NZ0.ne.NZ)then
           Print *,' VSc2d , a 2-dimensinal subroutine '
-          Stop
+          call exit(1)
         end if
 
 
@@ -2643,11 +2643,11 @@ C--------------------------------------
         Vy(I,J,K) = VP*T02IJ/DM
         if (isnan(Vx(I,J,K))) then
           print*, 'vx', VP_local, U0_local, VP, T01IJ, DM
-          stop
+          call exit(1)
         endif
         if (isnan(Vy(I,J,K))) then
           print*, 'vy', VP_local, U0_local, VP, T02IJ, DM
-          stop
+          call exit(1)
         endif
 !----------------------------------------------------------------------
  310   CONTINUE
@@ -2689,7 +2689,7 @@ C--------------------------------------
           Print*, "Vx,Vy=",Vx(I,J,K),Vy(I,J,K)
           Print*, "norm=",Vx(I,J,K)**2+Vy(I,J,K)**2
           Print*, "U0,U1,U2=",U0(I,J,K),U1(I,J,K),U2(I,J,K)
-          Stop
+          call exit(1)
         End If
       End Do
       End Do
@@ -3066,7 +3066,7 @@ C-------------------------------------------------------------------------------
 
           else
             write(*, *) "No such viscous equation type:",ViscousEqsType
-            stop
+            call exit(1)
           end if
         else
           ADLnT = 0.D0
@@ -3100,7 +3100,7 @@ C-------------------------------------------------------------------------------
      &       /U0(i,j,k)*VRelaxT0(i,j,k)
           else
             write(*, *) "No such viscous equation type:", ViscousEqsType
-            stop
+            call exit(1)
           endif
 
         else
@@ -3134,7 +3134,7 @@ C-------------------------------------------------------------------------------
           Print *, "etaTtp(I,J-1,K)=", etaTtp(I,J-1,K)
           Print *, "etaTtp(I,J+1,K)=", etaTtp(I,J+1,K)
 
-          Stop
+          call exit(1)
         EndIf
         EndIf
 
@@ -3898,7 +3898,7 @@ C----------------------------------------------------------------
         print*, A*A - 4*cstilde2*RSDM*RSDM
         print*, A + sqrt(A*A - 4*cstilde2*RSDM*RSDM)
         print*, RSDM0, RSDM, RSPPI, RSee
-        stop
+        call exit(1)
       endif
       End Function
 !----------------------------------------------------------------------
@@ -3981,7 +3981,7 @@ C----------------------------------------------------------------
           Print*, "Pi00,Pi11,Pi22,Time**2*Pi33=",
      &      Pi00(I,J,K),Pi11(I,J,K),Pi22(I,J,K),Pi33(I,J,K)
           Print*, "Ed,PL=", Ed(I,J,K),PL(I,J,K)
-          Stop
+          call exit(1)
         End If
 
         trans = Pi01(I,J,K)-Vx(I,J,K)*Pi11(I,J,K)-Vy(I,J,K)*Pi12(I,J,K)
@@ -3995,7 +3995,7 @@ C----------------------------------------------------------------
      &      Pi01(I,J,K),Pi11(I,J,K),Pi12(I,J,K)
           Print*, "Vx,Vy=",Vx(I,J,K),Vy(I,J,K)
           Print*, "Ed,PL=", Ed(I,J,K),PL(I,J,K)
-          Stop
+          call exit(1)
         End If
 
         trans = Pi02(I,J,K)-Vx(I,J,K)*Pi12(I,J,K)-Vy(I,J,K)*Pi22(I,J,K)
@@ -4009,7 +4009,7 @@ C----------------------------------------------------------------
      &      Pi02(I,J,K),Pi12(I,J,K),Pi22(I,J,K)
           Print*, "Vx,Vy=",Vx(I,J,K),Vy(I,J,K)
           Print*, "Ed,PL=", Ed(I,J,K),PL(I,J,K)
-          Stop
+          call exit(1)
         End If
 
         trans = Pi00(I,J,K)-Vx(I,J,K)*Pi01(I,J,K)-Vy(I,J,K)*Pi02(I,J,K)
@@ -4023,7 +4023,7 @@ C----------------------------------------------------------------
      &      Pi00(I,J,K),Pi01(I,J,K),Pi02(I,J,K)
           Print*, "Vx,Vy=",Vx(I,J,K),Vy(I,J,K)
           Print*, "Ed,PL=", Ed(I,J,K),PL(I,J,K)
-          Stop
+          call exit(1)
         End If
 
       End Do

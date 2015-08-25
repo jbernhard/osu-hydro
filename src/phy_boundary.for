@@ -209,12 +209,12 @@ CCC      A(-2,-2)=ISYM1*ISYM2*A(2,2)
           IF (EJM1.GE.0.5) THEN
           WRITE(*,*) 'SHAS1: DT/DY TOO LARGE ! J=',J-1,'  I=',I
           WRITE(*,*) 'TDX=',TDX,'  V(I,J-1)=',V(I,J-1)
-          STOP
+          call exit(1)
           END IF
           IF (EIM1.GE.0.5) THEN
           WRITE(*,*) 'SHAS1: DT/DX TOO LARGE ! I=',I-1,'   J=',J
           WRITE(*,*) 'TDX=',TDX,'  U(I-1,J)=',U(I-1,J)
-          STOP
+          call exit(1)
           END IF
 
 
@@ -263,11 +263,11 @@ CCC      A(-2,-2)=ISYM1*ISYM2*A(2,2)
 
        IF (EJP1.GE.0.5) THEN
        WRITE(*,*) 'SHAS1: DT/DY TOO LARGE ! J=',J+1
-       STOP
+       call exit(1)
        END IF
        IF (EIP1.GE.0.5) THEN
        WRITE(*,*) 'SHAS1: DT/DX TOO LARGE ! I=',I+1
-       STOP
+       call exit(1)
        END IF
 
       RETURN

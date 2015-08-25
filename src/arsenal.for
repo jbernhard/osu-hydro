@@ -37,7 +37,7 @@
       If (idx<0 .OR. idx>tableSize-1) Then
         Print *, "Subroutine interpCubic: varX out of bounds"
         Print *, "varX=",varX,"var0=",var0,"dVar=",dVar,"idx=",idx
-        Stop
+        call exit(1)
       End If
 
       If (idx==0) Then ! use quadratic interpolation
@@ -112,7 +112,7 @@
       If (idx<0 .OR. idx>tableSize-1) Then
         Print *, "Subroutine interpLinear: varX out of bounds"
         Print *, "varX=",varX,"var0=",var0,"dVar=",dVar,"idx=",idx
-        Stop
+        call exit(1)
       End If
 
       varD = varX - (var0 + idx*dVar)
@@ -196,7 +196,7 @@
         If (impatience>edge) Then
           Print *, "Subroutine invertNewton:",
      &                "max number of iterations reached!"
-          Stop
+          call exit(1)
         End If
       End Do ! <=> abs(XX2-XX1)>accuracy
 
@@ -255,7 +255,7 @@
           Print*, "Error: Invertfunction_binary: no unique solution!"
           Print*, "yL = ", yL, ", yR = ", yR
           Print*, "varL = ", varL, ", varR = ", varR, ", varY = ", varY
-          stop
+          call exit(1)
       endif
 
       itol = 0
@@ -352,7 +352,7 @@
         If (impatience>tolerance) Then
           Print *, "Subroutine invertFunctionD: ",
      &                "max number of iterations reached!"
-          Stop
+          call exit(1)
           !Print*, XX1, XX2
         End If
         dd = abs(XX2 - XX1)*0.05
@@ -415,7 +415,7 @@
       if(fl*fh>0) then
         print*, "invertFunctionH error!"
         print*, "No solution at given boundary!"
-        stop
+        call exit(1)
       EndIf
 
 !     Check initial value is solution
@@ -486,7 +486,7 @@
 
       print*, "invertFunctionH error!"
       print*, "reached maximum iteration but hadn't found root!"
-      stop
+      call exit(1)
 
       End Subroutine
 !-----------------------------------------------------------------------

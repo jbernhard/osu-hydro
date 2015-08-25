@@ -683,7 +683,7 @@
         bulkPi_scale = abs(BulkPi) + 1d-30
         if(bulkPi_scale .ne. bulkPi_scale) then
            print*, "Bulk Pi is NaN, I,J =", I, J
-           stop
+           call exit(1)
         endif
 
         ! find regulation strength using largeness comparison
@@ -958,7 +958,7 @@
           Print *, "Pi12=", Pi12(I,J,K)
           Print *, "Pi22=", Pi22(I,J,K)
           Print *, "Pi33=", Pi33(I,J,K)
-          Stop
+          call exit(1)
         EndIf
 
 3008    Continue
