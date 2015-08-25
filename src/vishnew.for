@@ -822,7 +822,7 @@ CSHEN===end=====================================================================
       Hc = HbarC
 
 
-      Print '(I3, 2X, F5.2, 2X, F9.5, 2X, F8.5, 2X, I2, 2X, I2)',
+      Print '(I3, 2X, F5.2, 2X, F10.5, 2X, F8.5, 2X, I2, 2X, I2)',
      &      ITime, Time, maxval(Ed)*HBarC, maxval(Temp)*HBarC,
      &      iRegulateCounter, iRegulateCounterBulkPi
 
