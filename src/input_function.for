@@ -223,7 +223,6 @@
       QNum = iargc ()
 
       sFactor = 1D0
-      VisBulkNorm = 1D0
 
       Do ArgIndex = 1, QNum
         Call getarg(ArgIndex, buffer)
