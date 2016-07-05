@@ -127,7 +127,7 @@ C *******************************J.Liu changes end***************************
        Common /Timestep/ DT_1, DT_2
 
        common/Edec/Edec    !decoupling energy density
-       common/Prefreezeout/Edec0, Ifreez
+!      common/Prefreezeout/Edec0, Ifreez
        Common/IEOS2dec/ IEOS2dec  ! IEOS=2 decouple by gluon/pion
 
        Common/OSCAR/ IOSCAR, IOSCARWrite  !CSHEN: for OSCAR output
@@ -175,8 +175,6 @@ C========= Inputting Parameters ===========================================
 
       ! freeze-out
       Read(1,*) Edec             ! decoupling energy density [GeV/fm^3]
-      Read(1,*) Ifreez           ! whether to freeze-out regions initially below Edec
-      Read(1,*) Edec0            ! minimum energy density for Ifreez == 1
       Read(1,*) NDX,NDY          ! freeze-out step in x, y directions
       Read(1,*) NDT              ! freeze-out step in tau direction
 
@@ -451,7 +449,7 @@ C-------------------------------------------------------------------------------
       COMMON /EOSSEL/ IEOS   !Type of EOS
       Common /Tde/ Tde, Rdec1, Rdec2,TempIni !Decoupling Temperature !decoupling radius
       common/Edec/Edec
-      common/Prefreezeout/Edec0, Ifreez
+!     common/Prefreezeout/Edec0, Ifreez
       common/Edec1/Edec1
 
       Common /Nsm/ Nsm
@@ -546,44 +544,44 @@ CSHEN===EOS from tables end====================================================
 
 !=======================================================================
 
-      ! output fluid cells outside the freeze out surface at initial time
-      if(Ifreez .ne. 0) then
-      DA0=(dx*NDX)*(dy*NDY)
-      DA1=0.0
-      DA2=0.0
+!     ! output fluid cells outside the freeze out surface at initial time
+!     if(Ifreez .ne. 0) then
+!     DA0=(dx*NDX)*(dy*NDY)
+!     DA1=0.0
+!     DA2=0.0
 
-      DO J = NYPhy0, NYPhy
-        IF (MOD(J, NDY) .NE. 0) cycle
-        YY = J * DY
-      DO I = NXPhy0, NXPHY
-        IF (MOD(I, NDX) .NE. 0) cycle
-        XX = I * DX
-        If(Ed(I,J,1)*HbarC.lt.Edec .and. Ed(I,J,1)*HbarC.ge.Edec0) then
-          PDec2 = PL(I,J,1)
+!     DO J = NYPhy0, NYPhy
+!       IF (MOD(J, NDY) .NE. 0) cycle
+!       YY = J * DY
+!     DO I = NXPhy0, NXPHY
+!       IF (MOD(I, NDX) .NE. 0) cycle
+!       XX = I * DX
+!       If(Ed(I,J,1)*HbarC.lt.Edec .and. Ed(I,J,1)*HbarC.ge.Edec0) then
+!         PDec2 = PL(I,J,1)
 
-          CPi00 = Pi00(I,J,1)
-          CPi01 = Pi01(I,J,1)
-          CPi02 = Pi02(I,J,1)
-          CPi11 = Pi11(I,J,1)
-          CPi12 = Pi12(I,J,1)
-          CPi22 = Pi22(I,J,1)
-          CPi33 = Pi33(I,J,1)
-          CPPI = PPI(I,J,1)
+!         CPi00 = Pi00(I,J,1)
+!         CPi01 = Pi01(I,J,1)
+!         CPi02 = Pi02(I,J,1)
+!         CPi11 = Pi11(I,J,1)
+!         CPi12 = Pi12(I,J,1)
+!         CPi22 = Pi22(I,J,1)
+!         CPi33 = Pi33(I,J,1)
+!         CPPI = PPI(I,J,1)
 
-          WRITE(99,'(19E20.8E3)')
-     &      Time, XX, YY,
-     &      DA0, DA1, DA2,
-     &      Vx(I,J,1), Vy(I,J,1),
-     &      Ed(I,J,1)*HbarC, PDec2*HbarC, Temp(I,J,1)*HbarC,
-     &      CPi00*HbarC, CPi01*HbarC, CPi02*HbarC,
-     &      CPi11*HbarC, CPi12*HbarC, CPi22*HbarC
-     &      CPi33*HbarC, CPPI*HbarC
+!         WRITE(99,'(19E20.8E3)')
+!    &      Time, XX, YY,
+!    &      DA0, DA1, DA2,
+!    &      Vx(I,J,1), Vy(I,J,1),
+!    &      Ed(I,J,1)*HbarC, PDec2*HbarC, Temp(I,J,1)*HbarC,
+!    &      CPi00*HbarC, CPi01*HbarC, CPi02*HbarC,
+!    &      CPi11*HbarC, CPi12*HbarC, CPi22*HbarC
+!    &      CPi33*HbarC, CPPI*HbarC
 
-          EDEC2 = Ed(I,J,1)*HbarC
-        End If
-       End Do
-       End Do
-       End If  !Ifreez
+!         EDEC2 = Ed(I,J,1)*HbarC
+!       End If
+!      End Do
+!      End Do
+!      End If  !Ifreez
 
 
        IW = 0
