@@ -139,7 +139,6 @@ C *******************************J.Liu changes end***************************
      &                            Inumparticle
 
        parameter (HbarC=0.19733d0) !for changcing between fm and GeV ! Hbarc=0.19733=GeV*fm
-       Character Cha
 
        Integer MaxT
 
@@ -165,14 +164,14 @@ C========= Inputting Parameters ===========================================
       Read(1,*) T0               ! initial time [fm]
       Read(1,*) IEin             ! read initial condition as energy (0) or entropy (1) density
 
-      Read(1,*) Cha
+      Read(1,*)
 
       ! basic stuff
       Read(1,*) DT_1             ! timestep [fm]
       Read(1,*) LS               ! lattice size in positive direction (total size = 2*LS + 1)
       Read(1,*) R0Bdry           ! boundary for viscous regulation [fm]
 
-      Read(1,*) Cha
+      Read(1,*)
 
       ! freeze-out
       Read(1,*) Edec             ! decoupling energy density [GeV/fm^3]
@@ -181,12 +180,12 @@ C========= Inputting Parameters ===========================================
       Read(1,*) NDX,NDY          ! freeze-out step in x, y directions
       Read(1,*) NDT              ! freeze-out step in tau direction
 
-      Read(1,*) Cha
+      Read(1,*)
 
       ! viscous equations
       Read(1,*) ViscousEqsType   ! Israel-Stewart (1) or 14-moment approximation (2)
 
-      Read(1,*) Cha
+      Read(1,*)
 
       ! shear viscosity
       Read(1,*) ViscousC         ! shear viscosity eta/s
@@ -196,7 +195,7 @@ C========= Inputting Parameters ===========================================
       Read(1,*) VisBeta          ! shear relaxation time tau_pi = 6*VisBeta*eta/(sT)
       Read(1,*) Initialpitensor  ! initialize shear tensor with zeros (0) or by Navier-Stokes (1)
 
-      Read(1,*) Cha
+      Read(1,*)
 
       ! bulk viscosity
       Read(1,*) VisBulk          ! Xi/s = VisBulk * (Xi/s)_min
@@ -205,7 +204,7 @@ C========= Inputting Parameters ===========================================
       Read(1,*) IRelaxBulk       ! bulk relaxation time: critical slowing down (0), constant (1), 1.5/(2*pi*T) (2), ?? (3), ?? (4)
       Read(1,*) BulkTau          ! constant bulk relaxation time for IRelaxBulk == 1
 
-      Read(1,*) Cha
+      Read(1,*)
 
       Read(1,*) InitialURead     ! read initial flow profile (currently broken)
 
