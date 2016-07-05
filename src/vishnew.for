@@ -542,7 +542,12 @@ CSHEN===EOS from tables end====================================================
      &  Ed,PL,Bd,Sd,Time,Temp0,Temp,CMu,T00,T01,T02,IAA,CofAA,PNEW,
      &  TEM0,ATEM0,Rj,EPS0,V10,V20,AEPS0,AV10,AV20,TFREEZ,TFLAG)
 
-!=======================================================================
+      ! write thermodynamic freeze-out quantities to surface file
+ 901  format (a,f13.10)
+      write(99,901) '# e = ', Edec
+      write(99,901) '# p = ', PEOSL7(Edec)
+      write(99,901) '# s = ', SEOSL7(Edec)
+      write(99,901) '# T = ', TEOSL7(Edec)
 
 !     ! output fluid cells outside the freeze out surface at initial time
 !     if(Ifreez .ne. 0) then
@@ -1100,14 +1105,14 @@ CSHEN======================================================================
            DA2  = dSigma(2, iSurf)
 
            IF (WRITING) THEN   !---
-             WRITE(99,'(19E20.8E3)')
+             WRITE(99,'(16ES24.16)')
      &         Tmid, Xmid, Ymid,
      &         DA0, DA1, DA2,
      &         v1mid, v2mid,
-     &         Edec, Pdec, Tdec,
      &         CPi00*HbarC, CPi01*HbarC, CPi02*HbarC,
      &         CPi11*HbarC, CPi12*HbarC, CPi22*HbarC,
-     &         CPi33*HbarC, CPPI*HbarC
+     &         CPi33*HbarC,
+     &         CPPI*HbarC
              IW = IW+1   !count the number in surface written file
              !output chemical potential for EOS-PCE
              IF (((IEOS.EQ.6).or.(IEOS.eq.7)).and.(IMuflag.eq.0)) then

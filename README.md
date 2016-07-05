@@ -66,8 +66,16 @@ During time evolution, the code prints out a line for each timestep
 
 Evolution stops after the max energy density drops below the configured decoupling energy density.
 
-The only output file is the hypersurface data `surface.dat`, with columns
+The only output file is the hypersurface data `surface.dat`, beginning with a commented header containing the thermodynamic freeze-out quantities
 
-    tau x y dsigma_t dsigma_x dsigma_y v_x v_y e p T pi00 pi01 pi02 pi11 pi12 pi22 pi33 PI
+    # e = <energy density>
+    # p = <pressure>
+    # s = <entropy density>
+    # T = <temperature>
 
-and one row for each hypersurface cell.
+and followed by data columns
+
+    tau x y dsigma_t dsigma_x dsigma_y v_x v_y pi00 pi01 pi02 pi11 pi12 pi22 pi33 PI
+
+where each row represents a volume element.
+All units are GeV and fm.
