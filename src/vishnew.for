@@ -267,8 +267,6 @@ CSHEN===END================================================================
       EK  = EK/Hbarc  !center energy density unit convert to fm^-4
       TT0 = T0
 
-      CALL UNLINK ('surface.dat')
-
       OPEN(99,FILE='surface.dat',FORM='FORMATTED',STATUS='REPLACE')
 
 CSHEN======================================================================
