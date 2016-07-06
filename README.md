@@ -79,3 +79,7 @@ and followed by data columns
 
 where each row represents a volume element.
 All units are GeV and fm.
+
+**Note**:
+The normal vector `dsigma` is output in contravariant form (index raised).
+Previous versions output the covariant vector (index lowered).

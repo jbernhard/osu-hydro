@@ -1077,8 +1077,9 @@ CSHEN======================================================================
      &             NX0,NY0,NX,NY,DTFreeze,DXFreeze,DYFreeze,CPPI,0)
 
            DA0  = dSigma(0, iSurf)
-           DA1  = dSigma(1, iSurf)
-           DA2  = dSigma(2, iSurf)
+           ! negative sign converts covariant (sigma_mu) -> contravariant (sigma^mu)
+           DA1  = -dSigma(1, iSurf)
+           DA2  = -dSigma(2, iSurf)
 
            WRITE(99,'(16ES24.16)')
      &       Tmid, Xmid, Ymid,
