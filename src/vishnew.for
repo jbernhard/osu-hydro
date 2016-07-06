@@ -589,7 +589,6 @@ CSHEN===EOS from tables end====================================================
 !      End If  !Ifreez
 
 
-       IW = 0
        do 9999 ITime = 1,MaxT
 !***********************  Begin  Time Loop ********************************
 CSHEN===========================================================================
@@ -860,7 +859,7 @@ C      NDT = 5
 5300  CONTINUE
 
       Call FreezeoutPro10 (EDEC, IEOS, NDX, NDY, NDT,
-     &     EPS0,EPS1,V10,V20,V11,V21, NINT, IW,
+     &     EPS0,EPS1,V10,V20,V11,V21, NINT,
      &     F0Pi00,F0Pi01,F0Pi02,F0Pi33,F0Pi11,F0Pi12,F0Pi22,
      &     FPi00,FPi01,FPi02,FPi33,FPi11,FPi12,FPi22,
      &     F0PPI, FPPI,
@@ -925,7 +924,7 @@ CSHEN===End=====================================================================
 
 C##################################################################################
       Subroutine FreezeoutPro10(Edec, IEOS, NDX, NDY, NDT,
-     &     EPS0,EPS1,V10,V20,V11,V21, NINT, IW,
+     &     EPS0,EPS1,V10,V20,V11,V21, NINT,
      &     F0Pi00,F0Pi01,F0Pi02,F0Pi33,F0Pi11,F0Pi12,F0Pi22,
      &     FPi00,FPi01,FPi02,FPi33,FPi11,FPi12,FPi22,
      &     F0PPI, FPPI,
@@ -935,7 +934,7 @@ C###############################################################################
       Implicit none
 
       double precision :: Edec
-      integer :: IEOS, NDX, NDY, NDT, NINT, IW
+      integer :: IEOS, NDX, NDY, NDT, NINT
       integer :: N
       double precision :: T, X, Y
       double precision :: DX, DY, DT
@@ -974,7 +973,7 @@ C###############################################################################
 
       double precision, PARAMETER :: pi=3.141592653d0, HbarC=.19733d0
 
-      Logical :: Intersect, WRITING, WRITINGX, WRITINGY
+      Logical :: intersect
       double precision :: DTFreeze, DXFreeze, DYFreeze
       integer :: NXFUL, NYFUL
       double precision :: Tmid, Xmid, Ymid
@@ -982,18 +981,12 @@ C###############################################################################
       double precision :: CPi00, CPi01, CPi02
       double precision :: CPi11, CPi12, CPi22, CPi33
       double precision :: CPPI
-      double precision :: BN, Pdec, ee, Tdec
-      double precision :: BAMU, SMU
       double precision :: DA0, DA1, DA2
-      double precision :: PEPS, TEIEOS4, TEIEOS5pp, TEOSL6, TEOSL7
 
 !** Zhi ***
       Integer :: absI, absJ ! abs(I) and abs(J) used in the loop
       Integer :: I, J, L
       Integer :: tmpI
-
-      double precision :: R0, Aeps
-      Common/R0Aeps/ R0,Aeps
 
 CSHEN======================================================================
 C=============add chemical potential for EOS-PCE
@@ -1045,12 +1038,11 @@ CSHEN======================================================================
        Y = J*DY
        X = I*DX
 
-       CALL SECTIONCornelius(Edec, Intersect, Cube, EPS0, EPS1,
+       CALL SECTIONCornelius(Edec, intersect, Cube, EPS0, EPS1,
      &                       I,J,NDX,NDY,NX0,NY0,NX,NY)
 
-       IF (INTERSECT) THEN   !***(INTERSECT)
+       IF (intersect) THEN
          NINT = NINT+1
-         WRITING = .TRUE.
          dSigma = 0.0d0
          Nsurf = 0
          Vmid = 0.0d0
@@ -1083,65 +1075,43 @@ CSHEN======================================================================
      &             NX0,NY0,NX,NY,DTFreeze,DXFreeze,DYFreeze,CPi33,0)
            CALL P4(I,J,NDX,NDY,NDT,Vmidpoint,F0PPI,FPPI,
      &             NX0,NY0,NX,NY,DTFreeze,DXFreeze,DYFreeze,CPPI,0)
-           Pdec = PEPS(0.0d0,Edec)
-
-           if (IEOS.eq.4) Then
-              ee   = Edec/HbarC          !change to fm
-              Tdec = TEIEOS4(ee)*HbarC   !change to GEV
-           ELSE IF (IEOS.eq.5) then         !CSHEN SM-EOS Q
-              ee   = Edec/HbarC          !1/fm^4
-              Tdec = TEIEOS5pp(ee)*HbarC !GeV
-           ELSE IF (IEOS.EQ.6) THEN         !CSHEN New EOS
-              ee   = Edec                !GeV/fm^3
-              Tdec = TEOSL6(ee)          !GeV
-           else if (IEOS.eq.7) then         !CSHEN EOS from table
-              ee   = Edec                !GeV/fm^3
-              Tdec = TEOSL7(ee)          !GeV
-           ELSE
-           END IF
 
            DA0  = dSigma(0, iSurf)
            DA1  = dSigma(1, iSurf)
            DA2  = dSigma(2, iSurf)
 
-           IF (WRITING) THEN   !---
-             WRITE(99,'(16ES24.16)')
-     &         Tmid, Xmid, Ymid,
-     &         DA0, DA1, DA2,
-     &         v1mid, v2mid,
-     &         CPi00*HbarC, CPi01*HbarC, CPi02*HbarC,
-     &         CPi11*HbarC, CPi12*HbarC, CPi22*HbarC,
-     &         CPi33*HbarC,
-     &         CPPI*HbarC
-             IW = IW+1   !count the number in surface written file
-             !output chemical potential for EOS-PCE
-             IF (((IEOS.EQ.6).or.(IEOS.eq.7)).and.(IMuflag.eq.0)) then
-               if(Inumparticle.ne.0) then
-                do L=1,Inumparticle
-                   call interpCubic(MuEOSdata(:,L), RegEOSMudatasize,
-     &                      EOS_Mu_e0, EOS_Mu_de, Edec, XMufreezetemp)
-                   XMufreeze(L) = XMufreezetemp
-                end do
-                write(81,'(E15.6)', Advance='NO') Edec
-                do L=1,Inumparticle
-                  write(81,'(E15.6)', Advance='NO') XMufreeze(L)
-                enddo
-                write(81,*)
-                IMuflag = 1
-               endif
+           WRITE(99,'(16ES24.16)')
+     &       Tmid, Xmid, Ymid,
+     &       DA0, DA1, DA2,
+     &       v1mid, v2mid,
+     &       CPi00*HbarC, CPi01*HbarC, CPi02*HbarC,
+     &       CPi11*HbarC, CPi12*HbarC, CPi22*HbarC,
+     &       CPi33*HbarC,
+     &       CPPI*HbarC
+
+           !output chemical potential for EOS-PCE
+           IF (((IEOS.EQ.6).or.(IEOS.eq.7)).and.(IMuflag.eq.0)) then
+             if(Inumparticle.ne.0) then
+              do L=1,Inumparticle
+                 call interpCubic(MuEOSdata(:,L), RegEOSMudatasize,
+     &                    EOS_Mu_e0, EOS_Mu_de, Edec, XMufreezetemp)
+                 XMufreeze(L) = XMufreezetemp
+              end do
+              write(81,'(E15.6)', Advance='NO') Edec
+              do L=1,Inumparticle
+                write(81,'(E15.6)', Advance='NO') XMufreeze(L)
+              enddo
+              write(81,*)
+              IMuflag = 1
              endif
-           ELSE               !write to file
-             NINT = NINT - 1
-           END IF             !write to file
-         Enddo  !loop over Nsurf
-       END IF      !***(INTERSECT)
+           endif
+
+         Enddo  ! Nsurf
+       ENDIF  ! intersect
 
 1911    Continue
  510    CONTINUE
  500    CONTINUE
-
-2553   FORMAT(8F20.8)
-2565   FORMAT(14E14.6)
 
       Return
       End
