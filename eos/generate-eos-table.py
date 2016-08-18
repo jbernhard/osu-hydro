@@ -206,8 +206,9 @@ def main():
     T = T_interp(e)
 
     # output table
+    fmt = 4*'{:24.16e}'
     for row in zip(e, p, s, T):
-        print(*('{:E}'.format(i) for i in row))
+        print(fmt.format(*row))
 
 
 if __name__ == "__main__":
