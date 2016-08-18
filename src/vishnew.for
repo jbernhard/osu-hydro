@@ -1552,18 +1552,13 @@ CSHEN======end=================================================================
       end if
 
 !------------ for bulk pressure------------
-      ttemp= Temp(i,j,k)*HbarC ! input function as Temp
-      e3pep=(Ed(i,j,k)-3.0*PL(i,j,k))/(Ed(i,j,k)+PL(i,j,k))
-
       If (VisBulk.ge.1D-6) then
-        !eta=ViscousC*Sd(i,j,k)
-        !VBulk(i,j,k)=VisBulk*BulkAdSH0(eta,ttemp)
-        !VBulk(i,j,k) = ViscousZetasTemp(Ed(i,j,k)*HbarC)*Sd(i,j,k)
+        delta_cs2 = (1.0/3.0 - getCS2(Ed(i,j,k)*HbarC))**2
+
         if (IVisBulkFlag .eq. 0) then
           VBulk(i,j,k) = Visbulk*Sd(i,j,k)
         else
-          VBulk(i,j,k)= ViscousZetasTempParametrized(ttemp,
-     &        0.180D0, VisBulkNorm)*Sd(i,j,k)
+          VBulk(i,j,k) = VisBulkNorm * delta_cs2 * Sd(i,j,k)
         endif
 
         If (IRelaxBulk.eq.0) then
@@ -1577,9 +1572,8 @@ CSHEN======end=================================================================
           TauPi = 9.0*VBulk(i,j,k)/(Ed(i,j,k) - 3.*PL(i,j,k))
           VRelaxT0(i,j,k) = 1.0/DMax1(0.1d0, TauPi)
         else if (IRelaxBulk .eq. 4) then
-          cs2 = getCS2(Ed(i,j,k)*HbarC)
-          Taupi = VBulk(i,j,k)/(14.55*(1.0/3.0-cs2)**2.0
-     &     *(Ed(i,j,k)+PL(i,j,k))) ! set lower bound of bulk relaxation time
+          ! lower bound of bulk relaxation time
+          Taupi = VBulk(i,j,k)/(14.55*delta_cs2*(Ed(i,j,k)+PL(i,j,k)))
           VRelaxT0(i,j,k) = 1.D0/DMax1(0.1D0, TauPi)
         else
           Print*,'This option is not supported by this version'
@@ -1621,22 +1615,6 @@ C====eta/s dependent on local temperature==================================
       else
           ViscousCTemp = VisHRG
       endif
-
-      return
-      end
-
-C====zeta/s dependent on local temperature==================================
-      double precision function ViscousZetasTemp(Ed)
-      ! Ed input should be in unit of GeV/fm^3
-      Implicit double precision (A-H, O-Z)
-      Parameter (pi=3.1415926d0)
-
-      de = 0.05*Ed
-      p1 = PEOSL7(Ed - de/2.)
-      p2 = PEOSL7(Ed + de/2.)
-      cs2 = (p2 - p1)/de   !cs^2 = dP/de
-
-      ViscousZetasTemp = 1./(8*pi)*(1./3. - cs2)
 
       return
       end
@@ -1687,34 +1665,6 @@ C---J.Liu-----------------------------------------------------------------------
       deltaBPiBPi = 2.D0/3.D0*tauBPi
       lambdaBPiSpi = 8.D0/5.D0*(1.D0/3.D0 - cs2)*tauBPi
 
-      Return
-      End
-
-
-      double precision function ViscousZetasTempParametrized(Temp_now,
-     &      T_cr, zetas_normFactor)
-      ! Unit of input temperatures should be GeV
-      ! Calculate the temperature dependent parameterization of zeta/s
-      Implicit double precision (A-H, O-Z)
-      double precision :: A1=-13.77D0, A2=27.55D0, A3=13.45D0
-      double precision :: lambda1=0.9D0, lambda2=0.25D0
-      double precision :: lambda3=0.9D0, lambda4=0.22D0
-      double precision :: sigma1=0.025D0, sigma2=0.13D0
-      double precision :: sigma3=0.0025D0, sigma4=0.022D0
-
-      x = Temp_now/T_cr
-
-      if(x < 0.995D0) Then
-        bulk = lambda3*exp((x-1.D0)/sigma3)
-     &       + lambda4*exp((x-1.D0)/sigma4) + 0.03D0
-      Else If(x > 1.05D0) then
-        bulk = lambda1*exp(-(x-1.D0)/sigma1)
-     &       + lambda2*exp(-(x-1.D0)/sigma2) + 0.001D0
-      Else
-        bulk = A1*x*x + A2*x - A3
-      EndIf
-
-      ViscousZetasTempParametrized = bulk*zetas_normFactor
       Return
       End
 
