@@ -30,7 +30,7 @@ This will place several files in `<prefix>/vishnew`: the compiled binary `vishne
 
 ### Equation of state
 
-The EOS table is generated at build time by the script `eos/generate-eos-table.py`, which blends a hadron resonance gas EOS at low temperature into the HotQCD EOS (http://inspirehep.net/record/1307761) at high temperature.
+The EOS table is generated at build time by the script `eos/generate-eos-table.py`, which connects a hadron resonance gas EOS at low temperature to a lattice EOS (HotQCD, http://inspirehep.net/record/1307761) at high temperature.
 Run `./generate-eos-table.py --plot` to visualize several important thermodynamic quantities.
 
 The EOS table has columns
@@ -38,7 +38,7 @@ The EOS table has columns
     energy_density  pressure  entropy_density  temperature
 
 in natural units of GeV and fm.
-It has exactly 155500 rows with evenly-spaced energy density steps, as expected by the `vishnew` code.
+It has 100000 rows with evenly-spaced energy density steps, as expected by the `vishnew` code.
 
 ### Configuration
 

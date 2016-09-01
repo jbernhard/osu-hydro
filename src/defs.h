@@ -1,0 +1,1 @@
+#define EOSDATALENGTH 100000

@@ -1,9 +1,10 @@
+#include "defs.h"
+
 ! Ver 1.2: EOS extended to infinite energy density by extrapolation
       Subroutine InputRegulatedEOS
       Implicit none
 
 !=======list of parameters===================================================
-      Integer, Parameter :: RegEOSdatasize = 155500  !converted EOS table data size
       Integer, Parameter :: RegEOSMudatasize = 501   !converted EOS Mu table data size
       Integer, Parameter :: IMax_Mu = 40        !maximum allowed stable particles for partically chemical equilibrium EOS
 !=======list of parameters end===============================================
@@ -12,12 +13,12 @@
       Integer :: I, J, K, L, M, N    !loop variables
       double precision :: EOSe0=0.0d0   !lowest energy density
       double precision :: EOSde=0.0d0   !spacing of energy density
-      Integer :: EOSne=RegEOSdatasize   !total rows of energy density
+      Integer :: EOSne=EOSDATALENGTH   !total rows of energy density
       double precision :: EOSEend   !the maximum energy density in the table
       double precision :: ee
-      double precision :: PEOSdata(RegEOSdatasize),
-     &                    SEOSdata(RegEOSdatasize),
-     &                    TEOSdata(RegEOSdatasize)
+      double precision :: PEOSdata(EOSDATALENGTH),
+     &                    SEOSdata(EOSDATALENGTH),
+     &                    TEOSdata(EOSDATALENGTH)
 
       double precision :: logx0, logy0, logx1, logy1
       double precision :: Pcoeff1, Pcoeff2, Scoeff1, Scoeff2,
@@ -109,13 +110,10 @@
 C====EOS from table===================================================
       Double Precision Function PEOSL7(ee)  ! for lattice P(e)
       Implicit none
-!=======list of parameters===================================================
-      Integer, Parameter :: RegEOSdatasize = 155500  !converted EOS table data size
-!=======list of parameters end===============================================
       double precision :: ee
-      double precision :: PEOSdata(RegEOSdatasize),
-     &                    SEOSdata(RegEOSdatasize),
-     &                    TEOSdata(RegEOSdatasize)
+      double precision :: PEOSdata(EOSDATALENGTH),
+     &                    SEOSdata(EOSDATALENGTH),
+     &                    TEOSdata(EOSDATALENGTH)
       double precision :: EOSe0         !lowest energy density
       double precision :: EOSde         !spacing of energy density
       Integer :: EOSne                  !total rows of energy density
@@ -143,13 +141,10 @@ C====EOS from table===================================================
 
       Double Precision Function SEOSL7(ee)  ! for lattice S(e)
       Implicit none
-!=======list of parameters===================================================
-      Integer, Parameter :: RegEOSdatasize = 155500  !converted EOS table data size
-!=======list of parameters end===============================================
       double precision :: ee
-      double precision :: PEOSdata(RegEOSdatasize),
-     &                    SEOSdata(RegEOSdatasize),
-     &                    TEOSdata(RegEOSdatasize)
+      double precision :: PEOSdata(EOSDATALENGTH),
+     &                    SEOSdata(EOSDATALENGTH),
+     &                    TEOSdata(EOSDATALENGTH)
       double precision :: EOSe0         !lowest energy density
       double precision :: EOSde         !spacing of energy density
       Integer :: EOSne                  !total rows of energy density
@@ -177,13 +172,10 @@ C====EOS from table===================================================
 
       Double Precision Function TEOSL7(ee)  ! for lattice T(e)
       Implicit none
-!=======list of parameters===================================================
-      Integer, Parameter :: RegEOSdatasize = 155500  !converted EOS table data size
-!=======list of parameters end===============================================
       double precision :: ee
-      double precision :: PEOSdata(RegEOSdatasize),
-     &                    SEOSdata(RegEOSdatasize),
-     &                    TEOSdata(RegEOSdatasize)
+      double precision :: PEOSdata(EOSDATALENGTH),
+     &                    SEOSdata(EOSDATALENGTH),
+     &                    TEOSdata(EOSDATALENGTH)
       double precision :: EOSe0         !lowest energy density
       double precision :: EOSde         !spacing of energy density
       Integer :: EOSne                  !total rows of energy density

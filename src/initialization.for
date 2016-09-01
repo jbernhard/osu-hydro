@@ -1,8 +1,6 @@
 ! 02-17-2011: The code "Ed = Ed + 1D-10" added at the end of energy initialization.
 
-!======== Pre-defined parameters =======================================
-
-#define EOSDATALENGTH 155500 ! compile with -cpp option
+#include "defs.h"
 #define CONSTPI 3.14159265
 
 !=======================================================================
@@ -111,10 +109,9 @@ C======output relaxation time for both shear and bulk viscosity================
 CSHEN==========================================================================
 
 CSHEN===EOS from tables========================================================
-      Integer, Parameter :: RegEOSdatasize = EOSDATALENGTH  !converted EOS table size
-      double precision :: PEOSdata(RegEOSdatasize),
-     &                    SEOSdata(RegEOSdatasize),
-     &                    TEOSdata(RegEOSdatasize)
+      double precision :: PEOSdata(EOSDATALENGTH),
+     &                    SEOSdata(EOSDATALENGTH),
+     &                    TEOSdata(EOSDATALENGTH)
       double precision :: EOSe0         !lowest energy density
       double precision :: EOSde         !spacing of energy density
       Integer :: EOSne                 !total rows of energy density
