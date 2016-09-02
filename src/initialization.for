@@ -190,13 +190,6 @@ C-------------------------------------------------------------------------------
 
 !   ---Zhi-End---
 
-CSHEN======================================================================
-C==========OSCAR2008H related parameters===================================
-      Integer :: ItimeOSCAR=800     !output time steps for OSCAR2008H file
-      Integer :: IOSCARWrite
-      Logical :: IOSCAR            ! trigger for output OSCAR format hydro results, False: not output, True: output
-      Common/OSCAR/ IOSCAR,IOSCARWrite
-CSHEN=========end==========================================================
       common /EOSdata/PEOSdata, SEOSdata, TEOSdata !CSHEN: for EOS from tables
       common /EOSdatastructure/ EOSe0, EOSde, EOSne, EOSEend
 

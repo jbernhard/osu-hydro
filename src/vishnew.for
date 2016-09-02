@@ -63,18 +63,14 @@ C===============================================================================
        Integer NX, NY, NZ
        Integer NX0,NY0, NZ0         ! dimension
 
-CSHEN===========================================================================
-       Logical :: IOSCAR=.false.            ! trigger for output OSCAR format hydro results, False: not output, True: output
-       Integer :: IVisflag=0          ! Flag for temperature dependent eta/s, 0: constant, 1: temperature dependent, which is defined in function ViscousCTemp(T)
-       Integer :: IOSCARWrite       ! output OCCAR file path number
-CSHEN===========================================================================
-
       double precision :: PEOSdata(EOSDATALENGTH),
      &                    SEOSdata(EOSDATALENGTH),
      &                    TEOSdata(EOSDATALENGTH)
       double precision :: EOSe0         !lowest energy density
       double precision :: EOSde         !spacing of energy density
       Integer :: EOSne                  !total rows of energy density
+
+      Integer :: IVisflag=0          ! Flag for temperature dependent eta/s, 0: constant, 1: temperature dependent, which is defined in function ViscousCTemp(T)
 
 C *******************************J.Liu changes*******************************
       Integer InitialURead
@@ -111,8 +107,6 @@ C *******************************J.Liu changes end***************************
        common/Edec/Edec    !decoupling energy density
 !      common/Prefreezeout/Edec0, Ifreez
        Common/IEOS2dec/ IEOS2dec  ! IEOS=2 decouple by gluon/pion
-
-       Common/OSCAR/ IOSCAR, IOSCARWrite  !CSHEN: for OSCAR output
 
        common /EOSdata/PEOSdata, SEOSdata, TEOSdata !CSHEN: for EOS from tables
        common /EOSdatastructure/ EOSe0, EOSde, EOSne
@@ -245,15 +239,6 @@ CSHEN===END================================================================
 
       OPEN(99,FILE='surface.dat',FORM='FORMATTED',STATUS='REPLACE')
 
-CSHEN======================================================================
-
-      If (IOSCAR) Then
-        IOSCARWrite = 43
-        open(IOSCARWrite,File='oscar.dat',Form='Formatted',
-     &     status='REPLACE')   !output standard format VISH2+1 results for further hydro movie and jet quenching purpose
-      EndIf
-CSHEN======================================================================
-
       call InputRegulatedEOS
 
       NXPhy0=-LS
@@ -267,20 +252,10 @@ CSHEN======================================================================
       NY0=NYPhy0-5
       NZ0=1
 
-CSHEN======output OSCAR file Header=========================================
-      if(IOSCAR) then
-            call OSCARheaderoutput(IOSCARWrite, NXPhy0, NXPhy,
-     &                             NYPhy0, NYPhy, T0, DX, DY)
-      endif
-CSHEN======output OSCAR file Header end=====================================
-
       Call Mainpro(NX0,NY0,NZ0,NX,NY,NZ,NXPhy0,NYPhy0,
      &          NXPhy,NYPhy,T0,DX,DY,DZ,DT,MaxT,NDX,NDY,NDT)   ! main program
 
       Close(99)
-      If (IOSCAR) Then
-        close(IOSCARWrite)
-      EndIf
 
       End
 !-----------------------------------------------------------------------
@@ -470,15 +445,7 @@ C-------------------------------------------------------------------------------
 !   ---Zhi-End---
 
 
-CSHEN======================================================================
-C==========OSCAR2008H related parameters===================================
-      Integer :: ItimeOSCAR=800     !output time steps for OSCAR2008H file
-      Integer :: IOSCARWrite
-      Logical :: IOSCAR            ! trigger for output OSCAR format hydro results, False: not output, True: output
-      Common/OSCAR/ IOSCAR,IOSCARWrite
-
       Integer :: Tau_idx
-CSHEN=========end==========================================================
 
 CSHEN===EOS from tables========================================================
       double precision :: PEOSdata(EOSDATALENGTH),
@@ -768,20 +735,6 @@ CSHEN====END====================================================================
       End Do
       End Do
 
-CSHEN===========================================================================
-C====output the OSCAR body file from hydro evolution============ ===============
-      if(IOSCAR) then
-       if(ITime .lt. ItimeOSCAR) then
-        call OSCARbodyoutput(IOSCARWrite, NX0, NX, NY0, NY, NZ0, NZ,
-     &                       NXPhy0, NXPhy, NYPhy0, NYPhy, ITime,
-     &                       Ed, PL, Temp, Vx, Vy,
-     &                       Pi00, Pi01, Pi02, Pi11, Pi12,
-     &                       Pi22, Pi33, PPi, VRelaxT, VRelaxT0)
-       endif
-      endif
-CSHEN===end=====================================================================
-
-
       Hc = HbarC
 
 
@@ -866,21 +819,6 @@ C~~~~~~~~~~~~~~Freezeout Procedure (rewritten from Peters code azhydro0p2)     ~
 
 9999  Continue  !***********************  End Time Loop  ******************************************
 10000 Continue
-
-CSHEN===========================================================================
-C============OSCAR2008H output format for hydro movie and jet quenching=========
-C=========fill up rest redundant step for the output file=======================
-      if(IOSCAR) then
-5786     if(ITime .lt. ItimeOSCAR) then
-         ITime =  ITime + 1
-         call OSCARredundantoutput(IOSCARWrite, NZ0, NZ, ITime,
-     &                             NXPhy0, NXPhy, NYPhy0, NYPhy)
-         write(*,*) ITime
-         goto 5786
-         endif
-      endif
-
-CSHEN===End=====================================================================
 
       Return
       End

@@ -4,7 +4,6 @@ add_executable(${PROJECT_NAME}
   eos.for
   initialization.for
   input_function.for
-  oscar_output.for
   phy_boundary.for
   vishnew.for
 )
