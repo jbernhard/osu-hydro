@@ -44,8 +44,6 @@ C===============================================================================
 
 
 #include "defs.h"
-#define EOSMUDATALENGTH 501
-#define EOSMUMAXPARTICLE 40
 #define CONSTPI 3.14159265
 
 ! change to 1 to ignore checks
@@ -71,25 +69,12 @@ CSHEN===========================================================================
        Integer :: IOSCARWrite       ! output OCCAR file path number
 CSHEN===========================================================================
 
-CSHEN===EOS from tables========================================================
       double precision :: PEOSdata(EOSDATALENGTH),
      &                    SEOSdata(EOSDATALENGTH),
      &                    TEOSdata(EOSDATALENGTH)
       double precision :: EOSe0         !lowest energy density
       double precision :: EOSde         !spacing of energy density
       Integer :: EOSne                  !total rows of energy density
-
-CSHEN======================================================================
-C=============add chemical potential for EOS-PCE
-      Integer, Parameter :: RegEOSMudatasize = EOSMUDATALENGTH   !converted EOS Mu table data size
-      Integer, Parameter :: IMax_Mu = EOSMUMAXPARTICLE        !maximum allowed stable particles for partically chemical equilibrium EOS
-      Integer :: Inumparticle       !number of stable particles in PCE, 0 for chemical equilibrium EOS
-      Integer :: EOS_Mu_ne            !total rows in mu table
-      double precision :: EOS_Mu_e0   !lowest energy density in mu table
-      double precision :: EOS_Mu_de   !spacing of energy density in mu table
-      double precision :: MuEOSdata(RegEOSMudatasize, IMax_Mu)
-      integer :: Muflag
-CSHEN===EOS from tables end====================================================
 
 C *******************************J.Liu changes*******************************
       Integer InitialURead
@@ -131,9 +116,6 @@ C *******************************J.Liu changes end***************************
 
        common /EOSdata/PEOSdata, SEOSdata, TEOSdata !CSHEN: for EOS from tables
        common /EOSdatastructure/ EOSe0, EOSde, EOSne
-       common /EOSMudata/MuEOSdata, IMuflag
-       common /EOSMudatastructure/ EOS_Mu_e0, EOS_Mu_de, EOS_Mu_ne,
-     &                            Inumparticle
 
        parameter (HbarC=0.19733d0) !for changcing between fm and GeV ! Hbarc=0.19733=GeV*fm
 
@@ -505,25 +487,11 @@ CSHEN===EOS from tables========================================================
       double precision :: EOSe0         !lowest energy density
       double precision :: EOSde         !spacing of energy density
       Integer :: EOSne                 !total rows of energy density
-
-      Integer, Parameter :: RegEOSMudatasize = EOSMUDATALENGTH   !converted EOS Mu table data size
-      Integer, Parameter :: IMax_Mu = EOSMUMAXPARTICLE        !maximum allowed stable particles for partially chemical equilibrium EOS
-      Integer :: Inumparticle       !number of stable particles in PCE, 0 for chemical equilibrium EOS
-      Integer :: EOS_Mu_ne            !total rows in mu table
-      double precision :: EOS_Mu_e0   !lowest energy density in mu table
-      double precision :: EOS_Mu_de   !spacing of energy density in mu table
-      double precision :: MuEOSdata(RegEOSMudatasize, IMax_Mu)
-      Integer :: IMuflag
-      double precision :: XMufreeze(1:IMax_mu)
 CSHEN===EOS from tables end====================================================
       common /EOSdata/PEOSdata, SEOSdata, TEOSdata !CSHEN: for EOS from tables
       common /EOSdatastructure/ EOSe0, EOSde, EOSne
-      common /EOSMudata/MuEOSdata, IMuflag
-      common /EOSMudatastructure/ EOS_Mu_e0, EOS_Mu_de, EOS_Mu_ne,
-     &                            Inumparticle
 
       TFLAG = 0
-      IMuflag = 0
       Edec1 = Edec
 
 !=======================================================================
@@ -984,25 +952,6 @@ C###############################################################################
       Integer :: I, J, L
       Integer :: tmpI
 
-CSHEN======================================================================
-C=============add chemical potential for EOS-PCE
-      Integer, Parameter :: RegEOSMudatasize = EOSMUDATALENGTH   !converted EOS Mu table data size
-      Integer, Parameter :: IMax_Mu = EOSMUMAXPARTICLE        !maximum allowed stable particles for partically chemical equilibrium EOS
-      Integer :: Inumparticle       !number of stable particles in PCE, 0 for chemical equilibrium EOS
-      Integer :: EOS_Mu_ne            !total rows in mu table
-      double precision :: EOS_Mu_e0   !lowest energy density in mu table
-      double precision :: EOS_Mu_de   !spacing of energy density in mu table
-      double precision :: MuEOSdata(RegEOSMudatasize, IMax_Mu)
-      Integer :: IMuflag
-
-      double precision :: XMufreeze(1:IMax_Mu)
-      double precision :: XMufreezetemp
-
-      common /EOSMudata/MuEOSdata, IMuflag
-      common /EOSMudatastructure/ EOS_Mu_e0, EOS_Mu_de, EOS_Mu_ne,
-     &                            Inumparticle
-CSHEN======================================================================
-
       DTFreeze = NDT*DT
       DXFreeze = NDX*DX
       DYFreeze = NDY*DY
@@ -1085,23 +1034,6 @@ CSHEN======================================================================
      &       CPi11*HbarC, CPi12*HbarC, CPi22*HbarC,
      &       CPi33*HbarC,
      &       CPPI*HbarC
-
-           !output chemical potential for EOS-PCE
-           IF (((IEOS.EQ.6).or.(IEOS.eq.7)).and.(IMuflag.eq.0)) then
-             if(Inumparticle.ne.0) then
-              do L=1,Inumparticle
-                 call interpCubic(MuEOSdata(:,L), RegEOSMudatasize,
-     &                    EOS_Mu_e0, EOS_Mu_de, Edec, XMufreezetemp)
-                 XMufreeze(L) = XMufreezetemp
-              end do
-              write(81,'(E15.6)', Advance='NO') Edec
-              do L=1,Inumparticle
-                write(81,'(E15.6)', Advance='NO') XMufreeze(L)
-              enddo
-              write(81,*)
-              IMuflag = 1
-             endif
-           endif
 
          Enddo  ! Nsurf
        ENDIF  ! intersect

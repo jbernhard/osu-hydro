@@ -191,17 +191,6 @@ C-------------------------------------------------------------------------------
 !   ---Zhi-End---
 
 CSHEN======================================================================
-C=============add chemical potential for EOS6
-      Common /chempot/ XEKeos6, XDEeos6, ICOLNUMeos6,
-     &                 INEeos6, XMUeos6(1:501,1:40),
-     &                 XEeos6(1:501), XMe2eos6(1:501,1:40)
-C=========XMUeos6 store the chemical potential data
-C=========XEeos6 store the coresponding energy density
-C=========XMe2eos6 store the second derivation of the chemical potential
-C=========INEeos6 store the number of the row of chemical potential
-CSHEN======================================================================
-
-CSHEN======================================================================
 C==========OSCAR2008H related parameters===================================
       Integer :: ItimeOSCAR=800     !output time steps for OSCAR2008H file
       Integer :: IOSCARWrite

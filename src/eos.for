@@ -3,11 +3,6 @@
       Subroutine InputRegulatedEOS
       Implicit none
 
-!=======list of parameters===================================================
-      Integer, Parameter :: RegEOSMudatasize = 501   !converted EOS Mu table data size
-      Integer, Parameter :: IMax_Mu = 40        !maximum allowed stable particles for partically chemical equilibrium EOS
-!=======list of parameters end===============================================
-
       Integer :: I
       double precision :: EOSe0=0.0d0   !lowest energy density
       double precision :: EOSde=0.0d0   !spacing of energy density
@@ -16,23 +11,11 @@
       double precision :: PEOSdata(EOSDATALENGTH),
      &                    SEOSdata(EOSDATALENGTH),
      &                    TEOSdata(EOSDATALENGTH)
-
       double precision :: e0, p0, cs2
       double precision :: escale, epow, sscale, spow
 
-      Integer :: Inumparticle = 0   !number of stable particles in PCE, 0 for chemical equilibrium EOS
-      Integer :: EOS_Mu_ne = RegEOSMudatasize   !total rows in mu table
-      double precision :: EOS_Mu_e0 = 0.0d0   !lowest energy density in mu table
-      double precision :: EOS_Mu_de = 0.0d0   !spacing of energy density in mu table
-      double precision :: MuEOSdata(RegEOSMudatasize, IMax_Mu)
-      Integer :: IMuflag
-
       common /EOSdata/PEOSdata, SEOSdata, TEOSdata
       common /EOSdatastructure/ EOSe0, EOSde, EOSne, EOSEend
-
-      common /EOSMudata/MuEOSdata, IMuflag
-      common /EOSMudatastructure/ EOS_Mu_e0, EOS_Mu_de, EOS_Mu_ne,
-     &                            Inumparticle
       common /EOScoeffs/ escale, epow, sscale, spow
 
 
@@ -85,19 +68,6 @@
       ! in SEOSL7, below.
       spow = 3/(4*(1 - epow))
       sscale = SEOSdata(EOSne - 1) * (e0**epow/(e0 + p0))**spow
-
-      ! disable PCE
-      !open(5,FILE='EOS/EOS_tables/EOS_particletable.dat', STATUS='OLD')
-      !read(5,*) Inumparticle
-      !close(5)
-      !if(Inumparticle.ne.0) then
-      !   open(5,FILE='EOS/EOS_tables/EOS_Mu.dat', STATUS='OLD')
-      !   do I=1,EOS_Mu_ne
-      !      read(5,*) ee, (MuEOSdata(I,J), J=1, Inumparticle)
-      !      if(I.eq.1) EOS_Mu_e0 = ee
-      !      if(I.eq.2) EOS_Mu_de = ee - EOS_Mu_e0
-      !   enddo
-      !endif
 
       end
 
