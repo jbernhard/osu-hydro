@@ -29,14 +29,10 @@ C   [5] H.Song, Ph.D thesis 2009, arXiv:0908.3656 [nucl-th].
        Integer NX, NY, NZ
        Integer NX0,NY0, NZ0         ! dimension
 
-      double precision :: PEOSdata(EOSDATALENGTH),
-     &                    SEOSdata(EOSDATALENGTH),
-     &                    TEOSdata(EOSDATALENGTH)
-      double precision :: EOSe0         !lowest energy density
-      double precision :: EOSde         !spacing of energy density
-      Integer :: EOSne                  !total rows of energy density
-
+      double precision :: ViscousC, VisHRG, VisMin, VisSlope, VisBeta
       Integer :: IVisflag=0          ! Flag for temperature dependent eta/s, 0: constant, 1: temperature dependent, which is defined in function ViscousCTemp(T)
+      Common /ViscousC/ ViscousC, VisHRG, VisMin, VisSlope, VisBeta,
+     &                  IVisflag  ! Related to Shear Viscosity
 
 C *******************************J.Liu changes*******************************
       Integer InitialURead
@@ -45,8 +41,9 @@ C *******************************J.Liu changes*******************************
       Integer Initialpitensor
       Common/Initialpi/ Initialpitensor
 
+      double precision :: VisBulkNorm
       Integer ViscousEqsType
-      Common/ViscousEqsControl/ ViscousEqsType, VisBulkNorm
+      Common /ViscousEqsControl/ VisBulkNorm, ViscousEqsType
 
       Integer :: IVisBulkFlag
       Common /ViscousBulk/ Visbulk, BulkTau,IRelaxBulk, IVisBulkFlag ! Related to bulk Visousity
@@ -57,17 +54,12 @@ C *******************************J.Liu changes end***************************
 
        COMMON /IEin/ IEin     !  type of initialization  entropy/enrgy
 
-       Common /ViscousC/ ViscousC, IVisflag, VisHRG, VisMin, VisSlope,
-     &                   VisBeta  ! Related to Shear Viscosity
        Common/dxdy/ ddx, ddy
        Common /TT0/ TT0   !T0
 
        Common /Timestep/ DT_1, DT_2
 
        common/Edec/Edec    !decoupling energy density
-
-       common /EOSdata/PEOSdata, SEOSdata, TEOSdata !CSHEN: for EOS from tables
-       common /EOSdatastructure/ EOSe0, EOSde, EOSne
 
        Integer MaxT
 
@@ -339,13 +331,13 @@ C-------------------------------------------------------------------------------
       Double Precision XN(0:9), YN(0:9), Weight ! For initial anisotropy calculation
       Double Precision XNP(0:9), YNP(0:9), WeightP ! XN' and YN', the one using r^n in the weight
 
-      Common /ViscousC/ ViscousC, IVisflag, VisHRG, VisMin, VisSlope,
-     &                  VisBeta  ! Related to Shear Viscosity
+      Common /ViscousC/ ViscousC, VisHRG, VisMin, VisSlope, VisBeta,
+     &                  IVisflag  ! Related to Shear Viscosity
       Common /ViscousBulk/ Visbulk,BulkTau,IRelaxBulk,IVisBulkFlag  ! Related to bulk Viscosity
 
+      double precision :: VisBulkNorm
       Integer ViscousEqsType
-      double precision:: VisBulkNorm
-      Common/ViscousEqsControl/ ViscousEqsType, VisBulkNorm
+      Common /ViscousEqsControl/ VisBulkNorm, ViscousEqsType
 
       Double Precision SEOSL7, PEOSL7, TEOSL7, SEOSL6
       Double Precision ss, ddt1, ddt2, ee1, ee2
@@ -356,17 +348,6 @@ C-------------------------------------------------------------------------------
 
 
       Integer :: Tau_idx
-
-CSHEN===EOS from tables========================================================
-      double precision :: PEOSdata(EOSDATALENGTH),
-     &                    SEOSdata(EOSDATALENGTH),
-     &                    TEOSdata(EOSDATALENGTH)
-      double precision :: EOSe0         !lowest energy density
-      double precision :: EOSde         !spacing of energy density
-      Integer :: EOSne                 !total rows of energy density
-CSHEN===EOS from tables end====================================================
-      common /EOSdata/PEOSdata, SEOSdata, TEOSdata !CSHEN: for EOS from tables
-      common /EOSdatastructure/ EOSe0, EOSde, EOSne
 
       TFLAG = 0
       Edec1 = Edec
@@ -1230,8 +1211,8 @@ C#####################################################
        Integer :: IVisflag
        Integer :: IVisBulkFlag
 
-       Common /ViscousC/ ViscousC, IVisflag, VisHRG, VisMin, VisSlope,
-     &                   VisBeta  ! Related to Shear Viscosity
+       Common /ViscousC/ ViscousC, VisHRG, VisMin, VisSlope, VisBeta,
+     &                   IVisflag  ! Related to Shear Viscosity
        Common /ViscousBulk/ Visbulk, BulkTau,IRelaxBulk, IVisBulkFlag  ! Related to bulk Viscous Coefficient Xi and beta0
 
        Common /Tde/ Tde, Rdec1, Rdec2,TempIni !Decoupling Temperature !decoupling radius
@@ -1239,9 +1220,9 @@ C#####################################################
        Common/R0Bdry/ R0Bdry
        double precision, parameter :: HbarC = M_HBARC
 
-       Integer ViscousEqsType
-       double precision :: VisBulkNorm
-       Common/ViscousEqsControl/ ViscousEqsType, VisBulkNorm
+      double precision :: VisBulkNorm
+      Integer ViscousEqsType
+      Common /ViscousEqsControl/ VisBulkNorm, ViscousEqsType
 
       do 10 k=1,1
       do 10 j=NYPhy0-2,NYPhy+2 ! -2,NYPhy+2
@@ -1348,8 +1329,8 @@ C====eta/s dependent on local temperature==================================
       Implicit double precision (A-H, O-Z)
       double precision, parameter :: HbarC = M_HBARC
 
-      Common /ViscousC/ ViscousC, IVisflag, VisHRG, VisMin, VisSlope,
-     &                  VisBeta  ! Related to Shear Viscosity
+      Common /ViscousC/ ViscousC, VisHRG, VisMin, VisSlope, VisBeta,
+     &                  IVisflag  ! Related to Shear Viscosity
 
       TT_GeV = TT*HbarC
       Ttr = 0.154
@@ -1686,8 +1667,8 @@ C-------------------------------------------
        Integer :: IVisflag
        Integer :: IVisBulkFlag
 
-       Common /ViscousC/ ViscousC, IVisflag, VisHRG, VisMin, VisSlope,
-     &                   VisBeta  ! Related to Shear Viscosity
+       Common /ViscousC/ ViscousC, VisHRG, VisMin, VisSlope, VisBeta,
+     &                   IVisflag  ! Related to Shear Viscosity
        Common /ViscousBulk/ Visbulk, BulkTau,IRelaxBulk, IVisBulkFlag
 
         DIMENSION PNEW(NNEW)!something related to root finding
@@ -1710,9 +1691,10 @@ C-------------------------------------------
       ! ----- Use in root search -----
       Double Precision :: RSDM0, RSDM, RSPPI, RSee
       Common /findEdHookData/ RSDM0, RSDM, RSPPI ! M0, M, Pi (see 0510014)
-      Integer ViscousEqsType
+
       double precision :: VisBulkNorm
-      Common/ViscousEqsControl/ ViscousEqsType, VisBulkNorm
+      Integer ViscousEqsType
+      Common /ViscousEqsControl/ VisBulkNorm, ViscousEqsType
 
       Double precision :: deltaBPiBPi, lambdaBPiSpi ! bulk transport coefficients
       Double precision :: deltaSpiSpi, lambdaSpiBPi, phi7, taupipi ! shear transport coefficients

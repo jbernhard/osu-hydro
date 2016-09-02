@@ -38,17 +38,17 @@
       Double Precision ViscousC, VisBeta, VisHRG, VisMin, VisSlope,
      &                 Visbulk, BulkTau, IRelaxBulk
       Integer IVisflag
-      Common /ViscousC/ ViscousC, IVisflag, VisHRG, VisMin, VisSlope,
-     &                  VisBeta  ! Related to Shear Viscosity
+      Common /ViscousC/ ViscousC, VisHRG, VisMin, VisSlope, VisBeta,
+     &                  IVisflag  ! Related to Shear Viscosity
       Integer IVisBulkFlag
       Common /ViscousBulk/ Visbulk, BulkTau, IRelaxBulk, IVisBulkFlag ! Related to bulk Visousity
 
       Integer Initialpitensor
       Common/Initialpi/ Initialpitensor
 
-      Integer :: ViscousEqsType
-      double precision:: VisBulkNorm
-      Common/ViscousEqsControl/ ViscousEqsType, VisBulkNorm
+      double precision :: VisBulkNorm
+      Integer ViscousEqsType
+      Common /ViscousEqsControl/ VisBulkNorm, ViscousEqsType
 
       Double Precision ITeta, b, ddx, ddy, TT0
       Common /ITeta/ ITeta
@@ -258,8 +258,8 @@
 
       Integer IVisflag
       Double Precision ViscousC, VisBeta, VisHRG, VisMin, VisSlope
-      Common /ViscousC/ ViscousC, IVisflag, VisHRG, VisMin, VisSlope,
-     &                  VisBeta  ! Related to Shear Viscosity
+      Common /ViscousC/ ViscousC, VisHRG, VisMin, VisSlope, VisBeta,
+     &                  IVisflag  ! Related to Shear Viscosity
 
       Double Precision PiRatio ! used to determine R0; within r<R0, Pi/(e+p) < PiRatio
       Common /PiRatio/ PiRatio ! should already be setuped in prepareInputFun function

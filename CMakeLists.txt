@@ -22,7 +22,7 @@ if(NOT CMAKE_Fortran_FLAGS MATCHES "-march|-mtune")
   set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -march=native")
 endif()
 
-set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -cpp -fno-align-commons")
+set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -cpp")
 
 install(FILES ${PROJECT_NAME}.conf DESTINATION ${PROJECT_NAME})
 

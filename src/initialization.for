@@ -104,17 +104,6 @@ C======output relaxation time for both shear and bulk viscosity================
       Dimension VRelaxT0(NX0:NX, NY0:NY, NZ0:NZ) !viscous coeficient relaxation time
 CSHEN==========================================================================
 
-CSHEN===EOS from tables========================================================
-      double precision :: PEOSdata(EOSDATALENGTH),
-     &                    SEOSdata(EOSDATALENGTH),
-     &                    TEOSdata(EOSDATALENGTH)
-      double precision :: EOSe0         !lowest energy density
-      double precision :: EOSde         !spacing of energy density
-      Integer :: EOSne                 !total rows of energy density
-
-CSHEN===EOS from tables end====================================================
-
-
 C----------------------------------------------------------------------------------------------
       DIMENSION EPS0(NX0:NX,NY0:NY),EPS1(NX0:NX,NY0:NY) ! Energy density in previous and current step
       DIMENSION TEM0(NX0:NX,NY0:NY),TEM1(NX0:NX,NY0:NY) ! Temperature density in previous and current step
@@ -165,15 +154,9 @@ C-------------------------------------------------------------------------------
 
       Common /ViscousC / ViscousC,VisBeta, IVisflag ! Related to Shear Viscosity
 
-      Double Precision SEOSL7, PEOSL7, TEOSL7, SEOSL6
+      Double Precision SEOSL7, PEOSL7, TEOSL7
       Double Precision ss, ddt1, ddt2, ee1, ee2
       External SEOSL7
-
-
-!   ---Zhi-End---
-
-      common /EOSdata/PEOSdata, SEOSdata, TEOSdata !CSHEN: for EOS from tables
-      common /EOSdatastructure/ EOSe0, EOSde, EOSne, EOSEend
 
       Integer Initialpitensor
       Common/Initialpi/ Initialpitensor

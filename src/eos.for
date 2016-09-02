@@ -4,18 +4,20 @@
       Implicit none
 
       Integer :: I
-      double precision :: EOSe0=0.0d0   !lowest energy density
-      double precision :: EOSde=0.0d0   !spacing of energy density
-      double precision :: EOSEend   !the maximum energy density in the table
-      Integer :: EOSne=EOSDATALENGTH
+      double precision :: e0, p0, cs2
+
       double precision :: PEOSdata(EOSDATALENGTH),
      &                    SEOSdata(EOSDATALENGTH),
      &                    TEOSdata(EOSDATALENGTH)
-      double precision :: e0, p0, cs2
-      double precision :: escale, epow, sscale, spow
-
       common /EOSdata/PEOSdata, SEOSdata, TEOSdata
-      common /EOSdatastructure/ EOSe0, EOSde, EOSne, EOSEend
+
+      double precision :: EOSe0         ! min (first) energy density
+      double precision :: EOSde         ! energy density step
+      double precision :: EOSEend       ! max (last) energy density
+      Integer :: EOSne = EOSDATALENGTH  ! number of table rows
+      common /EOSdatastructure/ EOSe0, EOSde, EOSEend, EOSne
+
+      double precision :: escale, epow, sscale, spow
       common /EOScoeffs/ escale, epow, sscale, spow
 
 
@@ -75,18 +77,21 @@
 C====EOS from table===================================================
       Double Precision Function PEOSL7(e)  ! for lattice P(e)
       Implicit none
+
       double precision :: e
+
       double precision :: PEOSdata(EOSDATALENGTH),
      &                    SEOSdata(EOSDATALENGTH),
      &                    TEOSdata(EOSDATALENGTH)
-      double precision :: EOSe0         !lowest energy density
-      double precision :: EOSde         !spacing of energy density
-      Integer :: EOSne                  !total rows of energy density
-      double precision :: EOSEend   !the maximum energy density in the table
-      double precision :: escale, epow, sscale, spow
-
       common /EOSdata/PEOSdata, SEOSdata, TEOSdata
-      common /EOSdatastructure/ EOSe0, EOSde, EOSne, EOSEend
+
+      double precision :: EOSe0         ! min (first) energy density
+      double precision :: EOSde         ! energy density step
+      double precision :: EOSEend       ! max (last) energy density
+      Integer :: EOSne                  ! number of table rows
+      common /EOSdatastructure/ EOSe0, EOSde, EOSEend, EOSne
+
+      double precision :: escale, epow, sscale, spow
       common /EOScoeffs/ escale, epow, sscale, spow
 
       e = abs(e)
@@ -105,19 +110,22 @@ C====EOS from table===================================================
 
       Double Precision Function SEOSL7(e)  ! for lattice S(e)
       Implicit none
+
       double precision :: e
       double precision :: PEOSL7
+
       double precision :: PEOSdata(EOSDATALENGTH),
      &                    SEOSdata(EOSDATALENGTH),
      &                    TEOSdata(EOSDATALENGTH)
-      double precision :: EOSe0         !lowest energy density
-      double precision :: EOSde         !spacing of energy density
-      Integer :: EOSne                  !total rows of energy density
-      double precision :: EOSEend   !the maximum energy density in the table
-      double precision :: escale, epow, sscale, spow
-
       common /EOSdata/PEOSdata, SEOSdata, TEOSdata
-      common /EOSdatastructure/ EOSe0, EOSde, EOSne, EOSEend
+
+      double precision :: EOSe0         ! min (first) energy density
+      double precision :: EOSde         ! energy density step
+      double precision :: EOSEend       ! max (last) energy density
+      Integer :: EOSne                  ! number of table rows
+      common /EOSdatastructure/ EOSe0, EOSde, EOSEend, EOSne
+
+      double precision :: escale, epow, sscale, spow
       common /EOScoeffs/ escale, epow, sscale, spow
 
       e = abs(e)
@@ -136,19 +144,22 @@ C====EOS from table===================================================
 
       Double Precision Function TEOSL7(e)  ! for lattice T(e)
       Implicit none
+
       double precision :: e
       double precision :: PEOSL7, SEOSL7
+
       double precision :: PEOSdata(EOSDATALENGTH),
      &                    SEOSdata(EOSDATALENGTH),
      &                    TEOSdata(EOSDATALENGTH)
-      double precision :: EOSe0         !lowest energy density
-      double precision :: EOSde         !spacing of energy density
-      Integer :: EOSne                  !total rows of energy density
-      double precision :: EOSEend   !the maximum energy density in the table
-      double precision :: escale, epow, sscale, spow
-
       common /EOSdata/PEOSdata, SEOSdata, TEOSdata
-      common /EOSdatastructure/ EOSe0, EOSde, EOSne, EOSEend
+
+      double precision :: EOSe0         ! min (first) energy density
+      double precision :: EOSde         ! energy density step
+      double precision :: EOSEend       ! max (last) energy density
+      Integer :: EOSne                  ! number of table rows
+      common /EOSdatastructure/ EOSe0, EOSde, EOSEend, EOSne
+
+      double precision :: escale, epow, sscale, spow
       common /EOScoeffs/ escale, epow, sscale, spow
 
       e = abs(e)
