@@ -1,20 +1,8 @@
-#define say_level 3
-
       Subroutine prepareInputFun()
 !     Purpose:
 !       Do some common preparation for other functions in this file
 
       Implicit None
-
-!----------Some global control symbols----------
-      Integer debug ! used to control the amount of output
-      Common /debug/ debug ! the larger the value, the more output on screen
-!     Values for debug:
-!     -- 0: no output
-!     -- 1: minimum output (important values only)
-!     -- 3: basic flow control output included (enter/leave subroutine)
-!     -- 5: more flow control output included (if/do)
-!     -- 9: variables value check output included
 
       Integer regMethod ! used to determine which method of regulation should be applied.
 !     1: find R0 (see PiRatio) + Fermi-Dirac; 2: use tanh (see maxPiRatio)
@@ -30,7 +18,6 @@
       Common /maxBulkPiRatio/ maxBulkPiRatio
 
       ! hard-code rather than read from extra file
-      debug = 0
       regMethod = 2
       PiRatio = 0.141421
       maxPiRatio = 10.0
@@ -44,9 +31,6 @@
 !     Read inputs from command line.
 
       Implicit None ! enforce explicit variable declaration
-
-      Integer debug
-      Common /debug/ debug
 
       Integer IEin
       Common /IEin/ IEin     !  type of initialization  entropy/enrgy
@@ -104,8 +88,6 @@
 
       Aeps = 0.05D0
 
-      If (debug>=3) Print *, "* readInputFromCML2 started"
-
       QNum = iargc ()
 
       Do ArgIndex = 1, QNum
@@ -159,8 +141,6 @@
 
         If (varName=="visbulknorm") VisBulkNorm=DResult ! VisBulkNorm, use for temperature dependent zeta/s(T)
       End Do ! ArgIndex
-
-      If (debug>=3) Print *, "* readInputFromCML finished"
 
       End Subroutine
 !-----------------------------------------------------------------------
@@ -230,9 +210,6 @@
 
       Implicit None
 
-      Integer debug
-      Common /debug/ debug
-
       Integer I,J,K
       Integer NX0,NY0,NZ0,NX,NY,NZ
       Integer NXPhy0,NYPhy0,NXPhy,NYPhy
@@ -293,13 +270,9 @@
       Integer regMethod
       Common /regMethod/ regMethod
 
-      If (debug>=3) Print *, "* Start GetInitialR0"
-
 !      Aeps = 0.5
 
       If (regMethod .eq. 1) Then
-        If (debug>=5) Print *,"-- To branch regMethod=1"
-
         DO 791 K=NZ0,NZ
         DO 791 J=NYPhy0,NYPhy
         DO 791 I=NXPhy0,NXPhy
@@ -371,16 +344,10 @@
  3007   Continue
         R0 = RMin
       ElseIf (regMethod .eq. 2) Then ! use maximun possible R0
-        If (debug>=5) Print *, "-- To branch regMethod=2"
         R0 = NX*ddx+NY*ddy
       Else  ! use R0=12
-        If (debug>=5) Print *, "-- To other regMethod branch..."
         R0 = 12.0
       EndIf ! corresponding to the one on variable "regMethod"
-
-      If (debug>=1) Print *,"R0=",R0 ! print out R0
-
-      If (debug>=3) Print *, "& GetInitialR0 finished."
 
       End Subroutine
 !-----------------------------------------------------------------------
@@ -394,9 +361,6 @@
 !       Return a suitable R0 (thru common) to regulate Pi(mu,nu)
 
       Implicit None
-
-      Integer debug
-      Common /debug/ debug
 
       Integer NX0,NY0,NZ0,NX,NY,NZ
       Integer I,J,K
@@ -430,12 +394,9 @@
       Integer regMethod
       Common /regMethod/ regMethod
 
-      If (debug>=3) Print *, "* Start DetermineR0"
-
 !      Aeps = 0.4
 
       If (regMethod .eq. 1) Then
-        If (debug>=5) Print *, "-- To branch regMethod=1"
         RMin = NX*ddx+NY*ddy !---Upper-Bound-R0---
         DO 3007 K=NZ0,NZ !Check for Pi tensor
         DO 3007 J=NY0,NY
@@ -454,16 +415,10 @@
  3007   Continue
         R0 = RMin
       ElseIf (regMethod .eq. 2) Then ! use maximun possible R0
-        If (debug>=5) Print *, "-- To regMethod=2 branch"
         R0 = (NX*ddx+NY*ddy)*2.0
       Else ! use R0=12.0
-        If (debug>=5) Print *, "-- To other regMethod branch"
         R0 = 12.0
       EndIf
-
-      If (debug>=1) Print *,"R0=",R0 ! output R0
-
-      If (debug>=3) Print *, "* DetermineR0 finished"
 
       End Subroutine
 !-----------------------------------------------------------------------
@@ -478,9 +433,6 @@
 !       value using tanh function
 
       Implicit None
-
-      Integer debug
-      Common /debug/ debug
 
       Integer NX0,NY0,NZ0,NX,NY,NZ,NXPhy0,NXPhy,NYPhy0,NYPhy
       Integer I,J,K,II,JJ,regStr
@@ -509,12 +461,7 @@
 
       Xsi0 = 1D-2/(regStr+1D0) ! VER-1.29RC: adaptive zero chooser VER-1.29RC4: bug fix: regStr -> regStr+1D0
 
-      If (debug >= 3) Print *, "* Start RegulateBulkPi"
-
       If (regMethod == 2) Then ! do tanh regulation
-
-        If (debug>=5) Print *, "-- To branch regMethod=2"
-        If (debug>=5) Print *, "-- Pi regulation at time",Time
 
         DO 3019 K=NZ0,NZ
         DO 3019 J=NY0,NY
@@ -537,34 +484,12 @@
         regStrength = max(bulkPi_scale/(maxBulkPiRatio*pressure_scale),
      &                    regStrength)
 
-        If ( say_level >=9 ) Then
-          If (I==II.AND.J==JJ) Then
-            Print*, "I,J=",I,J
-            Print*, "regStrength=", regStrength
-            Print*, "BulkPi = ", bulkPi_scale
-            Print*, "maxPi=", maxBulkPiRatio*pressure_scale
-            Print*, "PL=", PL(I,J,K)
-            Print*, "Xsi0=", Xsi0
-          endif
-          If (I==0.AND.J==0) Then
-            Print*, "I,J=",I,J
-            Print*, "regStrength=", regStrength
-            Print*, "BulkPi = ", bulkPi_scale
-            Print*, "maxPi=", maxBulkPiRatio*pressure_scale
-            Print*, "PL=", PL(I,J,K)
-            Print*, "Xsi0=", Xsi0
-
-          End If
-        End If !If (debug>=9)
-
         PPI(I,J,K)=PPI(I,J,K)*(tanh(regStrength)/regStrength) ! Bulk pressure PPI is regulated here
 
 3018    Continue
 3019    Continue
 
       EndIf ! on regMethod
-
-      If (debug>=3) Print *, "* RegulateBulkPi finished"
 
       End Subroutine
 !-----------------------------------------------------------------------------
@@ -579,9 +504,6 @@
 !       value using tanh function
 
       Implicit None
-
-      Integer debug
-      Common /debug/ debug
 
       Integer NX0,NY0,NZ0,NX,NY,NZ,NXPhy0,NXPhy,NYPhy0,NYPhy
       Integer I,J,K,II,JJ,regStr
@@ -639,13 +561,7 @@
 
       Xsi0 = 1D-2/(regStr+1D0) ! VER-1.29RC: adaptive zero chooser VER-1.29RC4: bug fix: regStr -> regStr+1D0
 
-      If (debug >= 3) Print *, "* Start RegulatePi"
-
       If (regMethod == 2) Then ! do tanh regulation
-
-        If (debug>=5) Print *, "-- To branch regMethod=2"
-        If (debug>=5) Print *, "-- Pi regulation at time",Time
-
         DO 3009 K=NZ0,NZ
         DO 3009 J=NY0,NY
         DO 3008 I=NX0,NX
@@ -677,11 +593,6 @@
         regStrength = max(abs(PiTr)/(Xsi0*MaxPiRatio*pi_scale),
      &                    regStrength)
 
-        !If (I==0.AND.J==0) Then
-        !  Print*, "I,J=",I,J
-        !  Print*, "regStrength1=", regStrength
-        !End If
-
         ! next transversality
         trans = gamma_perp*(p01-vvx*p11-vvy*p12)
         regStrength = max(abs(trans)/(Xsi0*MaxPiRatio*pi_scale),
@@ -693,87 +604,9 @@
         regStrength = max(abs(trans)/(Xsi0*MaxPiRatio*pi_scale),
      &                    regStrength)
 
-        !If (I==0.AND.J==0) Then
-        !  Print*, "I,J=",I,J
-        !  Print*, "regStrength2=", regStrength
-        !End If
-
-
         ! largeness comparision
         rTrPi2EAndP = pi_scale/(MaxPiRatio*Tideal_scale) + 1e-30
-
         regStrength = max(rTrPi2EAndP, regStrength)
-
-
-        !If (I==0.AND.J==0) Then
-        !  Print*, "I,J=",I,J
-        !  Print*, "regStrength3=", regStrength
-        !End If
-
-        !regStrength = exp(regStrength)-1D0 + 1D-30
-
-        !If (I==0.AND.J==0) Then
-        !  Print*, "I,J=",I,J
-        !  Print*, "regStrength4=", regStrength
-        !End If
-
-
-        If ( say_level >=9 ) Then
-        If (I==II.AND.J==JJ) Then
-          Print*, "I,J=",I,J
-          Print*, "regStrength=", regStrength
-          Print*, "PiTr=", PiTr
-          Print*, "numerical zero for pi=", Xsi0*MaxPiRatio*pi_scale
-          Print*, "p01-vvx*p11-vvy*p12=", p01-vvx*p11-vvy*p12
-          Print*, "regStrength1=",abs(p01-vvx*p11-vvy*p12)
-     &                            /(Xsi0*MaxPiRatio*pi_scale)
-          Print*, "p02-vvx*p12-vvy*p22=", p02-vvx*p12-vvy*p22
-          Print*, "regStrength2=",abs(p02-vvx*p12-vvy*p22)
-     &                            /(Xsi0*MaxPiRatio*pi_scale)
-          Print*, "p00-vvx*p01-vvy*p02=", p00-vvx*p01-vvy*p02
-          Print*, "regStrength3=",abs(p00-vvx*p01-vvy*p02)
-     &                            /(Xsi0*MaxPiRatio*pi_scale)
-          Print*, "sqrt(TrPi2)=", pi_scale
-          Print*, "maxPi=", MaxPiRatio*Tideal_scale
-          Print*, "Ed,PL=", Ed(I,J,K), PL(I,J,K)
-          Print*, "Tideal_scale=", Tideal_scale
-          Print*, "PiTr=", PiTr
-          Print*, "regStrength0=", PiTr/(Xsi0*MaxPiRatio*pi_scale)
-          Print*, "sqrt(abs(TrPi2)) / maxPi=", rTrPi2EAndP
-          Print*, "Xsi0=", Xsi0
-!
-          call printMore(1, I, J, Time,
-     &  NXPhy0, NXPhy, NYPhy0, NYPhy, NX0, NX, NY0, NY, NZ0, NZ,
-     &  Pi00,Pi01,Pi02,Pi33,Pi11,Pi12,Pi22,
-     &  0D0,0D0,0D0, Ed, PL, 0D0, 0D0, Vx, Vy)
-        End If
-
-        If (I==0.AND.J==0) Then
-          Print*, "I,J=",I,J
-          Print*, "regStrength=", regStrength
-          Print*, "PiTr=", PiTr
-          Print*, "numerical zero for pi=", Xsi0*MaxPiRatio*pi_scale
-          Print*, "p01-vvx*p11-vvy*p12=", p01-vvx*p11-vvy*p12
-          Print*, "regStrength1=",abs(p01-vvx*p11-vvy*p12)
-     &                            /(Xsi0*MaxPiRatio*pi_scale)
-          Print*, "p02-vvx*p12-vvy*p22=", p02-vvx*p12-vvy*p22
-          Print*, "regStrength2=",abs(p02-vvx*p12-vvy*p22)
-     &                            /(Xsi0*MaxPiRatio*pi_scale)
-          Print*, "p00-vvx*p01-vvy*p02=", p00-vvx*p01-vvy*p02
-          Print*, "regStrength3=",abs(p00-vvx*p01-vvy*p02)
-     &                            /(Xsi0*MaxPiRatio*pi_scale)
-          Print*, "sqrt(TrPi2)=", pi_scale
-          Print*, "maxPi=", MaxPiRatio*Tideal_scale
-          Print*, "Ed,PL=", Ed(I,J,K), PL(I,J,K)
-          Print*, "Tideal_scale=", Tideal_scale
-          Print*, "PiTr=", PiTr
-          Print*, "regStrength0=", PiTr/(Xsi0*MaxPiRatio*pi_scale)
-          Print*, "sqrt(abs(TrPi2)) / maxPi=", rTrPi2EAndP
-          Print*, "Xsi0=", Xsi0
-
-        End If
-        End If !If (debug>=9)
-
 
         Pi00(I,J,K)=Pi00(I,J,K)*(tanh(regStrength)/regStrength) ! Pi## is regulated here
         Pi01(I,J,K)=Pi01(I,J,K)*(tanh(regStrength)/regStrength) ! Pi## is regulated here
@@ -812,8 +645,6 @@
 3009    Continue
 
       EndIf ! on regMethod
-
-      If (debug>=3) Print *, "* RegulatePi finished"
 
       End Subroutine
 !-----------------------------------------------------------------------------

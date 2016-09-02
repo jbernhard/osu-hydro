@@ -20,14 +20,6 @@ C   [5] H.Song, Ph.D thesis 2009, arXiv:0908.3656 [nucl-th].
 
 #include "defs.h"
 
-! change to 1 to ignore checks
-#define silent_checkPi 0
-#define outputPiviolation .false.
-
-#define echo_level 1
-
-!=======================================================================
-
        Program Main
 
        Implicit Double Precision (A-H, O-Z)
@@ -478,8 +470,6 @@ CSHEN====END====================================================================
           Pi12Regulated = Pi12
           Pi33Regulated = Pi33
           iRegulateCounter = 0D0
-          If (echo_level>=3) Print*, "Regulation counts:",
-     &                               iRegulateCounter
         else
           Pi00 = 0D0
           Pi01 = 0D0
@@ -494,8 +484,6 @@ CSHEN====END====================================================================
         if(VisBulk > 1D-6) then
           PPIRegulated = PPI
           iRegulateCounterBulkPi = 0D0
-          If (echo_level>=3) Print*, "Regulation Bulk Pi counts:",
-     &                               iRegulateCounterBulkPi
         else
           PPI = 0D0
         endif
@@ -554,57 +542,31 @@ CSHEN====END====================================================================
         End Do
 
         if(ViscousC > 1D-6) then
-         if (outputPiviolation) then
-            call checkPiandoutputViolation(Time, DX, DY, Vx, Vy, Ed, PL,
-     &     NXPhy0, NXPhy, NYPhy0, NYPhy, NX0, NX, NY0, NY, NZ0, NZ,
-     &     Pi00,Pi01,Pi02,Pi33,Pi11,Pi12,Pi22)
-         endif
          Do ! pi evolution
            call checkPiAll(iFailed, II, JJ, Time, Vx, Vy, Ed, PL,
      &     NXPhy0, NXPhy, NYPhy0, NYPhy, NX0, NX, NY0, NY, NZ0, NZ,
      &     Pi00,Pi01,Pi02,Pi33,Pi11,Pi12,Pi22,
      &     Pi00Regulated,Pi01Regulated,Pi02Regulated,Pi33Regulated,
-     &     Pi11Regulated,Pi12Regulated,Pi22Regulated,echo_level)
+     &     Pi11Regulated,Pi12Regulated,Pi22Regulated)
          If (iFailed==0) Exit
          call regulatePi(iRegulateCounter,Time,NX0,NY0,NZ0,NX,NY,NZ,
      &       NXPhy0,NXPhy,NYPhy0,NYPhy,
      &       Ed,PL,PPI,
      &       Pi00,Pi01,Pi02,Pi11,
      &       Pi12,Pi22,Pi33,Vx,Vy,II,JJ)
-         If (echo_level>=7) Then
-           Print*, "After: Pi00,Pi11,Pi22,Pi33*T^2,Pi01,Pi02,Pi12=",
-     &         Pi00(II,JJ,1),Pi11(II,JJ,1),
-     &         Pi22(II,JJ,1),Pi33(II,JJ,1),
-     &         Pi01(II,JJ,1),Pi02(II,JJ,1),
-     &         Pi12(II,JJ,1)
-         End If
          iRegulateCounter = iRegulateCounter + 1D0
-         If (echo_level>=3) Then
-           Print*, "Regulation counts:", iRegulateCounter
-         EndIf
          End Do ! pi evolution
         endif
 
         if(VisBulk > 1D-6) then
-          if(outputPiviolation) then
-            call checkBulkPiandoutputViolation(Time, Dx, Dy, Ed, PL,
-     &        NXPhy0, NXPhy, NYPhy0, NYPhy, NX0, NX, NY0, NY, NZ0, NZ,
-     &        PPI)
-          endif
           Do ! BulkPi evolution
             call checkBulkPi(iFailed, II, JJ, Time, Ed, PL,
      &      NXPhy0, NXPhy, NYPhy0, NYPhy, NX0, NX, NY0, NY, NZ0, NZ,
-     &      PPI, echo_level)
+     &      PPI)
           If (iFailed==0) Exit
           call regulateBulkPi(iRegulateCounterBulkPi,Time,NX0,NY0,NZ0,
      &        NX,NY,NZ,NXPhy0,NXPhy,NYPhy0,NYPhy,Ed,PL,PPI,II,JJ)
-          If (echo_level>=7) Then
-            Print*, "After: PPI=", PPI(II,JJ,1)
-          End If
           iRegulateCounterBulkPi = iRegulateCounterBulkPi + 1D0
-          If (echo_level>=3) Then
-            Print*, "Regulation BulkPi counts:", iRegulateCounterBulkPi
-          EndIf
           End Do ! BulkPi evolution
         endif
 
@@ -857,25 +819,25 @@ C###############################################################################
            Ymid = Y + Vmid(2,iSurf)
            Vmidpoint = Vmid(:,iSurf)
            CALL P4(I,J,NDX,NDY,NDT,Vmidpoint,V10,V11,
-     &             NX0,NY0,NX,NY,DTFreeze,DXFreeze,DYFreeze,v1mid,0)
+     &             NX0,NY0,NX,NY,DTFreeze,DXFreeze,DYFreeze,v1mid)
            CALL P4(I,J,NDX,NDY,NDT,Vmidpoint,V20,V21,
-     &             NX0,NY0,NX,NY,DTFreeze,DXFreeze,DYFreeze,v2mid,0)
+     &             NX0,NY0,NX,NY,DTFreeze,DXFreeze,DYFreeze,v2mid)
            CALL P4(I,J,NDX,NDY,NDT,Vmidpoint,F0Pi00,FPi00,
-     &             NX0,NY0,NX,NY,DTFreeze,DXFreeze,DYFreeze,CPi00,0)
+     &             NX0,NY0,NX,NY,DTFreeze,DXFreeze,DYFreeze,CPi00)
            CALL P4(I,J,NDX,NDY,NDT,Vmidpoint,F0Pi01,FPi01,
-     &             NX0,NY0,NX,NY,DTFreeze,DXFreeze,DYFreeze,CPi01,0)
+     &             NX0,NY0,NX,NY,DTFreeze,DXFreeze,DYFreeze,CPi01)
            CALL P4(I,J,NDX,NDY,NDT,Vmidpoint,F0Pi02,FPi02,
-     &             NX0,NY0,NX,NY,DTFreeze,DXFreeze,DYFreeze,CPi02,0)
+     &             NX0,NY0,NX,NY,DTFreeze,DXFreeze,DYFreeze,CPi02)
            CALL P4(I,J,NDX,NDY,NDT,Vmidpoint,F0Pi11,FPi11,
-     &             NX0,NY0,NX,NY,DTFreeze,DXFreeze,DYFreeze,CPi11,0)
+     &             NX0,NY0,NX,NY,DTFreeze,DXFreeze,DYFreeze,CPi11)
            CALL P4(I,J,NDX,NDY,NDT,Vmidpoint,F0Pi12,FPi12,
-     &             NX0,NY0,NX,NY,DTFreeze,DXFreeze,DYFreeze,CPi12,0)
+     &             NX0,NY0,NX,NY,DTFreeze,DXFreeze,DYFreeze,CPi12)
            CALL P4(I,J,NDX,NDY,NDT,Vmidpoint,F0Pi22,FPi22,
-     &             NX0,NY0,NX,NY,DTFreeze,DXFreeze,DYFreeze,CPi22,0)
+     &             NX0,NY0,NX,NY,DTFreeze,DXFreeze,DYFreeze,CPi22)
            CALL P4(I,J,NDX,NDY,NDT,Vmidpoint,F0Pi33,FPi33,
-     &             NX0,NY0,NX,NY,DTFreeze,DXFreeze,DYFreeze,CPi33,0)
+     &             NX0,NY0,NX,NY,DTFreeze,DXFreeze,DYFreeze,CPi33)
            CALL P4(I,J,NDX,NDY,NDT,Vmidpoint,F0PPI,FPPI,
-     &             NX0,NY0,NX,NY,DTFreeze,DXFreeze,DYFreeze,CPPI,0)
+     &             NX0,NY0,NX,NY,DTFreeze,DXFreeze,DYFreeze,CPPI)
 
            DA0  = dSigma(0, iSurf)
            ! negative sign converts covariant (sigma_mu) -> contravariant (sigma^mu)
@@ -1840,8 +1802,6 @@ C---------------------------------------------------------------
         DM0 = T00IJ
         DM = sqrt(T01IJ*T01IJ + T02IJ*T02IJ)
 
-        IDebug = 0
-
         RSDM0 = DM0
         RSDM = DM
         RSPPI = PPI(I,J,K)
@@ -1867,7 +1827,7 @@ C---------------------------------------------------------------
 
         eeH = DM0 - VP_local*DM
 
-        !eeH = quadESolver(ED(I,J,K),DM0,DM,PPI(I,J,K),IDebug,I,J) ! use Ed from last time step as a starting point
+        !eeH = quadESolver(ED(I,J,K),DM0,DM,PPI(I,J,K),I,J) ! use Ed from last time step as a starting point
         ED(I,J,K) = dmax1(eeH, 1D-10)
         DM = dmax1(DM, 1D-10)
         !VP = (DM0-eeH)/DM
@@ -2985,15 +2945,13 @@ C----------------------------------------------------------------
 
 
 !======================================================================
-      Double Precision Function quadESolver(ee0,DM0,DM,PPI,debug,I,J)
+      Double Precision Function quadESolver(ee0,DM0,DM,PPI,I,J)
       ! Root finding by interating quadratic equation formula for the equation
       ! (M0+cs^2*e+Pi)(M0-e)=M^2
 
       Implicit None
 
       double precision :: PEOSL7
-
-      !Double Precision quadESolver
 
       Integer I,J
       Double Precision ED
@@ -3010,20 +2968,13 @@ C----------------------------------------------------------------
       Integer, Parameter :: maxIter=300 ! maximum number of iterations
       Integer numIter ! number of iterations
 
-      Integer debug
-
       Double Precision A,B ! intermedia step variables
-
-      if (debug == 1) print *, "quadESolver started in debug moded..."
 
       ee1 = ee0
       cs2=PEOSL7(ee0*Hbarc)/dmax1(ee0,zero)/Hbarc ! check dimension?
       A=DM0*(1-cs2)+PPI
       B=DM0*(DM0+PPI)-DM*DM
       ee=2*B/dmax1((sqrt(A*A+4*cs2*B)+A), zero)
-
-      If (debug.eq.1) Print *, "I,J=",I,J
-      If (debug.eq.1) Print *, "ee,ee1,p/e=",ee,ee1,cs2
 
       numIter=1
       accuracy=ee*1e-6 ! relative accuracy: answer should be correct up to e*1e-10
@@ -3035,7 +2986,6 @@ C----------------------------------------------------------------
         A=DM0*(1-cs2)+PPi
         B=DM0*(DM0+PPI)-DM*DM
         ee=2*B/dmax1((sqrt(A*A+4*cs2*B)+A), zero)
-        If (debug.eq.1) Print *, "ee,ee1,p/e=",ee,ee1,cs2
         numIter=numIter+1
         If (numIter>maxIter) Then
           Print *, "quadESolver: too many iterations."
@@ -3051,8 +3001,6 @@ C----------------------------------------------------------------
       End Do
 
       quadESolver = ee
-      If (debug.eq.1) Print *, "quadESolver=", quadESolver
-      if (debug == 1) print *, "quadESolver finished."
 
       End Function
 
@@ -3154,114 +3102,11 @@ C----------------------------------------------------------------
 !----------------------------------------------------------------------
 
 
-      Subroutine checkPi(id, Time, Vx, Vy, Ed, PL,
-     &  NXPhy0, NXPhy, NYPhy0, NYPhy, NX0, NX, NY0, NY, NZ0, NZ,
-     &  Pi00,Pi01,Pi02,Pi33,Pi11,Pi12,Pi22)
-      ! Check traceless and transversality condition for pi(mu,nu)
-
-      Implicit None
-
-      Integer NXPhy0,NXPhy,NYPhy0,NYPhy,NX0,NX,NY0,NY,NZ0,NZ,id
-      Double Precision Time
-
-      Double Precision Ed(NX0:NX,NY0:NY,NZ0:NZ)
-      Double Precision PL(NX0:NX,NY0:NY,NZ0:NZ)
-
-      Double Precision Vx(NX0:NX,NY0:NY,NZ0:NZ)
-      Double Precision Vy(NX0:NX,NY0:NY,NZ0:NZ)
-
-      Double Precision Pi00(NX0:NX, NY0:NY, NZ0:NZ)    !Stress Tensor
-      Double Precision Pi01(NX0:NX, NY0:NY, NZ0:NZ)    !Stress Tensor
-      Double Precision Pi02(NX0:NX, NY0:NY, NZ0:NZ)    !Stress Tensor
-      Double Precision Pi33(NX0:NX, NY0:NY, NZ0:NZ)    !Stress Tensor
-      Double Precision Pi11(NX0:NX, NY0:NY, NZ0:NZ)    !Stress Tensor
-      Double Precision Pi12(NX0:NX, NY0:NY, NZ0:NZ)    !Stress Tensor
-      Double Precision Pi22(NX0:NX, NY0:NY, NZ0:NZ)    !Stress Tensor
-
-
-      Integer I,J,K
-      Double Precision trace_pi, trans, toUse
-
-      Double Precision :: accuracy=1D0
-
-      If (silent_checkPi==1) Return
-
-      Do K=NZ0,NZ
-      Do J=NYPhy0-3,NYPhy+3
-      Do I=NXPhy0-3,NXPhy+3
-
-        toUse = max(Ed(I,J,K)*1D0/(1D0-Vx(I,J,K)**2-Vy(I,J,K)**2),1D-1)
-
-        trace_pi = Pi00(I,J,K)-Pi11(I,J,K)-Pi22(I,J,K)-Pi33(I,J,K)
-        If (abs(trace_pi)>toUse*accuracy) Then
-          Print*, "id=", id
-          Print*, "Time=", Time
-          Print*, "Pi should be traceless!"
-          Print*, "I,J=", I,J
-          Print*, "Pi00-Pi11-Pi22-Time**2*Pi33=", trace_pi
-          Print*, "Pi00,Pi11,Pi22,Time**2*Pi33=",
-     &      Pi00(I,J,K),Pi11(I,J,K),Pi22(I,J,K),Pi33(I,J,K)
-          Print*, "Ed,PL=", Ed(I,J,K),PL(I,J,K)
-          call exit(1)
-        End If
-
-        trans = Pi01(I,J,K)-Vx(I,J,K)*Pi11(I,J,K)-Vy(I,J,K)*Pi12(I,J,K)
-        If (abs(trans)>toUse*accuracy) Then
-          Print*, "id=", id
-          Print*, "Time=", Time
-          Print*, "Tranversality violated!"
-          Print*, "I,J=", I,J
-          Print*, "Pi01-Vx*Pi11-Vy*Pi12=", trans
-          Print*, "Pi01,Pi11,Pi12=",
-     &      Pi01(I,J,K),Pi11(I,J,K),Pi12(I,J,K)
-          Print*, "Vx,Vy=",Vx(I,J,K),Vy(I,J,K)
-          Print*, "Ed,PL=", Ed(I,J,K),PL(I,J,K)
-          call exit(1)
-        End If
-
-        trans = Pi02(I,J,K)-Vx(I,J,K)*Pi12(I,J,K)-Vy(I,J,K)*Pi22(I,J,K)
-        If (abs(trans)>toUse*accuracy) Then
-          Print*, "id=", id
-          Print*, "Time=", Time
-          Print*, "Tranversality violated!"
-          Print*, "I,J=", I,J
-          Print*, "Pi02-Vx*Pi12-Vy*Pi22=", trans
-          Print*, "Pi02,Pi12,Pi22=",
-     &      Pi02(I,J,K),Pi12(I,J,K),Pi22(I,J,K)
-          Print*, "Vx,Vy=",Vx(I,J,K),Vy(I,J,K)
-          Print*, "Ed,PL=", Ed(I,J,K),PL(I,J,K)
-          call exit(1)
-        End If
-
-        trans = Pi00(I,J,K)-Vx(I,J,K)*Pi01(I,J,K)-Vy(I,J,K)*Pi02(I,J,K)
-        If (abs(trans)>toUse*accuracy) Then
-          Print*, "id=", id
-          Print*, "Time=", Time
-          Print*, "Tranversality violated!"
-          Print*, "I,J=", I,J
-          Print*, "Pi00-Vx*Pi01-Vy*Pi02=", trans
-          Print*, "Pi00,Pi01,Pi02=",
-     &      Pi00(I,J,K),Pi01(I,J,K),Pi02(I,J,K)
-          Print*, "Vx,Vy=",Vx(I,J,K),Vy(I,J,K)
-          Print*, "Ed,PL=", Ed(I,J,K),PL(I,J,K)
-          call exit(1)
-        End If
-
-      End Do
-      End Do
-      End Do
-
-      If (echo_level>=2) Print *, "checkPi passed; id=", id
-
-      End Subroutine
-!-----------------------------------------------------------------------
-
-
       Subroutine checkPiAll(failed, II, JJ, Time, Vx, Vy, Ed, PL,
      &  NXPhy0, NXPhy, NYPhy0, NYPhy, NX0, NX, NY0, NY, NZ0, NZ,
      &  Pi00,Pi01,Pi02,Pi33,Pi11,Pi12,Pi22,
      &  Pi00Regulated,Pi01Regulated,Pi02Regulated,Pi33Regulated,
-     &  Pi11Regulated,Pi12Regulated,Pi22Regulated,say_level)
+     &  Pi11Regulated,Pi12Regulated,Pi22Regulated)
       ! Check tracelessness + transversality + positiveness of Tr(pi^2)
 
       Implicit None
@@ -3292,8 +3137,6 @@ C----------------------------------------------------------------
       Double Precision Pi12Regulated(NX0:NX, NY0:NY, NZ0:NZ)    !Stress Tensor
       Double Precision Pi22Regulated(NX0:NX, NY0:NY, NZ0:NZ)    !Stress Tensor
 
-      Integer say_level
-
       Integer I,J,K
       Double Precision trace_pi, trans, TrPi2
 
@@ -3320,7 +3163,7 @@ C----------------------------------------------------------------
         pi_scale = sqrt(abs(TrPi2))
         !Positivity of Tr(pi^2)
         if(TrPi2 < -relNumericalzero*pi_scale) then
-          If (say_level>=9) Then
+#ifdef OUTPUT_VIOLATION
             Print*, "Time=", Time
             Print*, "Trace Pi^2 is negative!"
             Print*, "I,J=", I,J
@@ -3336,7 +3179,7 @@ C----------------------------------------------------------------
      &        +Pi22Regulated(I,J,K)**2+Pi33Regulated(I,J,K)**2
      &        -2*Pi01Regulated(I,J,K)**2-2*Pi02Regulated(I,J,K)**2
      &        +2*Pi12Regulated(I,J,K)**2
-          End If
+#endif
           II = I
           JJ = J
           failed = 1
@@ -3346,7 +3189,7 @@ C----------------------------------------------------------------
         !Largeness of pi tensor Tr(pi^2)
         If (pi_scale > max(maxPiRatio*Tideal_scale,
      &      absNumericalzero)) Then
-          If (say_level>=9) Then
+#ifdef OUTPUT_VIOLATION
           Print*, "Time=", Time
           Print*, "pi is too large!"
           Print*, "I,J=", I,J
@@ -3362,7 +3205,7 @@ C----------------------------------------------------------------
      &      +Pi22Regulated(I,J,K)**2+Pi33Regulated(I,J,K)**2
      &      -2*Pi01Regulated(I,J,K)**2-2*Pi02Regulated(I,J,K)**2
      &      +2*Pi12Regulated(I,J,K)**2
-          End If
+#endif
           II = I
           JJ = J
           failed = 1
@@ -3373,7 +3216,7 @@ C----------------------------------------------------------------
         trace_pi = Pi00(I,J,K)-Pi11(I,J,K)-Pi22(I,J,K)-Pi33(I,J,K)
         If(abs(trace_pi) > max(relNumericalzero*pi_scale,
      &     absNumericalzero) ) Then
-          If (say_level>=9) Then
+#ifdef OUTPUT_VIOLATION
           Print*, "Time=", Time
           Print*, "Pi should be traceless!"
           Print*, "I,J=", I,J
@@ -3389,7 +3232,7 @@ C----------------------------------------------------------------
           Print*, "Before: Pi00-Pi11-Pi22-Time**2*Pi33=",
      &      Pi00Regulated(I,J,K)-Pi11Regulated(I,J,K)
      &      -Pi22Regulated(I,J,K)-Pi33Regulated(I,J,K)
-          End If
+#endif
           II = I
           JJ = J
           failed = 1
@@ -3402,7 +3245,7 @@ C----------------------------------------------------------------
      &                      - Vy(I,J,K)*Pi12(I,J,K))
         If (abs(trans) > max(relNumericalzero*pi_scale,
      &      absNumericalzero)) Then
-          If (say_level>=9) Then
+#ifdef OUTPUT_VIOLATION
           Print*, "Time=", Time
           Print*, "Tranversality violated!"
           Print*, "I,J=", I,J
@@ -3419,7 +3262,7 @@ C----------------------------------------------------------------
           Print*, "Before: Pi01-Vx*Pi11-Vy*Pi12=",
      &      Pi01Regulated(I,J,K)-Vx(I,J,K)*Pi11Regulated(I,J,K)
      &      -Vy(I,J,K)*Pi12Regulated(I,J,K)
-          End If
+#endif
           II = I
           JJ = J
           failed = 1
@@ -3431,7 +3274,7 @@ C----------------------------------------------------------------
      &                      - Vy(I,J,K)*Pi22(I,J,K))
         If (abs(trans) > max(relNumericalzero*pi_scale,
      &      absNumericalzero)) Then
-          If (say_level>=9) Then
+#ifdef OUTPUT_VIOLATION
           Print*, "Time=", Time
           Print*, "Tranversality violated!"
           Print*, "I,J=", I,J
@@ -3448,7 +3291,7 @@ C----------------------------------------------------------------
           Print*, "Before: Pi02-Vx*Pi12-Vy*Pi22=",
      &      Pi02Regulated(I,J,K)-Vx(I,J,K)*Pi12Regulated(I,J,K)
      &      -Vy(I,J,K)*Pi22Regulated(I,J,K)
-          End If
+#endif
           II = I
           JJ = J
           failed = 1
@@ -3460,11 +3303,10 @@ C----------------------------------------------------------------
      &                      - Vy(I,J,K)*Pi02(I,J,K))
         If (abs(trans) > max(relNumericalzero*pi_scale,
      &      absNumericalzero)) Then
-          If (say_level>=9) Then
+#ifdef OUTPUT_VIOLATION
           Print*, "Time=", Time
           Print*, "Tranversality violated!"
           Print*, "I,J=", I,J
-          Print*, "Pi00-Vx*Pi01-Vy*Pi02=", trans
           Print*, "Pi00,Pi01,Pi02=",
      &      Pi00(I,J,K),Pi01(I,J,K),Pi02(I,J,K)
           Print*, "Vx,Vy=",Vx(I,J,K),Vy(I,J,K)
@@ -3477,7 +3319,7 @@ C----------------------------------------------------------------
           Print*, "Before: Pi00-Vx*Pi01-Vy*Pi02=",
      &      Pi00Regulated(I,J,K)-Vx(I,J,K)*Pi01Regulated(I,J,K)
      &      -Vy(I,J,K)*Pi02Regulated(I,J,K)
-          End If
+#endif
           II = I
           JJ = J
           failed = 1
@@ -3548,116 +3390,10 @@ C----------------------------------------------------------------
 
       end Subroutine
 
-!-----------------------------------------------------------------------
-      Subroutine checkPiandoutputViolation(Time, Dx, Dy, Vx, Vy, Ed, PL,
-     &  NXPhy0, NXPhy, NYPhy0, NYPhy, NX0, NX, NY0, NY, NZ0, NZ,
-     &  Pi00,Pi01,Pi02,Pi33,Pi11,Pi12,Pi22)
-      ! Check size + tracelessness + transversality + positiveness of Tr(pi^2)
-      ! and output all the violation points in the transverse plane
-
-      Implicit None
-
-      Integer NXPhy0,NXPhy,NYPhy0,NYPhy,NX0,NX,NY0,NY,NZ0,NZ
-      Double Precision Time, Dx, Dy
-
-      Double Precision Ed(NX0:NX,NY0:NY,NZ0:NZ)
-      Double Precision PL(NX0:NX,NY0:NY,NZ0:NZ)
-
-      Double Precision Vx(NX0:NX,NY0:NY,NZ0:NZ)
-      Double Precision Vy(NX0:NX,NY0:NY,NZ0:NZ)
-
-      Double Precision Pi00(NX0:NX, NY0:NY, NZ0:NZ)    !Stress Tensor
-      Double Precision Pi01(NX0:NX, NY0:NY, NZ0:NZ)    !Stress Tensor
-      Double Precision Pi02(NX0:NX, NY0:NY, NZ0:NZ)    !Stress Tensor
-      Double Precision Pi33(NX0:NX, NY0:NY, NZ0:NZ)    !Stress Tensor
-      Double Precision Pi11(NX0:NX, NY0:NY, NZ0:NZ)    !Stress Tensor
-      Double Precision Pi12(NX0:NX, NY0:NY, NZ0:NZ)    !Stress Tensor
-      Double Precision Pi22(NX0:NX, NY0:NY, NZ0:NZ)    !Stress Tensor
-
-      Integer I,J,K
-      integer iFlag
-      double precision violationType
-      Double Precision trace_pi, trans, TrPi2
-
-      Double Precision :: Tideal_scale, pi_scale
-      Double Precision :: absNumericalzero = 1D-2
-      Double Precision :: relNumericalzero = 1D-2  !Xsi_0 in Zhi's thesis
-
-      Double Precision maxPiRatio
-      Double Precision gamma_perp
-      Common /maxPiRatio/ maxPiRatio
-
-      iFlag = 0
-
-      Do K=NZ0,NZ
-      Do J=NYPhy0-3,NYPhy+3
-      Do I=NXPhy0-3,NXPhy+3
-
-        violationType = 0D0
-        Tideal_scale = sqrt(Ed(I,J,K)**2 + 3*PL(I,J,K)**2)
-
-        TrPi2 = Pi00(I,J,K)**2+Pi11(I,J,K)**2+Pi22(I,J,K)**2
-     &          +Pi33(I,J,K)**2
-     &          -2*Pi01(I,J,K)**2-2*Pi02(I,J,K)**2+2*Pi12(I,J,K)**2
-
-        pi_scale = sqrt(abs(TrPi2))
-        !Positivity of Tr(pi^2)
-        if(TrPi2 < -relNumericalzero*pi_scale) then
-          violationType = violationType + 1.0D0
-        endif
-
-        !Largeness of pi tensor Tr(pi^2)
-        If (pi_scale > max(maxPiRatio*Tideal_scale,
-     &      absNumericalzero)) Then
-          violationType = violationType + 0.1D0
-        End If
-
-        !trace of pi tensor
-        trace_pi = Pi00(I,J,K)-Pi11(I,J,K)-Pi22(I,J,K)-Pi33(I,J,K)
-        If(abs(trace_pi) > max(relNumericalzero*pi_scale,
-     &     absNumericalzero) ) Then
-          violationType = violationType + 0.01D0
-        End If
-
-        !transversality of pi tensor  u_mu pi^{mu,x} = 0
-        gamma_perp = sqrt(1./(1. - Vx(I,J,K)**2 - Vy(I,J,K)**2 + 1D-30))
-        trans = gamma_perp*(Pi01(I,J,K) - Vx(I,J,K)*Pi11(I,J,K)
-     &                      - Vy(I,J,K)*Pi12(I,J,K))
-        If (abs(trans) > max(relNumericalzero*pi_scale,
-     &      absNumericalzero)) Then
-          violationType = violationType + 0.001D0
-        End If
-
-        !transversality of pi tensor  u_mu pi^{mu,y} = 0
-        trans = gamma_perp*(Pi02(I,J,K) - Vx(I,J,K)*Pi12(I,J,K)
-     &                      - Vy(I,J,K)*Pi22(I,J,K))
-        If (abs(trans) > max(relNumericalzero*pi_scale,
-     &      absNumericalzero)) Then
-          violationType = violationType + 0.001D0
-        End If
-
-        !transversality of pi tensor  u_mu pi^{mu,tau} = 0
-        trans = gamma_perp*(Pi00(I,J,K) - Vx(I,J,K)*Pi01(I,J,K)
-     &                      - Vy(I,J,K)*Pi02(I,J,K))
-        If (abs(trans) > max(relNumericalzero*pi_scale,
-     &      absNumericalzero)) Then
-          violationType = violationType + 0.001D0
-        End If
-
-        if(violationType > 0D0) then
-           iFlag = 1
-        endif
-
-      End Do
-      End Do
-      End Do
-
-      End Subroutine
-!-----------------------------------------------------------------------
 
       Subroutine checkBulkPi(failed, II, JJ, Time, Ed, PL,
      &  NXPhy0, NXPhy, NYPhy0, NYPhy, NX0, NX, NY0, NY, NZ0, NZ,
-     &  PPI, say_level)
+     &  PPI)
       ! Check the size of Bulk pressure
 
       Implicit None
@@ -3670,8 +3406,6 @@ C----------------------------------------------------------------
       Double Precision PL(NX0:NX,NY0:NY,NZ0:NZ)
 
       Double Precision PPI(NX0:NX, NY0:NY, NZ0:NZ)     !Bulk pressure
-
-      Integer say_level  !Warning level
 
       Integer I,J,K
       Double Precision :: pressure_scale, bulkPi_scale
@@ -3693,13 +3427,13 @@ C----------------------------------------------------------------
 
         If (bulkPi_scale > max(maxBulkPiRatio*pressure_scale,
      &      absNumericalzero)) Then
-          If (say_level>=9) Then
+#ifdef OUTPUT_VIOLATION
             Print*, "Time=", Time
             Print*, "Bulk Pi is larger than pressure!"
             Print*, "I,J=", I,J
             Print*, "Bulk Pi=", PPI(I,J,K)
             Print*, "Pressure=", PL(I,J,K)
-          End If
+#endif
           II = I
           JJ = J
           failed = 1
@@ -3711,121 +3445,8 @@ C----------------------------------------------------------------
       End Do
 
       End Subroutine
-!-----------------------------------------------------------------------
 
 
-      Subroutine checkBulkPiandoutputViolation(Time, Dx, Dy, Ed, PL,
-     &  NXPhy0, NXPhy, NYPhy0, NYPhy, NX0, NX, NY0, NY, NZ0, NZ,
-     &  PPI)
-      ! Check the size of Bulk pressure and output all violation
-      ! points in the transverse plane
-
-      Implicit None
-
-      Integer NXPhy0,NXPhy,NYPhy0,NYPhy,NX0,NX,NY0,NY,NZ0,NZ
-      Double Precision Time, Dx, Dy
-
-      Double Precision Ed(NX0:NX,NY0:NY,NZ0:NZ)
-      Double Precision PL(NX0:NX,NY0:NY,NZ0:NZ)
-
-      Double Precision PPI(NX0:NX, NY0:NY, NZ0:NZ)     !Bulk pressure
-
-      Integer violationType
-      Integer I,J,K
-      Double Precision :: pressure_scale, bulkPi_scale
-      Double Precision :: absNumericalzero = 1D-2
-      Double Precision :: relNumericalzero = 1D-2  !Xsi_0 in Zhi's thesis
-
-      Double Precision maxBulkPiRatio
-      Common /maxBulkPiRatio/ maxBulkPiRatio
-
-      Do K=NZ0,NZ
-      Do J=NYPhy0-3,NYPhy+3
-      Do I=NXPhy0-3,NXPhy+3
-
-        !Largeness of bulk pressure
-        pressure_scale = abs(PL(I,J,K))
-        bulkPi_scale = abs(PPI(I,J,K))
-
-      End Do
-      End Do
-      End Do
-
-      End Subroutine
-!-----------------------------------------------------------------------
-
-
-      Subroutine printMore(id, I, J, Time,
-     &  NXPhy0, NXPhy, NYPhy0, NYPhy, NX0, NX, NY0, NY, NZ0, NZ,
-     &  Pi00,Pi01,Pi02,Pi33,Pi11,Pi12,Pi22,
-     &  TT00,TT01,TT02, Ed, PL, Sd, Temp, Vx, Vy)
-      ! Print values of Pi
-
-      Implicit None
-
-      Integer NXPhy0,NXPhy,NYPhy0,NYPhy,NX0,NX,NY0,NY,NZ0,NZ,id,I,J
-
-      Double Precision Time
-
-      Double Precision Pi00(NX0:NX, NY0:NY, NZ0:NZ)    !Stress Tensor
-      Double Precision Pi01(NX0:NX, NY0:NY, NZ0:NZ)    !Stress Tensor
-      Double Precision Pi02(NX0:NX, NY0:NY, NZ0:NZ)    !Stress Tensor
-      Double Precision Pi33(NX0:NX, NY0:NY, NZ0:NZ)    !Stress Tensor
-      Double Precision Pi11(NX0:NX, NY0:NY, NZ0:NZ)    !Stress Tensor
-      Double Precision Pi12(NX0:NX, NY0:NY, NZ0:NZ)    !Stress Tensor
-      Double Precision Pi22(NX0:NX, NY0:NY, NZ0:NZ)    !Stress Tensor
-
-      Double Precision TT00(NX0:NX, NY0:NY, NZ0:NZ)    !Stress Tensor
-      Double Precision TT01(NX0:NX, NY0:NY, NZ0:NZ)    !Stress Tensor
-      Double Precision TT02(NX0:NX, NY0:NY, NZ0:NZ)    !Stress Tensor
-      Double Precision Ed(NX0:NX, NY0:NY, NZ0:NZ)    !Stress Tensor
-      Double Precision PL(NX0:NX, NY0:NY, NZ0:NZ)    !Stress Tensor
-      Double Precision Sd(NX0:NX, NY0:NY, NZ0:NZ)    !Stress Tensor
-      Double Precision Temp(NX0:NX, NY0:NY, NZ0:NZ)    !Stress Tensor
-      Double Precision Vx(NX0:NX, NY0:NY, NZ0:NZ)    !Stress Tensor
-      Double Precision Vy(NX0:NX, NY0:NY, NZ0:NZ)    !Stress Tensor
-      Double Precision p00,p01,p02,p11,p12,p22,p33,TrPi
-
-      Print*, "printPiAndTT: ID=", id
-      Print*, "I,J=",I,J
-
-      Print*, "Pi00=", Pi00(I,J,NZ0)
-      Print*, "Pi01=", Pi01(I,J,NZ0)
-      Print*, "Pi02=", Pi02(I,J,NZ0)
-      Print*, "Pi11=", Pi11(I,J,NZ0)
-      Print*, "Pi12=", Pi12(I,J,NZ0)
-      Print*, "Pi22=", Pi22(I,J,NZ0)
-      Print*, "Pi33*tau^2=", Pi33(I,J,NZ0)
-
-      p00 = Pi00(I,J,NZ0)
-      p01 = Pi01(I,J,NZ0)
-      p02 = Pi02(I,J,NZ0)
-      p11 = Pi11(I,J,NZ0)
-      p12 = Pi12(I,J,NZ0)
-      p22 = Pi22(I,J,NZ0)
-      p33 = Pi33(I,J,NZ0)/(Time*Time) ! Pi33=pi^(3,3)*tau*tau
-
-      TrPi = p00*p00+p11*p11+p22*p22+p33*Time*Time*p33*Time*Time
-     &  -2*p01*p01-2*p02*p02+2*p12*p12
-
-      Print*, "Tr(Pi^2)=",TrPi
-
-      Print*, "TT00=", TT00(I,J,NZ0)
-      Print*, "TT01=", TT01(I,J,NZ0)
-      Print*, "TT02=", TT02(I,J,NZ0)
-      Print*, "Ed=", Ed(I,J,NZ0)
-      Print*, "PL=", PL(I,J,NZ0)
-      Print*, "Sd=", Sd(I,J,NZ0)
-      Print*, "Temp=", Temp(I,J,NZ0)
-      Print*, "Vx=", Vx(I,J,NZ0)
-      Print*, "Vy=", Vy(I,J,NZ0)
-      Print*, "Time=", Time
-
-      End Subroutine
-
-
-
-!-----------------------------------------------------------------------
       Subroutine printDPc(id, I, J, Sd,
      &  NXPhy0, NXPhy, NYPhy0, NYPhy, NX0, NX, NY0, NY, NZ0, NZ,
      &  DPc00,DPc01,DPc02,DPc33,DPc11,DPc12,DPc22)

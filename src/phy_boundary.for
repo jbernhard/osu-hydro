@@ -601,7 +601,7 @@ C **** SEE PG.349 EQ-14 IN ZALESAK FOR THE BELOW CONDITIONS ********
 
 *******************************************************************
       SUBROUTINE P4(I,J,NDX,NDY,NDT,VMID,F0,F1,
-     &    NX0,NY0,NX,NY,DT,DX,DY,F,IDebug)
+     &    NX0,NY0,NX,NY,DT,DX,DY,F)
 
 ************************************************************
 ** THIS ROUTINE PERFORMS A THREE DIMENSIONAL INTERPOLATION
@@ -616,46 +616,24 @@ C **** SEE PG.349 EQ-14 IN ZALESAK FOR THE BELOW CONDITIONS ********
 
       Double Precision x,y,z
 
-      !Print *, "P4 Started"
-      !Print *, "I,J=",I,J
-      !Print *, "NDX,NDY=",NDX,NDY
-
       x=VMID(1)/DX
       y=VMID(2)/DY
       z=VMID(0)/DT
-
-      !Print *, "Division finished"
 
       V000=F0(I,J)
       V100=F0(I+NDX,J)
       V010=F0(I,J+NDY)
       V110=F0(I+NDX,J+NDY)
 
-      !Print *, "Set variables halfway finished"
-
       V001=F1(I,J)
       V101=F1(I+NDX,J)
       V011=F1(I,J+NDY)
       V111=F1(I+NDX,J+NDY)
 
-      !Print *, "Set variables finished"
-
-
       F = V000*(1-x)*(1-y)*(1-z) + V100*x*(1-y)*(1-z) +
      &    V010*(1-x)*y*(1-z) + V001*(1-x)*(1-y)*z +
      &    V101*x*(1-y)*z + V011*(1-x)*y*z +
      &    V110*x*y*(1-z) + V111*x*y*z
-
-      If (IDebug == 1) Then
-        Print *, "P4 debug"
-        Print *, "x,y,z=",x,y,z
-        Print *, "V000,V100,V010,V110=",V000,V100,V010,V110
-        Print *, "V001,V101,V011,V111=",V001,V101,V011,V111
-        Print *, "F=", F
-        Print *, "VMID=", VMID
-        Print *, "DX,DY,DT=", DX,DY,DT
-        Print *, "NDX,NDY,NDT=", NDX,NDY,NDT
-      End If
 
       RETURN
       END
