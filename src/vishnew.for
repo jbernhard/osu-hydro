@@ -19,7 +19,6 @@ C   [5] H.Song, Ph.D thesis 2009, arXiv:0908.3656 [nucl-th].
 
 
 #include "defs.h"
-#define CONSTPI 3.14159265
 
 ! change to 1 to ignore checks
 #define silent_checkPi 0
@@ -77,8 +76,6 @@ C *******************************J.Liu changes end***************************
 
        common /EOSdata/PEOSdata, SEOSdata, TEOSdata !CSHEN: for EOS from tables
        common /EOSdatastructure/ EOSe0, EOSde, EOSne
-
-       parameter (HbarC=0.19733d0) !for changcing between fm and GeV ! Hbarc=0.19733=GeV*fm
 
        Integer MaxT
 
@@ -325,12 +322,8 @@ C-------------------------------------------------------------------------------
       DIMENSION F0PPI(NX0:NX,NY0:NY),FPPI(NX0:NX,NY0:NY)   !Stress Tensor in previous and current step
 
 
-      CHARACTER*60 EARTERM
       INTEGER TFLAG, EINS
-      Parameter (EARTERM='EARLY')  ! 'EARLY' parameter for early ended the program after decoupling
-      Parameter (pi=3.1415926d0)
-      Parameter (gt=169.0d0/4.0d0)!total freedom of Quarks and Gluond  Nf=2.5  !change another in InitialES
-      Parameter (HbarC=0.19733d0) !for changcing between fm and GeV ! Hbarc=0.19733=GeV*fm
+      double precision, parameter :: HbarC = M_HBARC
 
       parameter(NNEW=4)
       DIMENSION PNEW(NNEW)    !related to root finding
@@ -798,7 +791,7 @@ C###############################################################################
       integer :: Nsurf, Nambi, Ndisc
       integer :: iSurf
 
-      double precision, PARAMETER :: pi=3.141592653d0, HbarC=.19733d0
+      double precision, parameter :: HbarC = M_HBARC
 
       Logical :: intersect
       double precision :: DTFreeze, DXFreeze, DYFreeze
@@ -1282,7 +1275,7 @@ C#####################################################
        Common /Tde/ Tde, Rdec1, Rdec2,TempIni !Decoupling Temperature !decoupling radius
        Common/R0Aeps/ R0,Aeps
        Common/R0Bdry/ R0Bdry
-       Parameter (HbarC=0.19733d0) !for changing between fm and GeV ! Hbarc=0.19733=GeV*fm
+       double precision, parameter :: HbarC = M_HBARC
 
        Integer ViscousEqsType
        double precision :: VisBulkNorm
@@ -1356,7 +1349,7 @@ CSHEN======end=================================================================
         else if (IRelaxBulk.eq.1) then
           VRelaxT0(i,j,k)=1.0/BulkTau
         else if (IRelaxBulk.eq.2) then
-          VRelaxT0(i,j,k)=2*3.1415926*Temp(i,j,k)/1.5
+          VRelaxT0(i,j,k)=2*M_PI*Temp(i,j,k)/1.5
         else if (IRelaxBulk .eq. 3) then
           TauPi = 9.0*VBulk(i,j,k)/(Ed(i,j,k) - 3.*PL(i,j,k))
           VRelaxT0(i,j,k) = 1.0/DMax1(0.1d0, TauPi)
@@ -1391,7 +1384,7 @@ C====eta/s dependent on local temperature==================================
 
       double precision function ViscousCTemp(TT)
       Implicit double precision (A-H, O-Z)
-      parameter (HbarC=0.19733d0)
+      double precision, parameter :: HbarC = M_HBARC
 
       Common /ViscousC/ ViscousC, IVisflag, VisHRG, VisMin, VisSlope,
      &                  VisBeta  ! Related to Shear Viscosity
@@ -1502,9 +1495,7 @@ C------call Temperatuen mu  Entropy from ee pp-----------
        Dimension CMu(NX0:NX, NY0:NY, NZ0:NZ) !Local chemical potential
        Dimension Sd(NX0:NX, NY0:NY, NZ0:NZ) !entropy density
 
-       Parameter (pi=3.1415926d0)
-       Parameter (gt=169.0d0/4.0d0)!total freedom of Quarks and Gluond  Nf=2.5  !change another in InitialES
-       Parameter (HbarC=0.19733d0) !for changcing between fm and GeV ! Hbarc=0.19733=GeV*fm
+      double precision, parameter :: HbarC = M_HBARC
 
       Do 1001 k=1,1                           !do 10 is in the unit of fm-1
       Do 1001 j=NYPhy0-2,NYPhy+2 ! -2,NYPhy
@@ -1748,7 +1739,7 @@ C-------------------------------------------
        Common/dxdy/ ddx, ddy
        Common /TT0/ TT0
 
-       Parameter (HbarC=0.19733d0) !for changing between fm and GeV ! Hbarc=0.19733=GeV*fm
+       double precision, parameter :: HbarC = M_HBARC
 
        Common /Nsm/ Nsm
        Common /Accu/Accu
@@ -3014,7 +3005,7 @@ C----------------------------------------------------------------
       ! Note that cs2 is not dp/de, but rather p/e!!!
 
       Double Precision, Parameter :: zero=1e-30 ! a small number
-      Double Precision, Parameter :: HbarC=0.19733d0 !for changcing between fm and GeV ! Hbarc=0.19733=GeV*fm
+      double precision, parameter :: HbarC = M_HBARC
 
       Integer, Parameter :: maxIter=300 ! maximum number of iterations
       Integer numIter ! number of iterations
@@ -3084,7 +3075,7 @@ C----------------------------------------------------------------
       ! Note that cs2 is not dp/de, but rather p/e!!!
 
       Double Precision, Parameter :: zero=1e-30 ! a small number
-      Double Precision, Parameter :: HbarC=0.19733d0 !for changing between fm and GeV ! Hbarc=0.19733=GeV*fm
+      double precision, parameter :: HbarC = M_HBARC
 
       Double Precision A,B ! intermedia step variables
 
@@ -3113,7 +3104,7 @@ C----------------------------------------------------------------
       ! Note that cstilde2 is NOT dp/de, but rather p/e!!!
 
       Double Precision, Parameter :: zero=1e-30 ! a small number
-      Double Precision, Parameter :: HbarC=0.19733d0 !for changing between fm and GeV ! Hbarc=0.19733=GeV*fm
+      double precision, parameter :: HbarC = M_HBARC
 
       Double Precision A ! temporary variables
 
@@ -3148,7 +3139,7 @@ C----------------------------------------------------------------
       ! Note that cstilde2 is NOT dp/de, but rather p/e!!!
 
       Double Precision, Parameter :: zero=1e-30 ! a small number
-      Double Precision, Parameter :: HbarC=0.19733d0 !for changing between fm and GeV ! Hbarc=0.19733=GeV*fm
+      double precision, parameter :: HbarC = M_HBARC
 
       Double Precision A ! temporary variables
 

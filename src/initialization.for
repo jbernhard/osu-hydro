@@ -1,7 +1,6 @@
 ! 02-17-2011: The code "Ed = Ed + 1D-10" added at the end of energy initialization.
 
 #include "defs.h"
-#define CONSTPI 3.14159265
 
 !=======================================================================
 
@@ -136,13 +135,8 @@ C-------------------------------------------------------------------------------
       DIMENSION F0Pi22(NX0:NX,NY0:NY),FPi22(NX0:NX,NY0:NY)   !Stress Tensor in previous and current step
       DIMENSION F0Pi33(NX0:NX,NY0:NY),FPi33(NX0:NX,NY0:NY)   !Stress Tensor in previous and current step
 
-
-      CHARACTER*60 EARTERM
       INTEGER TFLAG, EINS
-      Parameter (EARTERM='EARLY')  ! 'EARLY' parameter for early ended the program after decoupling
-      Parameter (pi=3.1415926d0)
-      Parameter (gt=169.0d0/4.0d0)!total freedom of Quarks and Gluond  Nf=2.5  !change another in InitialES
-      Parameter (HbarC=0.19733d0) !for changcing between fm and GeV ! Hbarc=0.19733=GeV*fm
+      double precision, parameter :: HbarC = M_HBARC
 
 C--------------------------------------------------------------------------------------------------------
       parameter(NNEW=4)
