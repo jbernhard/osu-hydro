@@ -12,7 +12,7 @@
      &  PScT00,PScT01,PScT02,PScT33,
      &  PScT11,PScT12,PScT22,etaTtp0,etaTtp,PPI,PISc,XiTtP0,XiTtP,
      &  U0,U1,U2, PU0,PU1,PU2,SxyT,Stotal,StotalBv,StotalSv,
-     &  Ed,PL,Bd,Sd,Time,Temp0,Temp,CMu,T00,T01,T02,IAA,CofAA,PNEW,
+     &  Ed,PL,Sd,Time,Temp0,Temp,CMu,T00,T01,T02,IAA,CofAA,PNEW,
      &  TEM0,ATEM0,Rj,EPS0,V10,V20,AEPS0,AV10,AV20,TFREEZ,TFLAG)
 
       Implicit Double Precision (A-H, O-Z)
@@ -72,7 +72,6 @@
 
       Dimension Ed(NX0:NX, NY0:NY, NZ0:NZ) !energy density
       Dimension PL(NX0:NX, NY0:NY, NZ0:NZ) !pressure
-      Dimension Bd(NX0:NX, NY0:NY, NZ0:NZ) !net baryon density
       Dimension Sd(NX0:NX, NY0:NY, NZ0:NZ) !entropy density
 
       Dimension Temp0(NX0:NX, NY0:NY, NZ0:NZ) !Local Temperature
@@ -97,8 +96,6 @@ C output T00, T11 and T22 debug**
       Dimension TToo(NXPhy0:NXPhy, NYPhy0:NYPhy, NZ0:NZ)  !T00
       Dimension TTXX(NXPhy0:NXPhy, NYPhy0:NYPhy, NZ0:NZ)  !T11
       Dimension TTYY(NXPhy0:NXPhy, NYPhy0:NYPhy, NZ0:NZ)  !T22
-      Dimension PL_ori(NX0:NX, NY0:NY, NZ0:NZ) !calculated from un-rescaled energy density
-
 C ******************** J.Liu changes end******************************
 
 
@@ -150,7 +147,6 @@ C-------------------------------------------------------------------------------
 C--------------------------------------------------------------------------------------------------------
       parameter(NNEW=4)
       DIMENSION PNEW(NNEW)    !related to root finding
-      COMMON /EOSSEL/ IEOS   !Type of EOS
       Common /Tde/ Tde, Rdec1, Rdec2,TempIni !Decoupling Temperature !decoupling redious
       common/Edec/Edec
       common/Edec1/Edec1
@@ -158,8 +154,6 @@ C-------------------------------------------------------------------------------
       Common /Nsm/ Nsm
       Common /Accu/Accu
 
-      COMMON /Initialization/ IInit     !
-      Common/IEOS2dec/ IEOS2dec
       Common/R0Aeps/ R0,Aeps
 
       Integer InitialURead   ! specify if read in more profiles
@@ -169,12 +163,6 @@ C-------------------------------------------------------------------------------
       Double Precision Time
 
       COMMON /IEin/ IEin     !  type of initialization  entropy/enrgy
-! ---Zhi-Changes---
-      Common /RxyBlock/ Rx2, Ry2
-      Common /EK/ EK, HWN
-      Double Precision sFactor
-      Common /sFactor/ sFactor
-! ---Zhi-End---
 
       Integer NN ! For initial anisotropy calcualtion
       Double Precision XX, YY, TotalE, XC, YC, angle, RR
@@ -201,34 +189,8 @@ C-------------------------------------------------------------------------------
 
 
 !------------- Freezeout energy density and temperature -----------------
-
-      IF (IEOS .EQ. 2.and.TFLAG.eq.0) THEN
-         if(IEOS2dec.eq.0) then ! decouple to gluons
-         TDEc   = ((EDEC-0.0)*120./(PI**2.)/169.
-     &            *(HBARC**3.))**(.25) !changed by Evan
-         TFREEZ = TDEc
-         else ! decouple to pions
-         TFREEZ=SQRT(HBARC*SQRT(10.0*HBARC*EDEC)/PI)
-         end if
-      Else if (IEOS.eq.4) Then
-         ee     = EDEC/HbarC
-         TFREEZ = TEIEOS4(ee)*HbarC
-         eed    = EDec/Hbarc              !1/fm^4
-      else if (IEOS.eq.5) then            !CSHEN for SM-EOS Q
-         ee     = EDEC/HbarC              !1/fm^4
-         TFREEZ = TEIEOS5pp(ee)*HbarC     !GeV
-         eed    = EDEC/HbarC              !1/fm^4
-      else if (IEOS.eq.6) then            !CSHEN New EOSL
-         ee     = EDEC                    !GeV/fm^3
-         TFREEZ = TEOSL6(ee)              !GeV
-         eed    = EDec                    !GeV/fm^3
-      else if (IEOS.eq.7) then            !CSHEN EOS from tables
-         ee     = EDEC                    !GeV/fm^3
-         TFREEZ = TEOSL7(ee)              !GeV
-         eed    = Edec                    !GeV/fm^3
-      end if
-
-         eed    = EDec/Hbarc              !fm^(-4)
+       ee     = EDEC                    !GeV/fm^3
+       TFREEZ = TEOSL7(ee)              !GeV
 
        Time = T0
 
@@ -323,7 +285,6 @@ C====Input the initial condition from file====
             Do I = NXPhy0,NXPhy
               read(2,*)  (Sd(I,J,NZ0), J=NYPhy0,NYPhy)
             End Do
-            Sd = sFactor*Sd  ! rescale initial entropy
             Do I = NXPhy0,NXPhy
             Do J = NYPhy0,NYPhy
 !              Call invertFunctionD(SEOSL7, 0D0, 315D0, 1D-3, 0D0,
@@ -403,19 +364,6 @@ C Read in pi_mu nu and overwrite what TransportPi6() gives. Then scale this tens
               read(212,*)  (Pi12(I,J,NZ0), J=NYPhy0, NYPhy)
               read(222,*)  (Pi22(I,J,NZ0), J=NYPhy0, NYPhy)
               read(232,*)  (PPI(I,J,NZ0), J=NYPhy0, NYPhy)
-              If (IEOS==7) Then ! use sFactor
-                do J = NYPhy0, NYPhy
-                   Pi00(I,J,NZ0)=Pi00(I,J,NZ0)*sFactor/HbarC
-                   Pi01(I,J,NZ0)=Pi01(I,J,NZ0)*sFactor/HbarC
-                   Pi02(I,J,NZ0)=Pi02(I,J,NZ0)*sFactor/HbarC
-                   Pi33(I,J,NZ0)=Pi33(I,J,NZ0)*sFactor/HbarC
-                   Pi11(I,J,NZ0)=Pi11(I,J,NZ0)*sFactor/HbarC
-                   Pi12(I,J,NZ0)=Pi12(I,J,NZ0)*sFactor/HbarC
-                   Pi22(I,J,NZ0)=Pi22(I,J,NZ0)*sFactor/HbarC
-                   PPI(I,J,NZ0) =sfactor*PL_ori(I,J,NZ0)-PL(I,J,NZ0)
-     &                  + sFactor*PPI(I,J,NZ0)/HbarC
-                end do
-              End If
 206        continue
           close(200)
           close(201)
@@ -451,7 +399,7 @@ C       End If
 
          ee = Ed(i,j,k)*HbarC ! [ee] = GeV/fm^3
          Cn = 0.0
-         pp = PEPS(Cn,ee)
+         pp = PEOSL7(ee)
          ee = Ed(i,j,k)
          pp = pp/HbarC ! [pp] -> fm^(-4)
          BulkPr = PPI(I,J,K)
@@ -471,7 +419,7 @@ C       End If
      &  Pi00,Pi01,Pi02,Pi33,Pi11,Pi12,Pi22, PScT00,PScT01,PScT02,PScT33,
      &  PScT11,PScT12,PScT22,etaTtp0,etaTtp,  PPI,PISc, XiTtP0,XiTtP,
      &  U0,U1,U2, PU0,PU1,PU2,SxyT, Stotal,StotalBv,StotalSv,
-     &  Ed,PL,Bd,Sd,Temp0,Temp,CMu, T00,T01,T02, IAA,CofAA,Time,DX,DY,
+     &  Ed,PL,Sd,Temp0,Temp,CMu, T00,T01,T02, IAA,CofAA,Time,DX,DY,
      &  DZ,DT,NXPhy0,NYPhy0,NXPhy,NYPhy,NX0,NX,NY0,NY,NZ0,NZ,PNEW,NNEW)
 
     !EPS0 = 1.0d0

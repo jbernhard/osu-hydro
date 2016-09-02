@@ -1,19 +1,3 @@
-! Regualtion using tracelessness, transversality also
-
-************************************************************************
-!   Collections of Supportive Subroutines for VISH2+1 code
-!
-!   Author: Zhi Qiu (qiu@mps.ohio-state.edu)
-!   -- For changes, see ChangeLogsInputFun.txt
-!-----------------------------------------------------------------------
-!   ToDos:
-!   -- Add debug symbol (and if''s)
-!   -- Change many multiple-if's into single-line if'
-!   -- Allow reading parameters outPiMovieDt and regMethod from CML & file
-!   -- Add debug echo for parameters read from file
-!
-************************************************************************
-
 #define say_level 3
 
       Subroutine prepareInputFun()
@@ -32,27 +16,6 @@
 !     -- 5: more flow control output included (if/do)
 !     -- 9: variables value check output included
 
-      Integer outPiTrace, outPiStrengthX
-!     used to control whether the trace (radius only) of region (Pi>0.9*max_Pi) should be outputed to file
-      Common /outPi/ outPiTrace, outPiStrengthX
-!     outPiTrace: 0: no ouput; 1: output
-!     -- Output PiTrace info. Format: (tau, minimal r where Pi is being regulated)
-!     outPiStrengthX: 0: no ouput; 1: output
-!     -- Output Pi info on X axes. Format (tau, list of Pi/Pi_max on X axes)
-
-      Integer outPiComponents
-!     if this is set to true, both the trace (see outPiTrace) and the strength on x axis (see outPiStrengthX) will be outputted for all components of Pi.
-      Common /outPiComponents/ outPiComponents
-
-      Double Precision outPiLastTime, outPiMovieDt, outPiMovieSize
-      common /outPiMovie/ outPiLastTime, outPiMovieDt, outPiMovieSize
-!     outPiCurTime stores the time when previous Pi output action happened
-!     outPiMoveDt is the time interval by which a snapshot of Pi is outputted, 0.0 being no output
-!     outPiMovieSize is the size of grid Pi is outputted: [0,outPiMovieSize]x[0,outPiMovieSize]
-
-      Integer outEOnXY
-      Common /outEOnXY/ outEOnXY
-
       Integer regMethod ! used to determine which method of regulation should be applied.
 !     1: find R0 (see PiRatio) + Fermi-Dirac; 2: use tanh (see maxPiRatio)
       Common /regMethod/ regMethod
@@ -66,69 +29,12 @@
       Double Precision maxBulkPiRatio ! used in tanh regulation method: Pi=Pi_max*tanh(Pi/Pi_max), Pi_max=maxPiRatio*(e+p)
       Common /maxBulkPiRatio/ maxBulkPiRatio
 
-      Integer checkE
-      Common /checkE/ checkE
-
-
-!----------GLOBALS-----------------------------------------------
-      debug = 0
-      outPiTrace = 0
-      outPiStrengthX = 0
-      outPiComponents = 0
-      outEOnXY = 0
-      outPiLastTime = 0.0
-      outPiMovieDt = 0.0
-      outPiMovieSize = 130
-      checkE = 0
-!----------------------------------------------------------------
-
       ! hard-code rather than read from extra file
+      debug = 0
       regMethod = 2
       PiRatio = 0.141421
       maxPiRatio = 10.0
       maxBulkPiRatio = 10.0
-
-!     Establish output files
-      If (outPiTrace .eq. 1) Then
-        Open(392,FILE="movie/PiTrace.dat",STATUS='REPLACE')
-        Close(392)
-      EndIf
-      If (outPiStrengthX .eq. 1) Then
-        Open(394,FILE="movie/PiOnX.dat",STATUS='REPLACE')
-        Close(394)
-      EndIf
-      If (outPiMovieDt >= 1e-6) Then
-        Open(393,FILE="movie/PiMovie.dat",STATUS='REPLACE')
-        Close(393)
-      EndIf
-      If (outPiComponents .eq. 1) Then
-        Open(190,FILE="movie/PiComTrace.dat",STATUS='REPLACE')
-        Close(190)
-        Open(193,FILE="movie/Pi00X.dat",STATUS='REPLACE')
-        Close(193)
-        Open(194,FILE="movie/Pi01X.dat",STATUS='REPLACE')
-        Close(194)
-        Open(195,FILE="movie/Pi02X.dat",STATUS='REPLACE')
-        Close(195)
-        Open(196,FILE="movie/Pi11X.dat",STATUS='REPLACE')
-        Close(196)
-        Open(197,FILE="movie/Pi12X.dat",STATUS='REPLACE')
-        Close(197)
-        Open(198,FILE="movie/Pi22X.dat",STATUS='REPLACE')
-        Close(198)
-        Open(199,FILE="movie/Pi33X.dat",STATUS='REPLACE')
-        Close(199)
-      EndIf
-      If (outEOnXY .eq. 1) Then
-        Open(230,FILE="movie/eOnX.dat",STATUS='REPLACE')
-        Close(230)
-        Open(231,FILE="movie/eOnY.dat",STATUS='REPLACE')
-        Close(231)
-      EndIf
-      If (checkE .eq. 1) Then
-        Open(310,FILE="movie/checkE.dat",STATUS='REPLACE')
-        Close(310)
-      EndIf
 
       End Subroutine
 
@@ -142,15 +48,8 @@
       Integer debug
       Common /debug/ debug
 
-      Integer IEOS, IEin, IInit
-      Common /EOSSEL/ IEOS   !Type of EOS
+      Integer IEin
       Common /IEin/ IEin     !  type of initialization  entropy/enrgy
-      Common /Initialization/ IInit     ! type of initialization CGC/Glauber
-
-      Double Precision A, Si0, EK, HWN, TRo0, TEta, TRA
-      Common /AWNBC/ A,Si0 !A Nuclei Number  Si0, Cross Section for NN
-      Common /EK/ EK, HWN  !EK(T0) constant related to energy density,HWN percent of Wounded Nucleon
-      Common /thick/ TRo0, TEta, TRA  !Para in Nuclear Thickness Function
 
       Double Precision ViscousC, VisBeta, VisHRG, VisMin, VisSlope,
      &                 Visbulk, BulkTau, IRelaxBulk
@@ -169,7 +68,6 @@
 
       Double Precision ITeta, b, ddx, ddy, TT0
       Common /ITeta/ ITeta
-      Common /bb/ b  !impact parameter
       Common/dxdy/ ddx, ddy
       Common /TT0/ TT0   ! T0, or tau_0
 
@@ -180,18 +78,6 @@
 
       Double Precision Edec
       Common/Edec/Edec    !decoupling temperature
-
-      Integer IEOS2dec
-      Common/IEOS2dec/ IEOS2dec  ! IEOS=2 decouple by gluon/pion
-
-      Double Precision Rx2, Ry2 ! <x^2> and <y^2> used in Gaussian initial condition
-      Common /RxyBlock/ Rx2, Ry2
-
-      Double Precision sFactor ! multiplicity factor on entropy density
-      Common /sFactor/ sFactor
-
-      Integer :: IhydroJetoutput   ! Output control for hydro evolution history
-      Common /hydroJetoutput/ IhydroJetoutput
 
       Integer InitialURead
       Common/LDInitial/ InitialURead  ! IintURead =1 read initial velocity profile
@@ -222,17 +108,9 @@
 
       QNum = iargc ()
 
-      sFactor = 1D0
-
       Do ArgIndex = 1, QNum
         Call getarg(ArgIndex, buffer)
         Call processAssignment(buffer, "=", varName, IResult, DResult)
-
-        If (varName=="ieos") IEOS=IResult ! EOSQ: 0;  EOSI: 2; SM-EOSQ: 5; EOSL: 4(Katz05 data); s95p-PCE: 6
-
-        If (varName=="iinit") IInit=IResult ! 0: Gaussian; 1: Optical Glauber; 2: From Initial/InitialEd.dat
-        If (varName=="init") IInit=IResult
-        If (varName=="ii") IInit=IResult
 
         If (varName=="iein") IEin=IResult ! 0: initialize by energy density; 1: initialize by entropy density
         If (varName=="iin") IEin=IResult
@@ -240,33 +118,6 @@
         If (varName=="dt") dT_1=DResult ! dT, DX, DY
         If (varName=="dx") dX=DResult
         If (varName=="dy") dy=DResult
-
-        If (varName=="x2") Rx2=DResult ! <x^2> and <y^2>
-        If (varName=="rx2") Rx2=DResult
-        If (varName=="x^2") Rx2=DResult
-        If (varName=="x_2") Rx2=DResult
-        If (varName=="y2") Ry2=DResult
-        If (varName=="ry2") Ry2=DResult
-        If (varName=="y^2") Ry2=DResult
-        If (varName=="y_2") Ry2=DResult
-
-        If (varName=="ek") EK=DResult ! centeral energy density, in GeV/fm^3 (for Glauber and Gaussian)
-        If (varName=="e0") EK=DResult
-        If (varName=="ec") EK=DResult
-        If (varName=="ecen") EK=DResult
-        If (varName=="e_cen") EK=DResult
-
-        If (varName=="sk") EK=DResult ! centeral entropy density, in fm^-3 (for Glauber)
-        If (varName=="s0") EK=DResult
-        If (varName=="sc") EK=DResult
-        If (varName=="scen") EK=DResult
-        If (varName=="s_cen") EK=DResult
-
-        If (varName=="factor") sFactor=DResult ! VER-1.29RC3: final multiplicity factor on entropy density
-        If (varName=="fac") sFactor=DResult
-        If (varName=="ff") sFactor=DResult
-
-        If (varName=="b") b=DResult ! impact parameter
 
         If (varName=="edec") EDec=DResult ! decouple energy density, in GeV/fm^3
         If (varName=="e_dec") EDec=DResult
@@ -295,8 +146,6 @@
         If (varName=="r0") R0Bdry=DResult
         If (varName=="r0bdry") R0Bdry=DResult
 
-        If (varName=="a") A=DResult ! Atom number A
-
         If (varName=="ndx") NDX=IResult ! freeze-out cell sizes
         If (varName=="ndy") NDY=IResult
         If (varName=="ndt") NDT=IResult
@@ -304,7 +153,6 @@
         If (varName=="visbeta") VisBeta=DResult ! VisBeta, used for proper time tau_pi
 
         If (varName=="initialuread") InitialURead=IResult ! read in initial flow velocity profiles
-        If (varName=="ihydrojetoutput") IhydroJetoutput=IResult ! output hydro evolution
 
         If (varName=="visflag") IVisflag=IResult ! Flag for temperature dependent eta/s(T)
         If (varName=="initialpitensor") Initialpitensor=IResult ! initialization of pi tensor
@@ -1020,247 +868,5 @@
       Pi01 = CC*Pi01
       Pi02 = CC*Pi02
       Pi12 = CC*Pi12
-
-
-      End Subroutine
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-!----------------------------------------------------------------------------
-
-
-
-!*****************************************************************************
-      Subroutine doOtherOutputs(NX0,NY0,NZ0,NX,NY,NZ,Ed,PL,Time,
-     &  NXPhy0,NXPhy,NYPhy0,NYPhy,
-     &  Pi00,Pi01,Pi02,Pi11,Pi12,Pi22,Pi33,
-     &  PiPiMaxRatio,maxPiRatio)
-
-      Implicit None
-
-      Integer debug
-      Common /debug/ debug
-
-      Integer outPiTrace, outPiStrengthX
-      Common /outPi/ outPiTrace, outPiStrengthX
-
-      Integer outPiComponents
-      Common /outPiComponents/ outPiComponents
-
-      Integer outEOnXY
-      Common /outEOnXY/ outEOnXY
-
-      Integer checkE
-      Common /checkE/ checkE
-
-      Double Precision maxE, maxEI, maxEJ, maxEK
-
-      Double Precision outPiLastTime, outPiMovieDt, outPiMovieSize
-      common /outPiMovie/ outPiLastTime, outPiMovieDt, outPiMovieSize
-
-      Integer NX0,NY0,NZ0,NX,NY,NZ,NXPhy0,NXPhy,NYPhy0,NYPhy
-      Integer I,J,K
-
-      Common /dxdy/ ddx, ddy
-      Double Precision ddx, ddy
-
-      Double Precision Time
-
-      Double Precision Ed(NX0:NX, NY0:NY, NZ0:NZ) !energy density
-      Double Precision PL(NX0:NX, NY0:NY, NZ0:NZ) !local pressure
-      Double Precision Sd(NX0:NX, NY0:NY, NZ0:NZ) !entropy density
-
-      Double Precision Pi00(NX0:NX, NY0:NY, NZ0:NZ)    !Stress Tensor
-      Double Precision Pi01(NX0:NX, NY0:NY, NZ0:NZ)    !Stress Tensor
-      Double Precision Pi02(NX0:NX, NY0:NY, NZ0:NZ)    !Stress Tensor
-      Double Precision Pi11(NX0:NX, NY0:NY, NZ0:NZ)    !Stress Tensor
-      Double Precision Pi12(NX0:NX, NY0:NY, NZ0:NZ)    !Stress Tensor
-      Double Precision Pi22(NX0:NX, NY0:NY, NZ0:NZ)    !Stress Tensor
-      Double Precision Pi33(NX0:NX, NY0:NY, NZ0:NZ)    !Stress Tensor
-
-      Double Precision EAndP, maxPiRatio, maxPi
-
-      Double Precision PiPiMaxRatio, PiCut ! PiCut=(e+p)*maxPiRatio*PiPiMaxRatio
-
-      Double Precision PiAvg
-
-      Double Precision r00,r01,r02,r11,r12,r22,r33 !radius of region inside which PiXX > (e+p)*maxPiRatio*PiPiMaxRatio
-
-!     Output outPiStrengthX
-      If (outPiStrengthX .eq. 1) Then ! Output Pi value on X axis to file
-        Open(394,FILE="movie/PiOnX.dat",STATUS='OLD',ACCESS='APPEND') ! file to output where Pi<0.9*max_pi
-        Write(394,'(f15.8)',ADVANCE='NO') Time ! write column header
-        DO 3108 K=NZ0,NZ0
-        DO 3108 J=0,0
-        DO 3108 I=0,NXPhy
-          PiAvg = 1.0d0/7.0d0*
-     &      (abs(Pi00(I,J,K))+abs(Pi01(I,J,K))+abs(Pi02(I,J,K))
-     &      +abs(Pi11(I,J,K))+abs(Pi12(I,J,K))+abs(Pi22(I,J,K))
-     &      +abs(Pi33(I,J,K)))
-          Write(394,'(f15.8)',ADVANCE='NO') PiAvg/(Ed(I,J,K)+PL(I,J,K))
- 3108   Continue
-        Write(394,*) ! write a new-line-symbol to the file
-        Close(394)
-      EndIf
-
-!     Output components of Pi
-      If (outPiComponents .eq. 1) Then
-!       Open files
-        Open(190,FILE="movie/PiComTrace.dat",
-     &                                  STATUS='OLD',ACCESS='APPEND')
-        Open(193,FILE="movie/Pi00X.dat",STATUS='OLD',ACCESS='APPEND')
-        Open(194,FILE="movie/Pi01X.dat",STATUS='OLD',ACCESS='APPEND')
-        Open(195,FILE="movie/Pi02X.dat",STATUS='OLD',ACCESS='APPEND')
-        Open(196,FILE="movie/Pi11X.dat",STATUS='OLD',ACCESS='APPEND')
-        Open(197,FILE="movie/Pi12X.dat",STATUS='OLD',ACCESS='APPEND')
-        Open(198,FILE="movie/Pi22X.dat",STATUS='OLD',ACCESS='APPEND')
-        Open(199,FILE="movie/Pi33X.dat",STATUS='OLD',ACCESS='APPEND')
-
-
-!       Initialize all the radius
-        r00=NX*ddx+NY*ddy
-        r01=NX*ddx+NY*ddy
-        r02=NX*ddx+NY*ddy
-        r11=NX*ddx+NY*ddy
-        r12=NX*ddx+NY*ddy
-        r22=NX*ddx+NY*ddy
-        r33=NX*ddx+NY*ddy
-
-        DO 300 K=NZ0,NZ
-        DO 300 J=NY0,NY
-        DO 300 I=NX0,NX
-
-        PiCut = PiPiMaxRatio*maxPiRatio*(Ed(I,J,K)+PL(I,J,K)) ! max possible Pi value
-        If (abs(Pi00(I,J,K)) > PiCut) Then
-          If (sqrt(ddx*ddx*I*I+ddy*ddy*J*J) < r00) Then
-            r00 = sqrt(ddx*ddx*I*I+ddy*ddy*J*J)
-          EndIf
-        EndIf
-        If (abs(Pi01(I,J,K)) > PiCut) Then
-          If (sqrt(ddx*ddx*I*I+ddy*ddy*J*J) < r01) Then
-            r01 = sqrt(ddx*ddx*I*I+ddy*ddy*J*J)
-          EndIf
-        EndIf
-        If (abs(Pi02(I,J,K)) > PiCut) Then
-          If (sqrt(ddx*ddx*I*I+ddy*ddy*J*J) < r02) Then
-            r02 = sqrt(ddx*ddx*I*I+ddy*ddy*J*J)
-          EndIf
-        EndIf
-        If (abs(Pi11(I,J,K)) > PiCut) Then
-          If (sqrt(ddx*ddx*I*I+ddy*ddy*J*J) < r11) Then
-            r11 = sqrt(ddx*ddx*I*I+ddy*ddy*J*J)
-          EndIf
-        EndIf
-        If (abs(Pi12(I,J,K)) > PiCut) Then
-          If (sqrt(ddx*ddx*I*I+ddy*ddy*J*J) < r12) Then
-            r12 = sqrt(ddx*ddx*I*I+ddy*ddy*J*J)
-          EndIf
-        EndIf
-        If (abs(Pi22(I,J,K)) > PiCut) Then
-          If (sqrt(ddx*ddx*I*I+ddy*ddy*J*J) < r22) Then
-            r22 = sqrt(ddx*ddx*I*I+ddy*ddy*J*J)
-          EndIf
-        EndIf
-        If (abs(Pi33(I,J,K)) > PiCut) Then
-          If (sqrt(ddx*ddx*I*I+ddy*ddy*J*J) < r33) Then
-            r33 = sqrt(ddx*ddx*I*I+ddy*ddy*J*J)
-          EndIf
-        EndIf
-
- 300    Continue
-
-        Write(190,"(f15.8,f15.8,f15.8,f15.8,f15.8,f15.8,f15.8,f15.8)")
-     &              Time,r00,r01,r02,r11,r12,r22,r33
-
-
-!       Next, write PiXX/(e+p) along x axis to file
-        Write(193,'(f15.8)',ADVANCE='NO') Time ! write column header
-        Write(194,'(f15.8)',ADVANCE='NO') Time ! write column header
-        Write(195,'(f15.8)',ADVANCE='NO') Time ! write column header
-        Write(196,'(f15.8)',ADVANCE='NO') Time ! write column header
-        Write(197,'(f15.8)',ADVANCE='NO') Time ! write column header
-        Write(198,'(f15.8)',ADVANCE='NO') Time ! write column header
-        Write(199,'(f15.8)',ADVANCE='NO') Time ! write column header
-
-        DO 1318 K=NZ0,NZ0
-        DO 1318 J=0,0
-        DO 1318 I=0,NXPhy
-          EAndP = Ed(I,J,K)+PL(I,J,K)
-          Write(193,'(f15.8)',ADVANCE='NO') Pi00(I,J,K)/EAndP
-          Write(194,'(f15.8)',ADVANCE='NO') Pi01(I,J,K)/EAndP
-          Write(195,'(f15.8)',ADVANCE='NO') Pi02(I,J,K)/EAndP
-          Write(196,'(f15.8)',ADVANCE='NO') Pi11(I,J,K)/EAndP
-          Write(197,'(f15.8)',ADVANCE='NO') Pi12(I,J,K)/EAndP
-          Write(198,'(f15.8)',ADVANCE='NO') Pi22(I,J,K)/EAndP
-          Write(199,'(f15.8)',ADVANCE='NO') Pi33(I,J,K)/EAndP
- 1318   Continue
-        Write(193,*) ! write a new-line-symbol to the file
-        Write(194,*) ! write a new-line-symbol to the file
-        Write(195,*) ! write a new-line-symbol to the file
-        Write(196,*) ! write a new-line-symbol to the file
-        Write(197,*) ! write a new-line-symbol to the file
-        Write(198,*) ! write a new-line-symbol to the file
-        Write(199,*) ! write a new-line-symbol to the file
-
-!       Close files
-        Close(190)
-        Close(193)
-        Close(194)
-        Close(195)
-        Close(196)
-        Close(197)
-        Close(198)
-        Close(199)
-      EndIf
-
-!     Output e on x and y axes
-      If (outEOnXY .eq. 1) Then
-        Open(230,FILE="movie/eOnX.dat",STATUS='OLD',ACCESS='APPEND')
-        Open(231,FILE="movie/eOnY.dat",STATUS='OLD',ACCESS='APPEND')
-        Write(230,'(f15.8)',ADVANCE='NO') Time
-        DO 310 I=0,NXPhy
-          Write(230,'(f15.8)',ADVANCE='NO') Ed(I,0,1)
- 310    Continue
-        Write(231,'(f15.8)',ADVANCE='NO') Time
-        DO 320 J=0,NYPhy
-          Write(231,'(f15.8)',ADVANCE='NO') Ed(0,J,1)
- 320    Continue
-        Close(230)
-        Close(231)
-      EndIf
-
-!     Output maximum value of Ed
-      If (checkE .eq. 1) Then
-        Open(230,FILE="movie/checkE.dat",STATUS='OLD',ACCESS='APPEND')
-        maxE = 0.0;
-        DO K=NZ0,NZ
-        DO J=NY0,NY
-        DO I=NX0,NX
-          If (abs(Ed(I,J,K)) > abs(maxE)) Then
-            maxE = Ed(I,J,K)
-            maxEI = I; maxEJ = J; maxEK = k;
-          EndIf
-        End Do
-        End Do
-        End Do
-        Write(230,'(f15.8,f15.8,I8,I8,I8)')
-     &      Time, maxE, maxEI, maxEJ, maxEK
-        Close(230)
-        Print *, "Time, maxE, I, J, K",
-     &    Time, maxE, maxEI, maxEJ, maxEK
-      EndIf
 
       End Subroutine

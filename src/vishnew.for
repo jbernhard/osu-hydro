@@ -1,6 +1,3 @@
-! Modified according to InputFun-1.26test3 (1.27RC), call with Vx and Vy in regulatePi
-! Multiple regulations
-
 C*****************************************************************************
 C                                                                            *
 C         Viscous Israel Stewart Hydrodynamics in 2+1-dimention (VISH2+1)    *
@@ -19,28 +16,6 @@ C   [2] H.Song and U.Heinz, Phys. Rev. C77, 064901 (2008);
 C   [3] H.Song and U.Heinz, Phys. Rev. C78, 024902 (2008);
 C   [4] H.Song and U.Heinz, arXiv:0909.1549 [nucl-th];
 C   [5] H.Song, Ph.D thesis 2009, arXiv:0908.3656 [nucl-th].
-
-!*******************************************************************************
-!     This program is further modified by Zhi
-!     Find changes made by Zhi by searching ---Changes-Zhi---
-!                                   ---Last modified on Jan 9, 2010
-!*******************************************************************************
-
-
-C===============================================================================
-C   Main Features includes:
-C   --- Use "full" I-S equations [3].
-C   --- Includes shear[1-2] and bulk viscosity[4].
-C   --- Use Optical Glauber Initialization.
-C   --- Has several available EOS's: EOS I, SM-EOS Q, and EOS L [5].
-C   --- Choose to freeze-out by constant energy density/temperature
-C
-C   For details, please refer to Song's Ph.D thesis[5] Chap.3 as well as Ref[1-4].
-C===============================================================================
-!
-! For list of changes since version 1.0, see ChangeLog.txt
-!
-C===============================================================================
 
 
 #include "defs.h"
@@ -89,24 +64,16 @@ C *******************************J.Liu changes end***************************
        Common /LS/ LS
        Common /R0Bdry/ R0Bdry
 
-       COMMON /EOSSEL/ IEOS   !Type of EOS
        COMMON /IEin/ IEin     !  type of initialization  entropy/enrgy
-       COMMON /Initialization/ IInit     ! type of initialization CGC/Glauber
 
-       Common /AWNBC/ A,Si0 !A Nuclei Number  Si0, Cross Section for NN
-       Common /EK/ EK, HWN  !EK(T0) constant related to energy density,HWN percent of Wounded Nucleon
-       Common /thick/ TRo0, TEta, TRA  !Para in Nuclear Thickness Function
        Common /ViscousC/ ViscousC, IVisflag, VisHRG, VisMin, VisSlope,
      &                   VisBeta  ! Related to Shear Viscosity
-       Common /bb/ b  !impact parameter
        Common/dxdy/ ddx, ddy
        Common /TT0/ TT0   !T0
 
        Common /Timestep/ DT_1, DT_2
 
        common/Edec/Edec    !decoupling energy density
-!      common/Prefreezeout/Edec0, Ifreez
-       Common/IEOS2dec/ IEOS2dec  ! IEOS=2 decouple by gluon/pion
 
        common /EOSdata/PEOSdata, SEOSdata, TEOSdata !CSHEN: for EOS from tables
        common /EOSdatastructure/ EOSe0, EOSde, EOSne
@@ -115,12 +82,7 @@ C *******************************J.Liu changes end***************************
 
        Integer MaxT
 
-***********************************************************************************
-! ---Zhi-Changes---
-      Common /RxyBlock/ Rx2,Ry2
-
       Common /DXY/ DX,DY
-
       Integer NDX, NDY, NDT ! used in Freeze-out subroutine
       Common /NXYTD/ NDX, NDY, NDT
 
@@ -198,28 +160,6 @@ C ***************************J.Liu changes*******************************
       endif
 C ***************************J.Liu changes end***************************
 
-      ! deprecated parameters
-      IEOS = 7
-      IEOS2dec = 1
-      IInit = 2
-      Rx2 = 4.0
-      Ry2 = 6.0
-
-      If (echo_level>=3) Then
-        Write (*,*) "Have:", "IEOS=", IEOS, "A=", A, ! write out parameter for a check
-     &    "IInit=", IInit, "dT=", dT_1,
-     &    "eta/s=",ViscousC,"b=",b,"Rx2=",Rx2,"Ry2=",Ry2,
-     &    "EK=", EK, "tau0=", T0, "EDec=", EDec, ! energy unit: GeV/fm^3
-     &    "LS=", LS, "R0Bdry", R0Bdry, "VisBeta=", VisBeta,
-     &    "DX=", DX, "DY=", DY, "DT_1=", DT_1,
-     &    "NDX=", NDX, "NDY=", NDY, "NDT=", NDT,
-     &    "IVisflag=", IVisflag,
-     &    "IVisBulkFlag=", IVisBulkFlag,
-     &    "Initialpitensor=", Initialpitensor,
-     &    "ViscousEqsType=", ViscousEqsType,
-     &    "VisBulkNorm=", VisBulkNorm
-      EndIf
-
       ddx=dx
       ddy=dy
       DZ=0.01d0
@@ -234,7 +174,6 @@ CSHEN===END================================================================
 
       MaxT = 40.0/DT_1
 
-      EK  = EK/Hbarc  !center energy density unit convert to fm^-4
       TT0 = T0
 
       OPEN(99,FILE='surface.dat',FORM='FORMATTED',STATUS='REPLACE')
@@ -259,8 +198,6 @@ CSHEN===END================================================================
 
       End
 !-----------------------------------------------------------------------
-
-
 
 
 
@@ -328,7 +265,6 @@ C###############################################################################
 
       Dimension Ed(NX0:NX, NY0:NY, NZ0:NZ) !energy density
       Dimension PL(NX0:NX, NY0:NY, NZ0:NZ) !pressure
-      Dimension Bd(NX0:NX, NY0:NY, NZ0:NZ) !net baryon density
       Dimension Sd(NX0:NX, NY0:NY, NZ0:NZ) !entropy density
 
       Dimension Temp0(NX0:NX, NY0:NY, NZ0:NZ) !Local Temperature
@@ -396,31 +332,21 @@ C-------------------------------------------------------------------------------
       Parameter (gt=169.0d0/4.0d0)!total freedom of Quarks and Gluond  Nf=2.5  !change another in InitialES
       Parameter (HbarC=0.19733d0) !for changcing between fm and GeV ! Hbarc=0.19733=GeV*fm
 
-
-C--------------------------------------------------------------------------------------------------------
       parameter(NNEW=4)
       DIMENSION PNEW(NNEW)    !related to root finding
-      COMMON /EOSSEL/ IEOS   !Type of EOS
       Common /Tde/ Tde, Rdec1, Rdec2,TempIni !Decoupling Temperature !decoupling radius
       common/Edec/Edec
-!     common/Prefreezeout/Edec0, Ifreez
       common/Edec1/Edec1
 
       Common /Nsm/ Nsm
       Common /Accu/Accu
 
-      COMMON /Initialization/ IInit     !
-      Common/IEOS2dec/ IEOS2dec
       Common/R0Aeps/ R0,Aeps
       Common /R0Bdry/ R0Bdry
 
       Common /Timestep/ DT_1, DT_2
 
       COMMON /IEin/ IEin     !  type of initialization  entropy/energy
-! ---Zhi-Changes---
-      Common /RxyBlock/ Rx2, Ry2
-      Common /EK/ EK, HWN
-      Character (len=80) filename_buffer
       Integer r_power
 
       Integer NN ! For initial anisotropy calcualtion
@@ -431,7 +357,6 @@ C-------------------------------------------------------------------------------
       Common /ViscousC/ ViscousC, IVisflag, VisHRG, VisMin, VisSlope,
      &                  VisBeta  ! Related to Shear Viscosity
       Common /ViscousBulk/ Visbulk,BulkTau,IRelaxBulk,IVisBulkFlag  ! Related to bulk Viscosity
-      Common /sFactor/ sFactor
 
       Integer ViscousEqsType
       double precision:: VisBulkNorm
@@ -470,7 +395,7 @@ CSHEN===EOS from tables end====================================================
      &  PScT00,PScT01,PScT02,PScT33,
      &  PScT11,PScT12,PScT22,etaTtp0,etaTtp,PPI,PISc,XiTtP0,XiTtP,
      &  U0,U1,U2, PU0,PU1,PU2,SxyT,Stotal,StotalBv,StotalSv,
-     &  Ed,PL,Bd,Sd,Time,Temp0,Temp,CMu,T00,T01,T02,IAA,CofAA,PNEW,
+     &  Ed,PL,Sd,Time,Temp0,Temp,CMu,T00,T01,T02,IAA,CofAA,PNEW,
      &  TEM0,ATEM0,Rj,EPS0,V10,V20,AEPS0,AV10,AV20,TFREEZ,TFLAG)
 
       ! write thermodynamic freeze-out quantities to surface file
@@ -587,7 +512,7 @@ CSHEN====END====================================================================
      &  Pi00,Pi01,Pi02,Pi33,Pi11,Pi12,Pi22, PScT00,PScT01,PScT02,PScT33,
      &  PScT11,PScT12,PScT22,etaTtp0,etaTtp,  PPI,PISc, XiTtP0,XiTtP,
      &  U0,U1,U2, PU0,PU1,PU2,SxyT,Stotal,StotalBv,StotalSv,
-     &  Ed,PL,Bd,Sd,Temp0,Temp,CMu, T00,T01,T02, IAA,CofAA,Time,DX,DY,
+     &  Ed,PL,Sd,Temp0,Temp,CMu, T00,T01,T02, IAA,CofAA,Time,DX,DY,
      &  DZ,DT,NXPhy0,NYPhy0,NXPhy,NYPhy,NX0,NX,NY0,NY,NZ0,NZ,PNEW,NNEW)  !PNEW NNEW  related to root finding
 
         DIFFC = 0.125D0
@@ -705,7 +630,7 @@ CSHEN====END====================================================================
      &  Pi00,Pi01,Pi02,Pi33,Pi11,Pi12,Pi22, PScT00,PScT01,PScT02,PScT33,
      &  PScT11,PScT12,PScT22,etaTtp0,etaTtp,  PPI,PISc, XiTtP0,XiTtP,
      &  U0,U1,U2, PU0,PU1,PU2,SxyT,Stotal,StotalBv,StotalSv,
-     &  Ed,PL,Bd,Sd,Temp0,Temp,CMu, T00,T01,T02, IAA,CofAA,Time,DX,DY,
+     &  Ed,PL,Sd,Temp0,Temp,CMu, T00,T01,T02, IAA,CofAA,Time,DX,DY,
      &  DZ,DT,NXPhy0,NYPhy0,NXPhy,NYPhy,NX0,NX,NY0,NY,NZ0,NZ,PNEW,NNEW)  !PNEW NNEW  related to root finding
 
       End If ! If (ViscousC>1D-6 .or. VisBulk > 1D-6) Then
@@ -775,7 +700,7 @@ C      NDT = 5
 
 5300  CONTINUE
 
-      Call FreezeoutPro10 (EDEC, IEOS, NDX, NDY, NDT,
+      Call FreezeoutPro10 (EDEC, NDX, NDY, NDT,
      &     EPS0,EPS1,V10,V20,V11,V21, NINT,
      &     F0Pi00,F0Pi01,F0Pi02,F0Pi33,F0Pi11,F0Pi12,F0Pi22,
      &     FPi00,FPi01,FPi02,FPi33,FPi11,FPi12,FPi22,
@@ -825,7 +750,7 @@ C~~~~~~~~~~~~~~Freezeout Procedure (rewritten from Peters code azhydro0p2)     ~
 
 
 C##################################################################################
-      Subroutine FreezeoutPro10(Edec, IEOS, NDX, NDY, NDT,
+      Subroutine FreezeoutPro10(Edec, NDX, NDY, NDT,
      &     EPS0,EPS1,V10,V20,V11,V21, NINT,
      &     F0Pi00,F0Pi01,F0Pi02,F0Pi33,F0Pi11,F0Pi12,F0Pi22,
      &     FPi00,FPi01,FPi02,FPi33,FPi11,FPi12,FPi22,
@@ -836,7 +761,7 @@ C###############################################################################
       Implicit none
 
       double precision :: Edec
-      integer :: IEOS, NDX, NDY, NDT, NINT
+      integer :: NDX, NDY, NDT, NINT
       integer :: N
       double precision :: T, X, Y
       double precision :: DX, DY, DT
@@ -1051,8 +976,6 @@ C------- Transport Pi00,Pi01,Pi02,Pi03,Pi11, Pi12,Pi22 by first order theory
        Dimension VRelaxT0(NX0:NX, NY0:NY, NZ0:NZ) !viscous coeficient relaxation time \tau_PI
        Dimension XiTtP(NX0:NX, NY0:NY, NZ0:NZ)  !extra (Xi T)/tau_Pi terms in full I-S bulk eqn 08/2008
 
-
-       COMMON /EOSSEL/ IEOS !Type of EOS
        COMMON /IEin/ IEin  !parameter for initializtion by entropy 1 or energy 0
          Parameter(XC0=1.0d-5, AAC=1.0d-6)  !XC0 charge of root acuracy  !AAC discard overflow value
 
@@ -1573,7 +1496,6 @@ C###########################################################################
 C------call Temperatuen mu  Entropy from ee pp-----------
         Implicit Double Precision (A-H, O-Z)
        Dimension Ed(NX0:NX, NY0:NY, NZ0:NZ) !energy density
-       Dimension Bd(NX0:NX, NY0:NY, NZ0:NZ) !energy density
        Dimension PL(NX0:NX, NY0:NY, NZ0:NZ) !Pressure
 
        Dimension Temp(NX0:NX, NY0:NY, NZ0:NZ) !Local Temperature
@@ -1584,454 +1506,25 @@ C------call Temperatuen mu  Entropy from ee pp-----------
        Parameter (gt=169.0d0/4.0d0)!total freedom of Quarks and Gluond  Nf=2.5  !change another in InitialES
        Parameter (HbarC=0.19733d0) !for changcing between fm and GeV ! Hbarc=0.19733=GeV*fm
 
-      COMMON /PAREOS/ BNP01,EPP01,DBNP1,DEPP1,NBNP1,NEPP1,
-     &                BNP02,EPP02,DBNP2,DEPP2,NBNP2,NEPP2,
-     &                PMAT1(0:300,0:250),PMAT2(0:300,0:250)
-      COMMON /TAREOS/ TBNP01,TEPP01,TDBNP1,TDEPP1,NTBNP1,NTEPP1,
-     &                TBNP02,TEPP02,TDBNP2,TDEPP2,NTBNP2,NTEPP2,
-     &                TMAT1(0:300,0:250),TMAT2(0:300,0:250)
-      COMMON /BAREOS/ BABNP01,BAEPP01,BADBNP1,BADEPP1,NBABNP1,NBAEPP1,
-     &                BABNP02,BAEPP02,BADBNP2,BADEPP2,NBABNP2,NBAEPP2,
-     &                BAMAT1(0:300,0:250),BAMAT2(0:300,0:250)
-
-       COMMON /EOSSEL/ IEOS
-
       Do 1001 k=1,1                           !do 10 is in the unit of fm-1
       Do 1001 j=NYPhy0-2,NYPhy+2 ! -2,NYPhy
       Do 1001 i=NXPhy0-2,NXPhy+2
         Ed(i,j,k) = max(1e-30, Ed(i,j,k))
  1001 Continue
 
-
-
-
-        If(IEOS.eq.2) then !Ideal QGP Gas (Ref. Wong Book)
-
-        a=(gt*Pi**2)/90.0
-        ConsT=(1.0/(3.0*a))**0.25    !ConsT=(30.0/(gt*Pi**2))**0.25
-        ConsS=4.0d0*a                    !ConsS=4.0/3.0*gt*pi**2/30.0
-
-           Print *, 'ConsT', ConsT
-          do 10 k=1,1                           !do 10 is in the unit of fm-1
-          do 10 j=NYPhy0-2,NYPhy+2 ! -2,NYPhy
-          do 10 i=NXPhy0-2,NXPhy+2
-             PL(i,j,k)=Ed(i,j,k)/3.0
-             Temp(i,j,k)=ConsT*(Ed(i,j,k)**0.25)
-             Sd(i,j,k)=ConsS*Temp(i,j,k)**3
-          !If (Sd(i,j,k) .ne. Sd(i,j,k)) Then
-          !  Print *, "Invalid Sd!"
-          !  Print *, "i,j,k=", i,j,k
-          !  Print *, "Ed=", Ed(i,j,k)
-          !  Print *, "Sd=", Sd(i,j,k)
-          !  Print *, "Temp=", Temp(i,j,k)
-          !  Print *, "Pl=", PL(i,j,k)
-          !EndIf
- 10       continue
-          Print*,'ConsS=',ConsS
-
-
-       else if(IEOS.eq.0) then
-       DO 98 I=NXPhy0-2,NXPhy+2
-       DO 99 J=NYPhy0-2,NYPhy+2
-         X=X0+I*DX
-         Y=Y0+J*DY
-         ee=Ed(I,J,NZ0)*HbarC      !fm-4 to GeV/fm3  peter unit
-         ba=0.0 !Bd(I,J,NZ0)
-
-           IF (ee.LT.24.) THEN
-           TTEMP=EOUT(ba,ee,0.0d0,
-     &          TBNP01,TEPP01,TDBNP1,TDEPP1,NTBNP1,NTEPP1,
-     &          TBNP02,TEPP02,TDBNP2,TDEPP2,NTBNP2,NTEPP2,
-     &          TMAT1,TMAT2)
-           pp=PEPS(ba,ee)
-           AMU=EOUT(ba,ee,0.0d0,
-     &         BABNP01,BAEPP01,BADBNP1,BADEPP1,NBABNP1,NBAEPP1,
-     &         BABNP02,BAEPP02,BADBNP2,BADEPP2,NBABNP2,NBAEPP2,
-     &         BAMAT1,BAMAT2)
-           ELSE
-           TTEMP=( (ee-.3642)*120./(PI**2.) /169. *(HBARC**3.))**(.25)
-           pp=(ee-4.*.3642)/3.
-           AMU =  0.
-*          with N_f=2.5    .3642 is our bag-constant in GeV/fm^3
-           END IF
-         IF(TTEMP.GT..00001) THEN
-         ss=(ee+pp-AMU*ba)/TTEMP
-         ELSE
-         ss=0.
-         END IF
-
-       PL(I,J,NZ0)=pp/HbarC     !GeV/fm3 to fm-4
-       Temp(I,J,NZ0)=TTEMP/HbarC !GeV/fm3 to fm-4
-       CMu(I,J,NZ0)=AMU !HbarC?
-       Sd(I,J,NZ0)=ss           !fm-3
-
- 99   CONTINUE
- 98   CONTINUE
-      else if (IEOS.eq.4) then  ! the lattice based EOS fm
-
-          do 110 k = 1,1                           !do 10 is in the unit of fm-1
-          do 110 j = NYPhy0-2,NYPhy+2 ! -2,NYPhy
-          do 110 i = NXPhy0-2,NXPhy+2
-           ee = Ed(i,j,k)
-           TT = TEIEOS4(ee)  !change the double precison fun for freezeourt corrispondingly
-           pp = PEIEOS4(ee)
-           ss = (pp+ee)/TT
-
-           PL(i,j,k)   = pp
-           Temp(i,j,k) = TT
-           Sd(i,j,k)   = ss
-110       continue
-
-      else if (IEOS.eq.5) then      !CSHEN SM-EOS Q
-          do 112 k = 1,1
-          do 112 j = NYPhy0-2,NYPhy+2
-          do 112 i = NXPhy0-2,NXPhy+2
-            ee = Ed(i,j,k)
-            TT = TEIEOS5pp(ee)
-            pp = PEIEOS5pp(ee)
-            ss = (pp+ee)/TT
-
-            PL(i,j,k)   = pp
-            Temp(i,j,k) = TT
-            Sd(i,j,k)   = ss
-112        continue
-
-      else if (IEOS.eq.6) then  ! CSHEN New EOS from Lattice
-
-          do 111 k = 1,1                           !do 10 is in the unit of fm-1
-          do 111 j = NYPhy0-2,NYPhy+2 ! -2,NYPhy
-          do 111 i = NXPhy0-2,NXPhy+2
-           ee = Ed(i,j,k)*HbarC     !ee in Gev/fm^3
-           TT = TEOSL6(ee)/HbarC    !TEOSL6 in GeV, TT in fm^-1
-           pp = PEOSL6(ee)/HbarC          !PEOSL6 in GeV/fm^3, pp in fm^-4
-           ss = SEOSL6(ee)                !SEOSL6 in fm^-3, ss in fm^-3
-
-           PL(i,j,k)   = pp
-           Temp(i,j,k) = TT
-           Sd(i,j,k)   = ss
-111       continue
-      else if (IEOS.eq.7) then  ! CSHEN EOS from tables
-
-          do k = 1,1
-          do j = NYPhy0-2,NYPhy+2
-          do i = NXPhy0-2,NXPhy+2
-           ee = Ed(i,j,k)*HbarC     !ee in Gev/fm^3
-           TT = TEOSL7(ee)/HbarC    !TEOSL7 in GeV, TT in fm^-1
-           pp = PEOSL7(ee)/HbarC    !PEOSL7 in GeV/fm^3, pp in fm^-4
-           ss = SEOSL7(ee)          !SEOSL7 in fm^-3, ss in fm^-3
-
-           PL(i,j,k)   = pp
-           Temp(i,j,k) = TT
-           Sd(i,j,k)   = ss
-          enddo   ! i loop
-          enddo   ! j loop
-          enddo   ! k loop
-
-
-      else
-      Print*,'alart EntropyTemp2 IEOS'
-      end if
+      do k = 1,1
+      do j = NYPhy0-2,NYPhy+2
+      do i = NXPhy0-2,NXPhy+2
+       ee = Ed(i,j,k)*HbarC     !ee in Gev/fm^3
+       PL(i,j,k)   = PEOSL7(ee)/HbarC    !PEOSL7 in GeV/fm^3, PL in fm^-4
+       Temp(i,j,k) = TEOSL7(ee)/HbarC    !TEOSL7 in GeV, Temp in fm^-1
+       Sd(i,j,k)   = SEOSL7(ee)          !SEOSL7 in fm^-3, Sd in fm^-3
+      enddo   ! i loop
+      enddo   ! j loop
+      enddo   ! k loop
 
       Return
       end
-
-***************************************************************************
-      Double Precision FUNCTION PEPS(BN,EP) ! [EP]=GeV/fm^3
-*****************************************************************
-** THIS FUNCTION GIVES THE EQUATION OF STATE P=P(BN,EPS)        *
-** BY INTERPOLATING THE TABLE OF VALUES OF PRESSURE GIVEN
-** BY THE MATRICES 'PMAT1' AND 'PMAT2' AT COMMON /PAREOS/.
-*****************************************************************
-       Implicit Double Precision (A-H, O-Z)
-      INTEGER RAPPSIZE
-      PARAMETER (RAPPSIZE=76)
-       Parameter (HbarC=0.19733d0) !for changcing between fm and GeV ! Hbarc=0.19733=GeV*fm
-
-      COMMON /PAREOS/ BNP01,EPP01,DBNP1,DEPP1,NBNP1,NEPP1,
-     &                BNP02,EPP02,DBNP2,DEPP2,NBNP2,NEPP2,
-     &                PMAT1(0:300,0:250),PMAT2(0:300,0:250)
-
-C      COMMON /RAPPEOS/ REOS(1:13,1:RAPPSIZE), pRAPP(1:RAPPSIZE),
-C     &                 TRAPP(1:RAPPSIZE), sRAPP(1:RAPPSIZE),
-C     &                 muNRAPP(1:RAPPSIZE), muNeRAPP(1:RAPPSIZE),
-C     &                 mupiRAPP(1:RAPPSIZE), muKRAPP(1:RAPPSIZE),
-C     &                 muetRAPP(1:RAPPSIZE),
-C     &                 eRAPP(1:RAPPSIZE), esi2RAPP(1:RAPPSIZE),
-C     &                 Tei2RAPP(1:RAPPSIZE), pei2RAPP(1:RAPPSIZE),
-C     &                 mei2RAP(1:RAPPSIZE), meei2RAP(1:RAPPSIZE),
-c     &                 mepi2RAP(1:RAPPSIZE), meKi2RAP(1:RAPPSIZE),
-C     &                 meti2RAP(1:RAPPSIZE)
-
-      COMMON /EOSSEL/ IEOS
-
-      IF ((IEOS .EQ. 0)) THEN
-       CALL POINT(BN,EP,F)        !Peter unit
-       PEPS = F
-      END IF
-
-      IF ((IEOS .EQ. 2)) THEN
-       PEPS = EP/3.0
-      END IF
-
-      IF ((IEOS .EQ. 4)) THEN       !peter Gev/fm-3
-       ee   = Ep/HbarC              !my fm-4
-       PEPS = PEIEOS4(ee)*HbarC     !GeV/fm^3
-      END IF
-
-      IF ((IEOS .eq. 5)) THEN       !CSHEN SM-EOS Q
-       ee   = Ep/HbarC              !1/fm^4
-       PEPS = PEIEOS5pp(ee)*HbarC   !GeV/fm^3
-      end if
-
-      IF ((IEOS .EQ. 6)) THEN       !CSHEN NEW EOS
-       ee = Ep                      !ee in GeV/fm^3
-       PEPS = PEOSL6(ee)            !GeV/fm^3
-      end if
-
-      IF ((IEOS .EQ. 7)) THEN       !CSHEN EOS from tables
-       ee = Ep                      !ee in GeV/fm^3
-       PEPS = PEOSL7(ee)            !GeV/fm^3
-      end if
-
-      RETURN
-      END
-
-
-
-
-C#####################################################################################
-C###############      Lattice  EOS   Katz05   data   #################################
-C#####################################################################################
-       Double Precision Function PEIEOS4(ee)  !close to Lattice  Katz05 data
-       Implicit Double Precision (A-H, O-Z)
-       Aperp=1.0d0/(exp((4.0d0-ee)/1.0d0)+1.0d0)
-       Cperp=1.0d0/(exp((1.8d0-ee)/1.5d0)+1.0d0)
-       pp=(-2.2d0+2.655d0*LOG(1.18136d0+exp(0.1111d0*ee)))*Aperp
-     &    +0.18d0*ee*(1.0d0-Cperp)+(0.40d0*Cperp)*(1-Aperp)
-     &    -0.0886002645519078d0
-         PEIEOS4=pp
-       return
-       end
-
-C--------------------------------------------------------------------------------------
-       Double Precision Function TEIEOS4(ee) !for Lattice
-*       Double Precision Function TEIEOS4LL(ee) !for Latiice
-       Implicit Double Precision (A-H, O-Z)
-        Aper=1.0d0/(exp((60.0d0-ee)/60.0d0)+1.0d0)
-        Bper=1.0d0/(exp((1.5d0-ee)/7.0d0)+1.0d0)
-        Cper=1.0d0/(exp((9.0d0-ee)/3.5d0)+1.0d0)
-        TT =((0.087d0*ee)**(0.25d0)*Aper
-     &     +(0.102d0*ee)**(0.25d0)*(1.0d0-Aper)
-     &              +0.15d0*(1.0d0-Bper))*Cper
-     &     +(0.15d0*ee)**(0.15d0)*(1-Cper)
-        TEIEOS4=TT
-       return
-       end
-*     Temperature-energy density relation
-*     T>165MeV modeling from Katz 05 Lattice (QM05)
-*     T<165MeV free Massive resonance gas from Peter code
-*     s=(e+p)/T
-
-
-C####################################################################################
-C##################      Peter EOS    SM-EOS Q      #################################
-C####################################################################################
-C----------------------------------------------------------------------
-       Double Precision Function TEIEOS5pp(ee) !for peter EOS0 continous modeling
-*       Double Precision Function TEIEOS4(ee) !for peter EOS0 continous modeling
-       Implicit Double Precision (A-H, O-Z)
-        Bper=1.0d0/(exp((8.0d0-ee)/3.0d0)+1.0d0)
-        Cper=1.0d0/(exp((5.0d0-ee)/15.0d0)+1.0d0)
-        TT=0.0+(0.07d0*ee)**(0.25d0)*Bper
-     &     +(6.2d0*ee)**(0.16d0)*(1-Cper)*(1-Bper)
-        TEIEOS5pp=TT
-*      s=(e+p)/T
-       return
-       end
-C-----------------------------------------------------------------------
-       Double Precision Function PEIEOS5pp(ee)   !close to Peter---2nd order phase transition
-*       Double Precision Function PEIEOS4(ee)   !close to Peter---2nd order phase transition
-       Implicit Double Precision (A-H, O-Z)    !lower EOS E2-15fm close Peter IEOS0  other id the same
-       Parameter (HbarC=0.19733d0) !for changcing between fm and GeV ! Hbarc=0.19733=GeV*fm
-C          EP=ee*HbarC      !fm-4 to GeV/fm3  peter unit
-C          BN=0.0 !Bd(I,J,NZ0)
-C          CALL POINT(BN,EP,F)
-C          pp=F/HbarC     !GeV/fm3 to fm-4
-
-         If(ee.gt.30.0d0)then        !Q (7.37 0.5)    H Exp(2.7 1.0) (2.45  0.1)
-           pp=0.334d0*ee-2.46085238d0
-         else if(ee.gt.5.0d0)then
-           pp=(-2.46085238d0+0.167d0*LOG(2.696674d7+exp(2.0d0*ee)))!
-         else
-           pp=0.152000165d0*ee
-     &       -0.0152d0*LOG(4.19314d10+Dexp(10.0d0*ee))
-     &       -0.0248909*Dexp(-2.7d0*ee) +0.3966722716141761d0
-         end if
-**           Cs=1.0/3.0
-**           Cs=0.333333d0*(1.0d0/(exp((7.37d0-ee)/0.5d0)+1.0d0))       !Q (7.37 0.5)
-**           Cs=Dexp(-2.7d0*(ee+1.0d0))
-**     &              +0.152d0*(1.0d0/(exp((ee-2.44593)/0.1d0)+1.0d0))  !H Exp(2.7 1.0) (2.45  0.1)
-         PEIEOS5pp=pp
-       return
-       end
-
-
-C#############################################################################################
-C--------------------------Lattice  EOS   Pasi-09 ---------------------------------------
-C------------------------- added by Shen Chun  ------------------------------------------
-C-----------------------FIT FUNCTIONS GOT FROM TOM REILY---------------------------------
-C#############################################################################################
-       Double Precision Function PEOSL6(ee)  ! for lattice P(e)
-C------  p(e)  p, e GeV/fm^3
-       Implicit Double Precision (A-H, O-Z)     !h
-      If (ee.lt.0.5028563305441270d0) Then
-       pp=0.3299d0*(Exp(0.4346d0*ee) - 1)
-
-C      Else If (ee.ge.0.5028563305441270d0 .AND.      !Tom original
-C     & ee.lt.1.8408643375520979d0) Then
-C	pp=0.0000001024d0*Exp(6.041d0*ee)
-C     &  + 0.007273d0+0.14578d0*ee
-
-CSHEN=================================================================
-C====smooth cs======================================================
-      Else If (ee.ge.0.5028563305441270d0 .AND.
-     & ee.lt.1.62d0) Then
-       pp=0.0000001024d0*Exp(6.041d0*ee)
-     &  + 0.007273d0+0.14578d0*ee
-      ELse if (ee.ge.1.62d0 .AND. ee.lt.1.86d0) then
-       pp=0.30195*Exp(0.31309*ee)-0.256232
-C      Else If (ee.ge.1.8408643375520979d0 .AND.      !Tome original
-       Else if (ee.ge.1.86d0 .AND.
-C===========end====================================================
-
-     & ee.lt.9.9878355786273545d0) Then
-       pp= 0.332d0*ee-0.3223d0*(ee**0.4585d0)
-     &  - 0.003906d0*ee/Exp(0.05697d0*ee)
-     &      + (0.1167d0/(ee**1.233d0)
-     &  + 0.1436d0*ee/Exp(0.9131d0*ee))
-      Else If (ee.ge.9.9878355786273545d0) Then
-      pp = 0.3327d0*ee-0.3223d0*(ee**0.4585d0)
-     &  - 0.003906d0*ee/Exp(0.05697d0*ee)
-      End If
-         PEOSL6=pp
-
-       return
-       end
-
-
-C--------------------------------------------------------------------------------------
-       Double Precision Function SEOSL6(ee) !for Lattice S(e)
-       Implicit Double Precision (A-H, O-Z)
-C------  s(e)   e GeV/fm^3  s fm^-3
-
-      If (ee.lt.0.1270769021427449d0) Then
-	ss=12.2304d0*(ee**1.16849d0)
-      Else If (ee.ge.0.1270769021427449d0 .AND.
-     &  ee.lt.0.4467079524674040d0) Then
-	ss=11.9279d0*(ee**1.15635d0)
-      Else If (ee.ge.0.4467079524674040d0 .AND.
-     &  ee.lt.1.9402832534193788d0) Then
-	ss=0.0580578d0 + 11.833d0*(ee**1.16187d0)
-      Else If (ee.ge.1.9402832534193788d0 .AND.
-     &  ee.lt.3.7292474570977285d0) Then
-	ss=18.202d0*ee - 63.0218d0
-     & - 4.85479d0*Exp(-0.0000000000272407d0*(ee**4.54886d0))
-     & + 65.1272d0/(ee**0.128012d0)
-     & /Exp(0.00369624d0*(ee**1.18735d0))
-     & - ((4.75253d0/(ee**1.18423d0))-0.999986d0)
-      Else If (ee.ge.3.7292474570977285d0) Then
-	ss=18.202d0*ee - 63.0218d0
-     & - 4.85479d0*Exp(-0.0000000000272407d0*(ee**4.54886d0))
-     & + 65.1272d0/(ee**0.128012d0)
-     & /Exp(0.00369624d0*(ee**1.18735d0))
-      End If
-        SEOSL6=ss**(3.0/4.0)
-
-       return
-       end
-
-       Double Precision Function TEOSL6(ee) !for Lattice     T(e)
-C------  T(e)   e GeV/fm^3  T GeV
-
-      Implicit Double Precision (A-H, O-Z)
-
-      If (ee.ge.0.5143939846236409d0) Then  ! 10^-16 accuracy
-	tt=(ee+PEOSL6(ee))/(SEOSL6(ee))
-      Else If (ee.lt.0.5143939846236409d0) Then
-	tt=0.203054d0*(ee**0.30679d0)
-      End If
-
-      TEOSL6=tt
-
-       return
-       end
-
-
-
-C######################################################################
-
-       Double Precision Function CWNBC (xx,yy,b,WNBC)
-C----- initial Wounded Nucleons density (WN) or Binary Collissions (BC)---
-C       Glauber Model kjC       A Nuclei Number    b, impact parameter  Si0, Cross Section for NN
-c       Character WNBC,WN,BC
-        Implicit Double Precision (A-H, O-Z)
-       Common /AWNBC/ A,Si0 !A Nuclei Number  Si0, Cross Section for NN
-
-            TA=Thickness(xx+b/2.0,yy)
-            TB=Thickness(xx-b/2.0,yy)
-
-        If(abs(WNBC-1.0).le.0.001 ) then ! for Wounded Nucleons
-          CWNBC=TA*(1.0-(1.0-(Si0*TB/A))**A)
-     &             +TB*(1.0-(1.0-(Si0*TA/A))**A)
-        end if
-
-        If(abs(WNBC-2.0).le.0.001) then ! for Binary Collision
-          CWNBC=Si0*TA*TB
-        end if
-
-       Return
-       End
-
-
-C####################################################################
-       Function Thickness(xx,yy)
-C----------Nuclear Thickness Function------------
-       Implicit Double Precision (A-H, O-Z)
-       integer iz, iz_min, iz_max
-       Common /thick/ TRo0, TEta, TRA  !Para in Nuclear Thickness Function
-
-       Thickness=0.0
-       ddz=TRA/100.0
-       iz_min = -5.0*TRA/ddz
-       iz_max = 5.0*TRA/ddz
-       do 10 iz = iz_min, iz_max, 1
-            zz = iz*ddz
-            r=sqrt(xx**2+yy**2+zz**2)
-            RoAr=TRo0/(Exp((r-TRA)/TEta)+1.0)
-            Thickness=Thickness+RoAr*ddz
- 10    continue
-
-       Return
-       End
-!C#################################################################
-!       Subroutine CheckThickness
-!C----------Check Thickness Func.
-!       Implicit Double Precision (A-H, O-Z)
-!       Common /thick/ TRo0, TEta, TRA  !Para in Nuclear Thickness Function
-!         ARo=0.0
-!         dx=TRA/10.0
-!         dy=TRA/10.0
-!         i=0
-!         do 10 x=(-5.0)*TRA,(5.0)*TRA,dx
-!            i=i+1
-!           If(mod(i,10).eq.0)  Print*,x, 'check Thickness'
-!          do 10 y=(-5.0)*TRA,(5.0)*TRA,dy
-!              ARo=ARo+Thickness(x,y)*dx*dy
-! 10      continue
-!
-!       Return
-!       End
-
 
 
 C###################################################################
@@ -2139,7 +1632,7 @@ C###################################################################
      &  Pi00,Pi01,Pi02,Pi33,Pi11,Pi12,Pi22, PScT00,PScT01,PScT02,PScT33,
      &  PScT11,PScT12,PScT22,etaTtp0,etaTtp,  PPI,PISc, XiTtP0,XiTtP,
      &  U0,U1,U2, PU0,PU1,PU2,SxyT,Stotal,StotalBv,StotalSv,
-     &  Ed,PL,Bd,Sd,Temp0,Temp,CMu, T00,T01,T02, IAA,CofAA,Time,DX,DY,
+     &  Ed,PL,Sd,Temp0,Temp,CMu, T00,T01,T02, IAA,CofAA,Time,DX,DY,
      &  DZ,DT,NXPhy0,NYPhy0,NXPhy,NYPhy,NX0,NX,NY0,NY,NZ0,NZ, PNEW,NNEW)
       !PNEW NNEW related to root finding
 
@@ -2248,7 +1741,6 @@ C-------------------------------------------
        Parameter(XC0=1.0d-15, AAC=1.0d-16) !root finding accuracy
 
         LOGICAL V1FOUND,V2FOUND,V3FOUND,V4FOUND
-        COMMON /EOSSEL/ IEOS
         Common /Newtonalart/ AI,AJ,AK,AE
         Common/R0Aeps/ R0,Aeps
         Common /R0Bdry/ R0Bdry
@@ -2346,41 +1838,10 @@ C-------------------------------------------
 C---------------------------------------------------------------
       DO 300 K=NZ0,NZ
       DO 300 J=NYPhy0,NYPhy
-!        EK=T00(0,J,K)
-!        B0=0.0
-!        B0=BN0(0,J,K)
       DO 310 I=NXPhy0,NXPhy !changed by song
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!     The original root finding algorithm (generic one)
-        !  T00IJ=T00(I,J,K)
-        !  T01IJ=T01(I,J,K)
-        !  T02IJ=T02(I,J,K)
-        !  BN0IJ=0.0       !BN0(I,J) !with  Bayron current
-        !  BulkPr=PPI(I,J,K)
-        !
-        !  AI=I
-        !  AJ=J
-        !  AK=K
-        !  AE=Ed(I,J,K)
-        !CALL NEWTON2(B0,EK,T00IJ,T01IJ,T02IJ,BN0IJ,BulkPr,PNEW,NNEW)  !bisection
-        !
-        !Ed(I,J,K)=DMAX1(0.0D0,EK)
-        !Bd(I,J,K)=DMAX1(0.0D0,B0)
-        !
-        !ee=Ed(I,J,NZ0)*HbarC        !fm-4 to GeV/fm3  peter unit
-        !Ba=Bd(I,J,K)                !unit
-        !pp=DMAX1(0.0D0,PEPS(Ba,ee))
-        !PL(I,J,K)=pp/HbarC           !GeV/fm3 to fm-4
-C--------------------------------------
-
-        !Vx(I,J,K)=T01(I,J,K)/Dmax1((T00(I,J,K)+PL(I,J,K)+Bulkpr),AAC)  !??
-        !Vy(I,J,K)=T02(I,J,K)/Dmax1((T00(I,J,K)+PL(I,J,K)+Bulkpr),AAC)  !??
-
-
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!     The following use quadESolver function to find root, which assumes Bd(I,J,K)=0
+!     The following use quadESolver function to find root, which assumes
+!     zero baryon density
         Bd(I,J,K)=0
         T00IJ=T00(I,J,K)
         T01IJ=T01(I,J,K)
@@ -2422,8 +1883,7 @@ C--------------------------------------
         VP = VP_local
 
         ee=Ed(I,J,NZ0)*HbarC        !fm-4 to GeV/fm3  peter unit
-        Ba=Bd(I,J,K)                !unit
-        pp=DMAX1(0.0D0,PEPS(Ba,ee))
+        pp=DMAX1(0.0D0,PEOSL7(ee))
         PL(I,J,K)=pp/HbarC           !GeV/fm3 to fm-4
 
         Vx(I,J,K) = VP*T01IJ/DM
@@ -3540,12 +3000,7 @@ C----------------------------------------------------------------
 
       Implicit None
 
-      interface
-        function PEPS(x,y)
-        Double Precision :: x, y
-        Double Precision :: PEPS
-        end function PEPS
-      end interface
+      double precision :: PEOSL7
 
       !Double Precision quadESolver
 
@@ -3571,7 +3026,7 @@ C----------------------------------------------------------------
       if (debug == 1) print *, "quadESolver started in debug moded..."
 
       ee1 = ee0
-      cs2=PEPS(0.0d0, ee0*Hbarc)/dmax1(ee0,zero)/Hbarc ! check dimension?
+      cs2=PEOSL7(ee0*Hbarc)/dmax1(ee0,zero)/Hbarc ! check dimension?
       A=DM0*(1-cs2)+PPI
       B=DM0*(DM0+PPI)-DM*DM
       ee=2*B/dmax1((sqrt(A*A+4*cs2*B)+A), zero)
@@ -3585,7 +3040,7 @@ C----------------------------------------------------------------
       !accuracy=1e-10
       Do While (abs(ee-ee1) > accuracy)
         ee1 = ee
-        cs2=PEPS(0.0d0, ee1*Hbarc)/dmax1(ee1,zero)/Hbarc
+        cs2=PEOSL7(ee1*Hbarc)/dmax1(ee1,zero)/Hbarc
         A=DM0*(1-cs2)+PPi
         B=DM0*(DM0+PPI)-DM*DM
         ee=2*B/dmax1((sqrt(A*A+4*cs2*B)+A), zero)
@@ -3609,11 +3064,6 @@ C----------------------------------------------------------------
       if (debug == 1) print *, "quadESolver finished."
 
       End Function
-!----------------------------------------------------------------------
-
-
-
-
 
 
 !======================================================================
@@ -3623,14 +3073,7 @@ C----------------------------------------------------------------
 
       Implicit None
 
-      !interface
-      !  function PEPS(x,y)
-      !  Double Precision :: x, y
-      !  Double Precision :: PEPS
-      !  end function PEPS
-      !end interface
-
-      Double Precision PEPS
+      Double Precision PEOSL7
 
       Double Precision ee ! energy density
 
@@ -3645,7 +3088,7 @@ C----------------------------------------------------------------
 
       Double Precision A,B ! intermedia step variables
 
-      cs2=PEPS(0.0d0, ee*Hbarc)/dmax1(abs(ee),zero)/Hbarc ! check dimension?
+      cs2=PEOSL7(ee*Hbarc)/dmax1(abs(ee),zero)/Hbarc ! check dimension?
       A=RSDM0*(1-cs2)+RSPPI
       B=RSDM0*(RSDM0+RSPPI)-RSDM*RSDM
       findEdHook = ee-2*B/dmax1((sqrt(A*A+4*cs2*B)+A), zero)
@@ -3660,7 +3103,7 @@ C----------------------------------------------------------------
 
       Implicit None
 
-      Double Precision PEPS
+      Double Precision PEOSL7
       Double Precision v
 
       Double Precision :: RSDM0, RSDM, RSPPI, RSee
@@ -3675,7 +3118,7 @@ C----------------------------------------------------------------
       Double Precision A ! temporary variables
 
       RSee = RSDM0 - v*RSDM
-      cstilde2=PEPS(0.0d0, RSee*Hbarc)/dmax1(abs(RSee),zero)/Hbarc
+      cstilde2=PEOSL7(RSee*Hbarc)/dmax1(abs(RSee),zero)/Hbarc
       A=RSDM0*(1+cstilde2)+RSPPI
 
       findvHook = v - (2*RSDM)/(A + sqrt(dmax1(A*A
@@ -3695,7 +3138,7 @@ C----------------------------------------------------------------
       ! Root finding by iterating quadratic equation formula for the equation
       Implicit None
 
-      Double Precision PEPS
+      Double Precision PEOSL7
       Double Precision v, U0
 
       Double Precision :: RSDM0, RSDM, RSPPI, RSee
@@ -3710,7 +3153,7 @@ C----------------------------------------------------------------
       Double Precision A ! temporary variables
 
       RSee = RSDM0 - v*RSDM
-      cstilde2=PEPS(0.0d0, RSee*Hbarc)/dmax1(abs(RSee),zero)/Hbarc
+      cstilde2=PEOSL7(RSee*Hbarc)/dmax1(abs(RSee),zero)/Hbarc
       A=RSDM0*(1+cstilde2)+RSPPI
       v = (2*RSDM)/(A+sqrt(dmax1(A*A-4*cstilde2*RSDM*RSDM, 1D-30))
      &              + 1D-30)
