@@ -1725,7 +1725,7 @@ C---------------------------------------------------------------
         U0_guess = 1./sqrt(1. - VP_local*VP_local)
         U0_low_boundary = dmax1(1.0, 0.5*U0_guess)
         U0_upper_boundary = 1.5*U0_guess
-        U0_local = findU0Hook(0.0D0)
+        U0_local = findU0Hook(1D0)
         Call invertFunctionH(findU0Hook, U0_low_boundary,
      &                       U0_upper_boundary, 0.0, 1D-6,
      &                       U0_local)
@@ -2711,6 +2711,7 @@ C----------------------------------------------------------------
 
       Double Precision A ! temporary variables
 
+      v = sqrt(1 - 1/max(U0, 1d0)**2)
       RSee = RSDM0 - v*RSDM
       cstilde2=PEOSL7(RSee*Hbarc)/dmax1(abs(RSee),zero)/Hbarc
       A=RSDM0*(1+cstilde2)+RSPPI
