@@ -24,6 +24,11 @@ endif()
 
 set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -cpp")
 
+option(WARNINGS "enable compiler warnings" OFF)
+if(WARNINGS)
+  set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -Wall -Wextra")
+endif()
+
 install(FILES ${PROJECT_NAME}.conf DESTINATION ${PROJECT_NAME})
 
 add_subdirectory(eos)

@@ -1,3 +1,5 @@
+#include "defs.h"
+
       Subroutine prepareInputFun()
 !     Purpose:
 !       Do some common preparation for other functions in this file
@@ -50,7 +52,7 @@
       Integer ViscousEqsType
       Common /ViscousEqsControl/ VisBulkNorm, ViscousEqsType
 
-      Double Precision ITeta, b, ddx, ddy, TT0
+      Double Precision ITeta, ddx, ddy, TT0
       Common /ITeta/ ITeta
       Common/dxdy/ ddx, ddy
       Common /TT0/ TT0   ! T0, or tau_0
@@ -245,10 +247,8 @@
       Double Precision SiLoc(NX0:NX, NY0:NY, NZ0:NZ) ! Local expansion rate \sita
       Double Precision DLnT(NX0:NX, NY0:NY, NZ0:NZ) ! DlnT(x,y) terms
 
-      Double Precision R0, Aeps, Accu
+      Double Precision R0, Aeps
       Common /R0Aeps/ R0,Aeps
-      Common /Accu/Accu  ! A parameter to determine the accuracy of Calculation
-                         !Accu=3.0 used 3pt formula to cal derivative. Accu=5.0 use 5pt formula to cal Deriv.
 
       Double Precision Ed(NX0:NX, NY0:NY, NZ0:NZ) !energy density
       Double Precision Sd(NX0:NX, NY0:NY, NZ0:NZ) !entropy density
@@ -281,14 +281,14 @@
         D0U1=(U1(I,J,K)-PU1(I,J,K))/DT
         D0U2=(U2(I,J,K)-PU2(I,J,K))/DT
 
-        If(abs(Accu-3.0).le.0.00001) Then  !3pt formula
+#if DERIV_ORDER == 3
           D1U0=(U0(I+1,J,K)-U0(I-1,J,K))/(2.0*DX)
           D1U1=(U1(I+1,J,K)-U1(I-1,J,K))/(2.0*DX)
           D1U2=(U2(I+1,J,K)-U2(I-1,J,K))/(2.0*DX)
           D2U0=(U0(I,J+1,K)-U0(I,J-1,K))/(2.0*DY)
           D2U1=(U1(I,J+1,K)-U1(I,J-1,K))/(2.0*DY)
           D2U2=(U2(I,J+1,K)-U2(I,J-1,K))/(2.0*DY)
-        ElseIf (abs(Accu-5.0).le.0.00001) Then !5pt formula
+#elif DERIV_ORDER == 5
           D1U0=(U0(I+1,J,K)*2.0d0/3.0d0-U0(I-1,J,K)*2.0d0/3.0d0
      &        -U0(I+2,J,K)/12.0d0+U0(I-2,J,K)/12.0d0)/DX
           D1U1=(U1(I+1,J,K)*2.0d0/3.0d0-U1(I-1,J,K)*2.0d0/3.0d0
@@ -301,10 +301,9 @@
      &        -U1(I,J+2,K)/12.0d0+U1(I,J-2,K)/12.0d0)/DY
           D2U2=(U2(I,J+1,K)*2.0d0/3.0d0-U2(I,J-1,K)*2.0d0/3.0d0
      &        -U2(I,J+2,K)/12.0d0+U2(I,J-2,K)/12.0d0)/DY
-        Else
-          Print*, "Wrong input for Accu:",
-     &    "Accu=3or5 for 3pt or 5pt cal of deriv."
-        EndIf
+#else
+#error "DERIV_ORDER must be 3 or 5"
+#endif
 
         CS=(D0U0+D1U1+D2U2+U0(I,J,K)/Time)/3.0
 
@@ -475,7 +474,7 @@
 
         ! get Bulk pi scale
         bulkPi_scale = abs(BulkPi) + 1d-30
-        if(bulkPi_scale .ne. bulkPi_scale) then
+        if (isnan(bulkPi_scale)) then
            print*, "Bulk Pi is NaN, I,J =", I, J
            call exit(1)
         endif
@@ -529,8 +528,6 @@
 
       Double Precision PPI(NX0:NX, NY0:NY, NZ0:NZ) ! Bulk Pressure Tensor
 
-      Double Precision Te00,Te01,Te02,Te11,Te12,Te22,Te33 ! These are T(mu,nu) in equilibrium
-
       Double Precision p00,p01,p02,p11,p12,p22,p33,vvx,vvy! These are just Pi at I,J,K (in a loop)
 
       Double Precision TrPi2 ! Tr(pi^2)
@@ -548,16 +545,10 @@
       Common /maxPiRatio/ maxPiRatio
       Double Precision maxPi ! maxPi = maxPiRatio*(e+p)
 
-      Double Precision PiPiMaxRatio1, PiPiMaxRatio2
-      Double Precision PiPiMaxRatio3, PiPiMaxRatio4
-      Double Precision rTrPi1, rTrPi2, rTrPi3, rTrPi4 ! radii determined by comparing PiPiMaxRatio to piRatioMax, piRatioAvg
-      Double Precision gridInFz, inTP1, inTP2, inTP3, inTP4 ! count number of lattice points inside freezeout surface, TrPi1, TrPi2, TrPi3, TrPi4
-
-      Double Precision PiAvg, PiRegAvg
-      Integer PiCheckFlag, PiRegCheckFlag
+      Double Precision PiAvg
       Double Precision gamma_perp
 
-      Double Precision PiTr, PiTrSum, trans
+      Double Precision PiTr, trans
 
       Xsi0 = 1D-2/(regStr+1D0) ! VER-1.29RC: adaptive zero chooser VER-1.29RC4: bug fix: regStr -> regStr+1D0
 
@@ -623,7 +614,7 @@
      &      +abs(Pi22(I,J,K))
      &      +abs(Pi33(I,J,K)))
 
-        If (PiAvg .ne. PiAvg) Then
+        If (isnan(PiAvg)) Then
           Print *, "Invalid PiAvg"
           Print *, "(I,J,K)=",I,J,K
           Print *, "e=", Ed(I,J,K)
@@ -660,7 +651,6 @@
       Implicit None
 
       Integer NX0,NY0,NZ0,NX,NY,NZ,NXPhy0,NXPhy,NYPhy0,NYPhy
-      Integer I,J,K
       Double Precision ratio
 
       Double Precision Time

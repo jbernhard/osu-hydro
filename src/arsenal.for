@@ -100,7 +100,7 @@
 
 !     declare local variables
       Integer idx ! varX is between var0+idx*dVar and var0+(idx+1)*dVar
-      Double Precision A0,A1,A2,A3,varD ! varD=delta-var
+      Double Precision varD  ! varD=delta-var
 
       If ((varX-var0)<dVar*1e-15) Then
         varResult = table(0)
@@ -117,90 +117,6 @@
 
       varD = varX - (var0 + idx*dVar)
       varResult = (table(idx)*(dVar-varD) + table(idx+1)*varD)/dVar
-
-      End Subroutine
-!-----------------------------------------------------------------------
-
-
-
-************************************************************************
-      Subroutine invertNewtonL(table,tableSize,var0,dVar,varX,varResult)
-!     Purpose:
-!       Return the inverted value at varX from table using Newton method.
-!       -- table: 1d array, stores values corresponding to var0+index*dVar
-!       -- tableSize: size of the talbe
-!       -- var0: start of the independent variable
-!       -- dVar: step of the independent variable
-!       -- varX: the value of the varibale to be inverted
-!       -- varResult: the return inverted value
-!
-!   Solve: f(x)=0 with f(x)=table(x)-varX => f'(x)=table'(x)
-!
-      Implicit None
-
-!     declare input parameters
-      Integer tableSize
-      Double Precision table(0:tableSize-1)
-      Double Precision var0, dVar, varX, varResult
-
-!     pre-fixed parameters
-      Double Precision accuracy
-      Double Precision ending
-      Integer edge
-
-!     declare local variables
-      Double Precision XX1, XX2 ! used in iterations
-      Double Precision F0, F1, F2, F3, F4, X1, X2, tmp ! intermedia variables
-      Double Precision impatience ! number of iterations
-
-!     initialize parameters
-      accuracy = dVar*1e-3
-      ending = var0+tableSize*dVar
-      edge = 60
-
-!     initial value, left point and middle point
-      XX1 = var0 + tableSize*dVar/2D0
-      XX2 = var0
-
-      Do While (abs(XX2-XX1)>accuracy)
-        XX1 = XX2 ! copy values
-
-!       value of function at XX!
-        Call interpCubic(table,tableSize,var0,dVar,XX1,tmp)
-        F0 = tmp  - varX ! the value of the function at this point
-
-!     decide X1 and X2 for differentiation
-        If (XX1>var0+dVar) Then
-          X1 = XX1 - dVar
-        Else
-          X1 = var0
-        End If
-
-        If (XX1<ending-dVar) Then
-          X2 = XX1 + dVar
-        Else
-          X2 = ending
-        End If
-
-!     get values at X1 and X2
-        Call interpCubic(table,tableSize,var0,dVar,X1,tmp)
-        F1 = tmp
-        Call interpCubic(table,tableSize,var0,dVar,X2,tmp)
-        F2 = tmp
-
-        F3 = (F1-F2)/(X1-X2) ! derivative at XX1
-
-        XX2 = XX1 - F0/F3 ! Newton's mysterious method
-
-        impatience = impatience + 1
-        If (impatience>edge) Then
-          Print *, "Subroutine invertNewton:",
-     &                "max number of iterations reached!"
-          call exit(1)
-        End If
-      End Do ! <=> abs(XX2-XX1)>accuracy
-
-      varResult = XX2
 
       End Subroutine
 !-----------------------------------------------------------------------
@@ -305,7 +221,7 @@
 
 !     declare local variables
       Double Precision XX1, XX2 ! used in iterations
-      Double Precision F0, F1, F2, F3, X1, X2, tmp ! intermedia variables
+      Double Precision F0, F1, F2, F3, X1, X2 ! intermediate variables
       Integer impatience ! number of iterations
 
 !     initialize parameters
@@ -389,7 +305,7 @@
 
 !     declare input parameters
       Double Precision func
-      Double Precision varL, varR, acc, varX, varResult, yy
+      Double Precision varL, varR, acc, varResult, yy
       Double Precision dd ! step size of numerical derivative
 
 !     pre-fixed parameters
@@ -545,9 +461,6 @@
 
       Common /R0Bdry/ R0Bdry
       Double Precision R0Bdry
-
-      Integer I,J,K
-      Double Precision xx,yy,rr,ff
 
 !     initialization to zeros
       UtX = 0D0
@@ -714,8 +627,6 @@
       Double Precision length, step ! half length of the interval; mid-points are located at a+(i+0.5)*step, i=0..count-1
       Integer currentRecursionDepth
       Integer i
-
-      Double Precision tmp
 
       f_1=f(a)+f(b)
       f_2=0D0

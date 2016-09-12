@@ -468,7 +468,7 @@
      REAL(KIND(0D0)),DIMENSION(0:2,2,12) :: Edge
      REAL(KIND(0D0)),DIMENSION(0:2,2,12) :: Side
      REAL(KIND(0D0)),DIMENSION(0:2,12)   :: Ut, Ut2
-     INTEGER :: i, j, Nside, Nedge
+     INTEGER :: i, Nside, Nedge
 
      Nsurfs = 1
      EdgeSet(1) = 1

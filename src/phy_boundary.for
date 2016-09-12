@@ -822,10 +822,6 @@ C-----------Boundary Treatment-for Velocity ------------------
         end do
 1820  CONTINUE
 
-
-
-C          goto 999
-C-------------Some other treatment of Velocity-------------------------
           DO 3310 K=NZ0,NZ
           DO 3310 I=NXPhy0-3,NXPhy+3
             V1FOUND=.TRUE.
@@ -890,7 +886,6 @@ C            Print *,I,J, AAC0,AVx
 
  3320  CONTINUE
 
- 999   Continue
       Return
       End
 
@@ -904,7 +899,6 @@ C###############################################################################
      &  NXPhy0,NYPhy0, NXPhy,NYPhy,AAC0)
         Implicit Double Precision (A-H, O-Z)
         Dimension VV(NX0:NX, NY0:NY, NZ0:NZ)
-        LOGICAL V1FOUND,V2FOUND,V3FOUND,V4FOUND
 C-----------Boundary Treatment-for Velocity ------------------
 
       DO 1800 K=NZ0,NZ
@@ -933,75 +927,6 @@ C-----------Boundary Treatment-for Velocity ------------------
         end do
 1820  CONTINUE
 
-
-
-C          goto 999
-C-------------Some other treatment of Velocity-------------------------
-!          DO 3310 K=NZ0,NZ
-!          DO 3310 I=NXPhy0-3,NXPhy+3
-!            V1FOUND=.TRUE.
-!            V2FOUND=.TRUE.
-!            V3FOUND=.TRUE.
-!            V4FOUND=.TRUE.
-!
-!            DO 3311 J=NYPhy-1,0,-1
-!             AVy=Vy(I,J,K)
-!      IF (V1FOUND.AND.ABS(AVy).GT.AAC0) THEN
-!        V1FOUND=.FALSE.
-!          Vy(I,J+1,K)=2.0*Vy(I,J,K)-Vy(I,J-1,K)
-!        Vy(I,J+2,K)=2.0*Vy(I,J,K)-Vy(I,J-2,K)
-!        Vy(I,J+3,K)=2.0*Vy(I,J,K)-Vy(I,J-3,K)
-!        Vy(I,J+4,K)=2.0*Vy(I,J,K)-Vy(I,J-4,K)
-!      ENDIF
-! 3311     CONTINUE
-!
-!            DO 3312 J=NYPhy0+1,0,+1
-!             AVy=Vy(I,J,K)
-!      IF (V2FOUND.AND.ABS(AVy).GT.AAC0) THEN
-!        V2FOUND=.FALSE.
-!          Vy(I,J-1,K)=2.0*Vy(I,J,K)-Vy(I,J+1,K)
-!        Vy(I,J-2,K)=2.0*Vy(I,J,K)-Vy(I,J+2,K)
-!        Vy(I,J-3,K)=2.0*Vy(I,J,K)-Vy(I,J+3,K)
-!        Vy(I,J-4,K)=2.0*Vy(I,J,K)-Vy(I,J+4,K)
-!      ENDIF
-! 3312     CONTINUE
-!
-! 3310     CONTINUE
-!
-!        DO 3320 K=NZ0,NZ
-!        DO 3320 J=NYPhy0-3,NYPhy+3
-!
-!          V1FOUND=.TRUE.
-!          V2FOUND=.TRUE.
-!          V3FOUND=.TRUE.
-!          V4FOUND=.TRUE.
-!
-!          DO 3321 I=NXPhy-1,0,-1
-!             AVV=VV(I,J,K)
-!          IF (V3FOUND.AND.ABS(AVV).GT.AAC0) THEN
-!      V3FOUND=.FALSE.
-!C            Print *,I,J, AAC0,AVV
-!      VV(I+1,J,K)=2.0*VV(I,J,K)-VV(I-1,J,K)
-!      VV(I+2,J,K)=2.0*VV(I,J,K)-VV(I-2,J,K)
-!      VV(I+3,J,K)=2.0*VV(I,J,K)-VV(I-3,J,K)
-!      VV(I+4,J,K)=2.0*VV(I,J,K)-VV(I-4,J,K)
-!          END IF
-! 3321  CONTINUE
-!
-!          DO 3322 I=NXPhy0+1,0,+1
-!             AVV=VV(I,J,K)
-!          IF (V4FOUND.AND.ABS(AVV).GT.AAC0) THEN
-!      V4FOUND=.FALSE.
-!      VV(I-1,J,K)=2.0*VV(I,J,K)-VV(I+1,J,K)
-!      VV(I-2,J,K)=2.0*VV(I,J,K)-VV(I+2,J,K)
-!      VV(I-3,J,K)=2.0*VV(I,J,K)-VV(I+3,J,K)
-!      VV(I-4,J,K)=2.0*VV(I,J,K)-VV(I+4,J,K)
-!          END IF
-! 3322  CONTINUE
-!
-! 3320  CONTINUE
-
- 999   Continue
       Return
       End
 

@@ -153,7 +153,7 @@ C====Change to a smaller time step for small \tau_0 case ==================
       dT  = DT_1
 CSHEN===END================================================================
 
-      MaxT = 40.0/DT_1
+      MaxT = int(40.0/DT_1)
 
       TT0 = T0
 
@@ -187,7 +187,6 @@ C###############################################################################
      &         NXPhy,NYPhy,T0,DX,DY,DZ,DT,MaxT,NDX,NDY,NDT)
 
       Implicit Double Precision (A-H, O-Z)
-      Dimension X(NX0:NX), Y(NY0:NY), Z(NZ0:NZ)
 
       Dimension TT00(NX0:NX, NY0:NY, NZ0:NZ)
       Dimension ScT00(NX0:NX, NY0:NY, NZ0:NZ)
@@ -223,7 +222,6 @@ C###############################################################################
       Dimension PScT33(NX0:NX, NY0:NY, NZ0:NZ)
 
       Dimension Pi11(NX0:NX, NY0:NY, NZ0:NZ)    !Stress Tensor
-      Dimension Pi11A(NX0:NX, NY0:NY, NZ0:NZ)    !Pi11_attempt, used only when v_perp=0
       Dimension PScT11(NX0:NX, NY0:NY, NZ0:NZ)
 
       Dimension Pi12(NX0:NX, NY0:NY, NZ0:NZ)    !Stress Tensor
@@ -250,7 +248,6 @@ C###############################################################################
 
       Dimension Temp0(NX0:NX, NY0:NY, NZ0:NZ) !Local Temperature
       Dimension Temp(NX0:NX, NY0:NY, NZ0:NZ) !Local Temperature
-      Dimension CMu(NX0:NX, NY0:NY, NZ0:NZ) !Local chemical potential
       Dimension IAA(NX0:NX, NY0:NY, NZ0:NZ)
       Dimension CofAA(0:2,NX0:NX, NY0:NY, NZ0:NZ)
 
@@ -259,11 +256,6 @@ C###############################################################################
 
       Dimension XiTtP(NX0:NX, NY0:NY, NZ0:NZ)  !extra (Xi T)/tau_Pi terms in full I-S bulk eqn 08/2008
       Dimension XiTtP0(NX0:NX, NY0:NY, NZ0:NZ)  !extra (Xi T)/tau_Pi in last time step
-
-
-      Dimension BEd(NX0:NX, NY0:NY, NZ0:NZ)
-
-      Dimension CC(NX0:NX, NY0:NY, NZ0:NZ) !Check
 
       ! backups
 
@@ -276,14 +268,6 @@ C###############################################################################
       Double Precision Pi33Regulated(NX0:NX,NY0:NY,NZ0:NZ)
       Double Precision PPIRegulated(NX0:NX,NY0:NY,NZ0:NZ)
 
-CSHEN==========================================================================
-C======output relaxation time for both shear and bulk viscosity================
-      Dimension VRelaxT(NX0:NX, NY0:NY, NZ0:NZ) !viscous coefficient relaxation time
-      Dimension VRelaxT0(NX0:NX, NY0:NY, NZ0:NZ) !viscous coefficient relaxation time
-CSHEN==========================================================================
-
-
-
 C----------------------------------------------------------------------------------------------
       DIMENSION EPS0(NX0:NX,NY0:NY),EPS1(NX0:NX,NY0:NY) ! Energy density in previous and current step
       DIMENSION TEM0(NX0:NX,NY0:NY),TEM1(NX0:NX,NY0:NY) ! Temperature density in previous and current step
@@ -291,10 +275,9 @@ C-------------------------------------------------------------------------------
       DIMENSION V10(NX0:NX,NY0:NY),V20(NX0:NX,NY0:NY)   !velocity in X Y in Previous step
       DIMENSION V11(NX0:NX,NY0:NY),V21(NX0:NX,NY0:NY)   !velocity in X Y in current step
 
-      DIMENSION AEPS0(NX0:NX, NY0:NY),AEPS1(NX0:NX, NY0:NY) ! Energy density in previous and current step
-      DIMENSION ATEM0(NX0:NX, NY0:NY),ATEM1(NX0:NX, NY0:NY) ! Temperature density in previous and current step
+      DIMENSION AEPS0(NX0:NX, NY0:NY) ! Energy density in previous step
+      DIMENSION ATEM0(NX0:NX, NY0:NY) ! Temperature in previous step
       DIMENSION AV10(NX0:NX, NY0:NY),AV20(NX0:NX, NY0:NY)   !velocity in X Y in Previous step
-      DIMENSION AV11(NX0:NX, NY0:NY),AV21(NX0:NX, NY0:NY)   !velocity in X Y in current step
 
       DIMENSION F0Pi00(NX0:NX,NY0:NY),FPi00(NX0:NX,NY0:NY)   !Stress Tensor in previous and current step
       DIMENSION F0Pi01(NX0:NX,NY0:NY),FPi01(NX0:NX,NY0:NY)   !Stress Tensor in previous and current step
@@ -305,8 +288,6 @@ C-------------------------------------------------------------------------------
       DIMENSION F0Pi33(NX0:NX,NY0:NY),FPi33(NX0:NX,NY0:NY)   !Stress Tensor in previous and current step
       DIMENSION F0PPI(NX0:NX,NY0:NY),FPPI(NX0:NX,NY0:NY)   !Stress Tensor in previous and current step
 
-
-      INTEGER TFLAG, EINS
       double precision, parameter :: HbarC = M_HBARC
 
       parameter(NNEW=4)
@@ -316,7 +297,6 @@ C-------------------------------------------------------------------------------
       common/Edec1/Edec1
 
       Common /Nsm/ Nsm
-      Common /Accu/Accu
 
       Common/R0Aeps/ R0,Aeps
       Common /R0Bdry/ R0Bdry
@@ -324,12 +304,6 @@ C-------------------------------------------------------------------------------
       Common /Timestep/ DT_1, DT_2
 
       COMMON /IEin/ IEin     !  type of initialization  entropy/energy
-      Integer r_power
-
-      Integer NN ! For initial anisotropy calcualtion
-      Double Precision XX, YY, TotalE, XC, YC, angle, RR
-      Double Precision XN(0:9), YN(0:9), Weight ! For initial anisotropy calculation
-      Double Precision XNP(0:9), YNP(0:9), WeightP ! XN' and YN', the one using r^n in the weight
 
       Common /ViscousC/ ViscousC, VisHRG, VisMin, VisSlope, VisBeta,
      &                  IVisflag  ! Related to Shear Viscosity
@@ -339,30 +313,24 @@ C-------------------------------------------------------------------------------
       Integer ViscousEqsType
       Common /ViscousEqsControl/ VisBulkNorm, ViscousEqsType
 
-      Double Precision SEOSL7, PEOSL7, TEOSL7, SEOSL6
-      Double Precision ss, ddt1, ddt2, ee1, ee2
+      Double Precision SEOSL7, PEOSL7, TEOSL7
       External SEOSL7
       Integer iRegulateCounter, iRegulateCounterBulkPi
 
-!   ---Zhi-End---
 
-
-      Integer :: Tau_idx
-
-      TFLAG = 0
       Edec1 = Edec
 
 !=======================================================================
 !============ Initialization ===========================================
       Call InitializeAll(NX0,NY0,NZ0,NX,NY,NZ,
-     &  NXPhy0,NYPhy0,NXPhy,NYPhy,T0,DX,DY,DZ,DT,MaxT,NDX,NDY,NDT,
+     &  NXPhy0,NYPhy0,NXPhy,NYPhy,T0,DX,DY,DZ,DT,
      &  TT00,TT01,TT02,ScT00,ScT01,ScT02,Vx,Vy,
      &  Pi00,Pi01,Pi02,Pi33,Pi11,Pi12,Pi22,
      &  PScT00,PScT01,PScT02,PScT33,
      &  PScT11,PScT12,PScT22,etaTtp0,etaTtp,PPI,PISc,XiTtP0,XiTtP,
      &  U0,U1,U2, PU0,PU1,PU2,SxyT,Stotal,StotalBv,StotalSv,
-     &  Ed,PL,Sd,Time,Temp0,Temp,CMu,T00,T01,T02,IAA,CofAA,PNEW,
-     &  TEM0,ATEM0,Rj,EPS0,V10,V20,AEPS0,AV10,AV20,TFREEZ,TFLAG)
+     &  Ed,PL,Sd,Time,Temp0,Temp,T00,T01,T02,IAA,CofAA,PNEW,
+     &  TEM0,ATEM0,Rj,EPS0,V10,V20,AEPS0,AV10,AV20,TFREEZ)
 
       ! write thermodynamic freeze-out quantities to surface file
  901  format (a,f13.10)
@@ -450,7 +418,7 @@ CSHEN====END====================================================================
           Pi22Regulated = Pi22
           Pi12Regulated = Pi12
           Pi33Regulated = Pi33
-          iRegulateCounter = 0D0
+          iRegulateCounter = 0
         else
           Pi00 = 0D0
           Pi01 = 0D0
@@ -464,7 +432,7 @@ CSHEN====END====================================================================
         !bulk
         if(VisBulk > 1D-6) then
           PPIRegulated = PPI
-          iRegulateCounterBulkPi = 0D0
+          iRegulateCounterBulkPi = 0
         else
           PPI = 0D0
         endif
@@ -474,7 +442,7 @@ CSHEN====END====================================================================
      &  Pi00,Pi01,Pi02,Pi33,Pi11,Pi12,Pi22, PScT00,PScT01,PScT02,PScT33,
      &  PScT11,PScT12,PScT22,etaTtp0,etaTtp,  PPI,PISc, XiTtP0,XiTtP,
      &  U0,U1,U2, PU0,PU1,PU2,SxyT,Stotal,StotalBv,StotalSv,
-     &  Ed,PL,Sd,Temp0,Temp,CMu, T00,T01,T02, IAA,CofAA,Time,DX,DY,
+     &  Ed,PL,Sd,Temp0,Temp, T00,T01,T02, IAA,CofAA,Time,DX,DY,
      &  DZ,DT,NXPhy0,NYPhy0,NXPhy,NYPhy,NX0,NX,NY0,NY,NZ0,NZ,PNEW,NNEW)  !PNEW NNEW  related to root finding
 
         DIFFC = 0.125D0
@@ -535,19 +503,19 @@ CSHEN====END====================================================================
      &       Ed,PL,PPI,
      &       Pi00,Pi01,Pi02,Pi11,
      &       Pi12,Pi22,Pi33,Vx,Vy,II,JJ)
-         iRegulateCounter = iRegulateCounter + 1D0
+         iRegulateCounter = iRegulateCounter + 1
          End Do ! pi evolution
         endif
 
         if(VisBulk > 1D-6) then
           Do ! BulkPi evolution
-            call checkBulkPi(iFailed, II, JJ, Time, Ed, PL,
+            call checkBulkPi(iFailed, II, JJ, Time, PL,
      &      NXPhy0, NXPhy, NYPhy0, NYPhy, NX0, NX, NY0, NY, NZ0, NZ,
      &      PPI)
           If (iFailed==0) Exit
           call regulateBulkPi(iRegulateCounterBulkPi,Time,NX0,NY0,NZ0,
      &        NX,NY,NZ,NXPhy0,NXPhy,NYPhy0,NYPhy,Ed,PL,PPI,II,JJ)
-          iRegulateCounterBulkPi = iRegulateCounterBulkPi + 1D0
+          iRegulateCounterBulkPi = iRegulateCounterBulkPi + 1
           End Do ! BulkPi evolution
         endif
 
@@ -566,7 +534,7 @@ CSHEN====END====================================================================
      &  Pi00,Pi01,Pi02,Pi33,Pi11,Pi12,Pi22, PScT00,PScT01,PScT02,PScT33,
      &  PScT11,PScT12,PScT22,etaTtp0,etaTtp,  PPI,PISc, XiTtP0,XiTtP,
      &  U0,U1,U2, PU0,PU1,PU2,SxyT,Stotal,StotalBv,StotalSv,
-     &  Ed,PL,Sd,Temp0,Temp,CMu, T00,T01,T02, IAA,CofAA,Time,DX,DY,
+     &  Ed,PL,Sd,Temp0,Temp, T00,T01,T02, IAA,CofAA,Time,DX,DY,
      &  DZ,DT,NXPhy0,NYPhy0,NXPhy,NYPhy,NX0,NX,NY0,NY,NZ0,NZ,PNEW,NNEW)  !PNEW NNEW  related to root finding
 
       End If ! If (ViscousC>1D-6 .or. VisBulk > 1D-6) Then
@@ -645,9 +613,7 @@ C      NDT = 5
 
       DO 5400 J=NY0,NY
       DO 5400 I=NX0,NX
-c                IF (TFLAG .EQ. 1) THEN
           TEM0(I,J) = TEM1(I,J)
-c                END IF
           EPS0(I,J) = EPS1(I,J)
           V10(I,J)  = V11(I,J)
           V20(I,J)  = V21(I,J)
@@ -672,9 +638,6 @@ c                END IF
       END IF
 
       END IF    !  IF (MOD(N+1,NDT).EQ.0) THEN
-
-C~~~~~~~~~~~~~~Freezeout Procedure (rewritten from Peters code azhydro0p2)     ~~~~~~~~~~~~~~~~
-5555  continue
 
       Time=Time+DT
 
@@ -748,7 +711,7 @@ C###############################################################################
 
 !** Zhi ***
       Integer :: absI, absJ ! abs(I) and abs(J) used in the loop
-      Integer :: I, J, L
+      Integer :: I, J
       Integer :: tmpI
 
       DTFreeze = NDT*DT
@@ -896,8 +859,6 @@ C------- Transport Pi00,Pi01,Pi02,Pi03,Pi11, Pi12,Pi22 by first order theory
        Dimension Temp(NX0:NX, NY0:NY, NZ0:NZ) !Local Temperature
        Dimension Temp0(NX0:NX, NY0:NY, NZ0:NZ) !Local Temperature
 
-       Dimension CMu(NX0:NX, NY0:NY, NZ0:NZ) !Local chemical potential
-
        Dimension VCoefi(NX0:NX, NY0:NY, NZ0:NZ) !viscous coeficient
        Dimension VCBeta(NX0:NX, NY0:NY, NZ0:NZ) !viscous coeficient Beta2
        Dimension VRelaxT(NX0:NX, NY0:NY, NZ0:NZ) !viscous coeficient relaxation time
@@ -905,15 +866,12 @@ C------- Transport Pi00,Pi01,Pi02,Pi03,Pi11, Pi12,Pi22 by first order theory
        Dimension DLnT(NX0:NX, NY0:NY, NZ0:NZ) ! DlnT(x,y) terms
 
         Dimension etaTtp(NX0:NX, NY0:NY, NZ0:NZ)  !extra (eta T)/tau_pi terms in I-S eqn 02/2008
-        Dimension etaTtp0(NX0:NX, NY0:NY, NZ0:NZ)  !extra (eta T)/tau_pi terms in I-S eqn 02/2008
 
        Dimension VBulk(NX0:NX, NY0:NY, NZ0:NZ) !viscous coeficient-bulk vicosity \xi
-       Dimension VCBeta0(NX0:NX, NY0:NY, NZ0:NZ) !viscous coeficient Beta0
        Dimension VRelaxT0(NX0:NX, NY0:NY, NZ0:NZ) !viscous coeficient relaxation time \tau_PI
        Dimension XiTtP(NX0:NX, NY0:NY, NZ0:NZ)  !extra (Xi T)/tau_Pi terms in full I-S bulk eqn 08/2008
 
        COMMON /IEin/ IEin  !parameter for initializtion by entropy 1 or energy 0
-         Parameter(XC0=1.0d-5, AAC=1.0d-6)  !XC0 charge of root acuracy  !AAC discard overflow value
 
 
 !   ---Changes-Zhi--- ***
@@ -930,7 +888,7 @@ C------- Transport Pi00,Pi01,Pi02,Pi03,Pi11, Pi12,Pi22 by first order theory
 !   ---Zhi-End---
 
         call ViscousCoefi8(Ed,Sd,PL,Temp,
-     &  VCoefi,VCBeta,VRelaxT,etaTtp, VBulk, VCBeta0,VRelaxT0,XiTtP,
+     &  VCoefi,VCBeta,VRelaxT,etaTtp, VBulk, VRelaxT0,XiTtP,
      &  Time,DX,DY,DT,NX0,NY0,NZ0, NX,NY,NZ, NXPhy0,NYPhy0, NXPhy,NYPhy)
 
          do 10 k=NZ0,NZ
@@ -961,7 +919,7 @@ C
        Pi22(i,j,k)=ConsP*DPc22(i,j,k)
 
        Pi00(i,j,k)=(Pi01(i,j,k)*U1(I,j,k)+Pi02(i,j,k)*U2(I,j,k))
-     &      /DMax1(1.0*d-34,U0(i,j,k))
+     &      /DMax1(1d-34,U0(i,j,k))
 
         PPI(I,J,K)=(-1.0)*VBulk(i,j,k)*SiLoc(i,j,k)
 30    continue
@@ -1018,7 +976,6 @@ C-------------------------------------------------------------------------------
         Dimension DLnT(NX0:NX, NY0:NY, NZ0:NZ) ! DlnT(x,y) terms
 
         Common/R0Aeps/ R0,Aeps
-        Common /Accu/Accu
         Common /R0Bdry/ R0Bdry
 
 C$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
@@ -1050,14 +1007,14 @@ c       goto 199
          D0U1=(U1(I,J,K)-PU1(I,J,K))/DT
          D0U2=(U2(I,J,K)-PU2(I,J,K))/DT
 
-       If(abs(Accu-3.0).le.0.00001) then  !3pt formula
+#if DERIV_ORDER == 3
          D1U0=(U0(I+1,J,K)-U0(I-1,J,K))/(2.0*DX)
          D1U1=(U1(I+1,J,K)-U1(I-1,J,K))/(2.0*DX)
          D1U2=(U2(I+1,J,K)-U2(I-1,J,K))/(2.0*DX)
          D2U0=(U0(I,J+1,K)-U0(I,J-1,K))/(2.0*DY)
          D2U1=(U1(I,J+1,K)-U1(I,J-1,K))/(2.0*DY)
          D2U2=(U2(I,J+1,K)-U2(I,J-1,K))/(2.0*DY)
-       else if (abs(Accu-5.0).le.0.00001) then !5pt formula
+#elif DERIV_ORDER == 5
          D1U0=(U0(I+1,J,K)*2.0d0/3.0d0-U0(I-1,J,K)*2.0d0/3.0d0
      &            -U0(I+2,J,K)/12.0d0+U0(I-2,J,K)/12.0d0)/DX
          D1U1=(U1(I+1,J,K)*2.0d0/3.0d0-U1(I-1,J,K)*2.0d0/3.0d0
@@ -1071,15 +1028,14 @@ c       goto 199
      &           -U1(I,J+2,K)/12.0d0+U1(I,J-2,K)/12.0d0)/DY
          D2U2=(U2(I,J+1,K)*2.0d0/3.0d0-U2(I,J-1,K)*2.0d0/3.0d0
      &           -U2(I,J+2,K)/12.0d0+U2(I,J-2,K)/12.0d0)/DY
-        else
-           Print*, "wrong input for Accu,
-     &         Accu=3or5 for 3pt or 5pt cal of deriv. "
-        end if
+#else
+#error "DERIV_ORDER must be 3 or 5"
+#endif
 
          CS=(D0U0+D1U1+D2U2+U0(I,J,K)/Time)/3.0
 
       If (Time > 0.8) Then
-      If (CS .ne. CS) Then
+      If (isnan(CS)) Then
         Print *, "Invalid CS!"
         Print *, "i,j,k=", i,j,k
         Print *, "D0U0=", D0U0, "D1U1=", D1U1, "D2U2=", D2U2
@@ -1110,15 +1066,6 @@ c       goto 199
        DPc22(I,J,K)=(-1.0)*D2U2-U2(I,J,K)*DU2+CS*(U2(I,J,K)**2+1.0)
        DPc12(I,J,K)=(-0.5)*(D2U1+D1U2)-0.5*(U1(I,J,K)*DU2+U2(I,J,K)*DU1)
      &                      +CS*(U1(I,J,K)*U2(I,J,K))
-!       call checkSigma(U0(I,J,K), U1(I,J,K), U2(I,J,K),
-!     &    DPc00(I,J,K), DPc01(I,J,K), DPc02(I,J,K),
-!     &    DPc11(I,J,K), DPc12(I,J,K), DPc22(I,J,K), DPc33(I,J,K),
-!     &    Itrigger)
-       !if(Itrigger .eq. 1) then
-       !  print*, D0U2, D2U0
-       !  print*, U0(I,J+1,K), U0(I,J-1,K)
-       !  stop
-       !endif
 
          SiLoc(I,J,K)=CS*3.0  !   CS=(D0U0+D1U1+D2U2+U0(I,J,K)/Time)/3.0
 
@@ -1184,7 +1131,7 @@ c             Pi13(I,J,K)=0.0
 
 C#####################################################
        Subroutine ViscousCoefi8(Ed,Sd,PL,Temp,
-     &  VCoefi,VCBeta,VRelaxT,etaTtp, VBulk, VCBeta0,VRelaxT0,XiTtP,
+     &  VCoefi,VCBeta,VRelaxT,etaTtp, VBulk, VRelaxT0,XiTtP,
      &  Time,DX,DY,DT,NX0,NY0,NZ0, NX,NY,NZ, NXPhy0,NYPhy0, NXPhy,NYPhy)
 !--------call visous coeficient from from entropy
 !--------bulk viscosity are included
@@ -1201,12 +1148,8 @@ C#####################################################
        Dimension etaTtp(NX0:NX, NY0:NY, NZ0:NZ)  !extra (eta T)/tau_pi terms in I-S eqn 02/2008
 
        Dimension VBulk(NX0:NX, NY0:NY, NZ0:NZ) !viscous coeficient-bulk vicosity \xi
-       Dimension VCBeta0(NX0:NX, NY0:NY, NZ0:NZ) !viscous coeficient Beta0
        Dimension VRelaxT0(NX0:NX, NY0:NY, NZ0:NZ) !viscous coeficient relaxation time \tau_PI
        Dimension XiTtP(NX0:NX, NY0:NY, NZ0:NZ)  !extra (Xi T)/tau_Pi terms in full I-S bulk eqn 08/2008
-
-
-       Dimension AA(NX0:NX, NY0:NY, NZ0:NZ) !
 
        Integer :: IVisflag
        Integer :: IVisBulkFlag
@@ -1259,7 +1202,7 @@ CSHEN======end=================================================================
         VCoefi(i,j,k)=VCoefi(i,j,k)*ff
         VRelaxT(i,j,k)=VRelaxT(i,j,k)*ff
         If (Time > 0.8) Then
-        If (etaTtp(i,j,k) .ne. etaTtp(i,j,k)) Then
+        If (isnan(etaTtp(i,j,k))) Then
           Print *, "Invalid etaTtp!"
           Print *, "i,j,k=",i,j,k
           Print *, "VRelaxT=",VRelaxT(i,j,k)
@@ -1305,14 +1248,13 @@ CSHEN======end=================================================================
           Print*,'IRelaxBulk'
           call exit(1)
         end if
-        VCBeta0(i,j,k)=VisBulkBeta*6.0/(Sd(i,j,k)*Temp(i,j,k))
+
         XiTtP(i,j,k)=(VBulk(i,j,k)*Temp(i,j,k))*VRelaxT0(i,j,k)  !(Xi T/tau_Pi)  for extra term in full I-S
 
         VBulk(i,j,k)=VBulk(i,j,k)*ff
         VRelaxT0(i,j,k)=VRelaxT0(i,j,k)*ff
       else
         VBulk(i,j,k)=0.0
-        VCBeta0(i,j,k)=0.0
         VRelaxT0(i,j,k)=0.0
         XiTtP(i,j,k)=0.0
       end if
@@ -1427,7 +1369,7 @@ C     &          *(1-Cper)  !HRG
 
 
 C###########################################################################
-       Subroutine EntropyTemp3 (Ed,PL, Temp,CMu,Sd,
+       Subroutine EntropyTemp3 (Ed,PL, Temp,Sd,
      &       NX0,NY0,NZ0, NX,NY,NZ, NXPhy0,NYPhy0, NXPhy,NYPhy)
 C------call Temperatuen mu  Entropy from ee pp-----------
         Implicit Double Precision (A-H, O-Z)
@@ -1435,7 +1377,6 @@ C------call Temperatuen mu  Entropy from ee pp-----------
        Dimension PL(NX0:NX, NY0:NY, NZ0:NZ) !Pressure
 
        Dimension Temp(NX0:NX, NY0:NY, NZ0:NZ) !Local Temperature
-       Dimension CMu(NX0:NX, NY0:NY, NZ0:NZ) !Local chemical potential
        Dimension Sd(NX0:NX, NY0:NY, NZ0:NZ) !entropy density
 
       double precision, parameter :: HbarC = M_HBARC
@@ -1566,7 +1507,7 @@ C###################################################################
      &  Pi00,Pi01,Pi02,Pi33,Pi11,Pi12,Pi22, PScT00,PScT01,PScT02,PScT33,
      &  PScT11,PScT12,PScT22,etaTtp0,etaTtp,  PPI,PISc, XiTtP0,XiTtP,
      &  U0,U1,U2, PU0,PU1,PU2,SxyT,Stotal,StotalBv,StotalSv,
-     &  Ed,PL,Sd,Temp0,Temp,CMu, T00,T01,T02, IAA,CofAA,Time,DX,DY,
+     &  Ed,PL,Sd,Temp0,Temp, T00,T01,T02, IAA,CofAA,Time,DX,DY,
      &  DZ,DT,NXPhy0,NYPhy0,NXPhy,NYPhy,NX0,NX,NY0,NY,NZ0,NZ, PNEW,NNEW)
       !PNEW NNEW related to root finding
 
@@ -1582,9 +1523,6 @@ C###################################################################
 
         Dimension Vx(NX0:NX, NY0:NY, NZ0:NZ)
         Dimension Vy(NX0:NX, NY0:NY, NZ0:NZ)
-        Double Precision VxTmp(NX0:NX, NY0:NY, NZ0:NZ)
-        Double Precision VyTmp(NX0:NX, NY0:NY, NZ0:NZ)
-        Dimension dummy(NX0:NX, NY0:NY, NZ0:NZ)
 
         Dimension U0(NX0:NX, NY0:NY, NZ0:NZ) !Four velocity
         Dimension U1(NX0:NX, NY0:NY, NZ0:NZ) !Four velocity
@@ -1627,7 +1565,6 @@ C-------------------------------------------
 
         Dimension Temp0(NX0:NX, NY0:NY, NZ0:NZ) !Local Temperature  in last time step
         Dimension Temp(NX0:NX, NY0:NY, NZ0:NZ) !Local Temperature
-        Dimension CMu(NX0:NX, NY0:NY, NZ0:NZ) !Local chemical potential
 
         Dimension VCoefi(NX0:NX, NY0:NY, NZ0:NZ) !viscous coefficient
         Dimension VCBeta(NX0:NX, NY0:NY, NZ0:NZ) !viscous coefficient  Beta 2
@@ -1636,7 +1573,6 @@ C-------------------------------------------
         Dimension DLnT(NX0:NX, NY0:NY, NZ0:NZ) ! DlnT(x,y) terms  !added 02/2008
 
        Dimension VBulk(NX0:NX, NY0:NY, NZ0:NZ) !viscous coefficient-bulk viscosity \xi
-       Dimension VCBeta0(NX0:NX, NY0:NY, NZ0:NZ) !viscous coefficient Beta0
        Dimension VRelaxT0(NX0:NX, NY0:NY, NZ0:NZ) !viscous coefficient relaxation time \tau_PI
 
         Dimension etaTtp(NX0:NX, NY0:NY, NZ0:NZ)  !extra (eta T)/tau_pi terms in I-S eqn 02/2008
@@ -1659,8 +1595,6 @@ C-------------------------------------------
         Dimension DPc12(NX0:NX, NY0:NY, NZ0:NZ) !
         Dimension DPc22(NX0:NX, NY0:NY, NZ0:NZ) !
 
-        Dimension CC(NX0:NX, NY0:NY, NZ0:NZ) !
-
         Dimension IAA(NX0:NX, NY0:NY, NZ0:NZ)
         Dimension CofAA(0:2,NX0:NX, NY0:NY, NZ0:NZ)
 
@@ -1674,8 +1608,6 @@ C-------------------------------------------
         DIMENSION PNEW(NNEW)!something related to root finding
        Parameter(XC0=1.0d-15, AAC=1.0d-16) !root finding accuracy
 
-        LOGICAL V1FOUND,V2FOUND,V3FOUND,V4FOUND
-        Common /Newtonalart/ AI,AJ,AK,AE
         Common/R0Aeps/ R0,Aeps
         Common /R0Bdry/ R0Bdry
 
@@ -1685,11 +1617,10 @@ C-------------------------------------------
        double precision, parameter :: HbarC = M_HBARC
 
        Common /Nsm/ Nsm
-       Common /Accu/Accu
        common/Edec1/Edec1
 
       ! ----- Use in root search -----
-      Double Precision :: RSDM0, RSDM, RSPPI, RSee
+      Double Precision :: RSDM0, RSDM, RSPPI !, RSee
       Common /findEdHookData/ RSDM0, RSDM, RSPPI ! M0, M, Pi (see 0510014)
 
       double precision :: VisBulkNorm
@@ -1775,8 +1706,6 @@ C---------------------------------------------------------------
       DO 300 J=NYPhy0,NYPhy
       DO 310 I=NXPhy0,NXPhy !changed by song
 
-!     The following use quadESolver function to find root, which assumes
-!     zero baryon density
         Bd(I,J,K)=0
         T00IJ=T00(I,J,K)
         T01IJ=T01(I,J,K)
@@ -1977,7 +1906,6 @@ c------------------------------------------------------------------
      & +Time*(Vy(I,J+1,K)*PL(I,J+1,K)-Vy(I,J-1,K)*PL(I,J-1,K))/(2.0*DY)
      &+Time*(Vy(I,J+1,K)*PPi(I,J+1,K)-Vy(I,J-1,K)*PPi(I,J-1,K))/(2.0*DY)
  690   continue
- 666   continue
 
         call TriSembdary3(ScT00,ScT01, ScT02,
      &        NX0,NY0,NZ0, NX,NY,NZ, NXPhy0,NYPhy0, NXPhy,NYPhy)
@@ -1994,11 +1922,11 @@ c------------------------------------------------------------------
        end if
 
 C---------------------------------------------------------------------
-        call EntropyTemp3 (Ed,PL, Temp,CMu,Sd,
+        call EntropyTemp3 (Ed,PL, Temp,Sd,
      &         NX0,NY0,NZ0, NX,NY,NZ, NXPhy0,NYPhy0, NXPhy,NYPhy)
 
         call ViscousCoefi8(Ed,Sd,PL,Temp,
-     &  VCoefi,VCBeta,VRelaxT,etaTtp, VBulk, VCBeta0,VRelaxT0,XiTtP,
+     &  VCoefi,VCBeta,VRelaxT,etaTtp, VBulk, VRelaxT0,XiTtP,
      &  Time,DX,DY,DT,NX0,NY0,NZ0, NX,NY,NZ, NXPhy0,NYPhy0, NXPhy,NYPhy)
 C--------------------
 
@@ -2078,18 +2006,17 @@ C-------------------------------------------------------------------------------
         rr=sqrt(xx**2+yy**2)
         ff=1.0/(Dexp((rr-R0Bdry)/Aeps)+1.0)
 
-        Accu=3.0
-        If(abs(Accu-3.0).le.0.00001) then  !3pt formula
+#if DERIV_ORDER == 3
           PA=(Vx(I+1,J,K)-Vx(I-1,J,K))/(2*DX)
      &      +(Vy(I,J+1,K)-Vy(I,J-1,K))/(2*DY)
-        else if(abs(Accu-5.0).le.0.00001) then  !5pt formula
+#elif DERIV_ORDER == 5
           PA=( Vx(I+1,J,K)*2.0d0/3.0d0-Vx(I-1,J,K)*2.0d0/3.0d0
      &       -Vx(I+2,J,K)/12.0d0+Vx(I-2,J,K)/12.0d0 )/DX
      &      +( Vy(I,J+1,K)*2.0d0/3.0d0-Vy(I,J-1,K)*2.0d0/3.0d0
      &       -Vy(I,J+2,K)/12.0d0+Vy(I,J-2,K)/12.0d0 )/DY
-        else
-          Print*, "wrong input for Accu"
-        end if
+#else
+#error "DERIV_ORDER must be 3 or 5"
+#endif
 
         PT=VRelaxT(I,J,K)/U0(I,J,K)
         PS=2.0*VCoefi(I,J,K)
@@ -2292,7 +2219,7 @@ C-------------------------------------------------------------------------------
      &        + PScT33(i,j,k)
 
         If (TIME > TT0) Then
-        If (PScTSum .ne. PScTSum) Then
+        If (isnan(PScTSum)) Then
           Print *, "Invalid PScT terms!"
           Print *, "i,j,k=", i,j,k
           Print *, "PScT00=", PScT00(i,j,K)
@@ -2322,233 +2249,6 @@ C-------------------------------------------------------------------------------
      &      PA*PPI(I,J,K)-PT0*(PPI(I,J,K)+PS0*SiLoc(i,j,K)))*(-1.0)
 
  710   continue
-
-!-----------------------------------------------------------------------
-!    Check if pi(mu,nu) goes away from sigma(mu,nu) (DPc)
-      !dmaxRatio = 0D0
-      !Iwhich = -1
-      !Imax = -1000
-      !Jmax = -1000
-      !Kmax = -1000
-      !
-      !Do I=NXPhy0-3,NXPhy
-      !Do J=NYPhy0-3,NYPhy
-      !Do K=NZ0,NZ
-      !
-      !ratio = Pi00(I,J,K)/max(abs(DPc00(I,J,K)), 1D-30)
-      !If (abs(ratio)>dmaxRatio) Then
-      !  dmaxRatio = ratio
-      !  Iwhich = 0
-      !  Imax = I
-      !  Jmax = J
-      !  Kmax = K
-      !End If
-      !
-      !ratio = Pi01(I,J,K)/max(abs(DPc01(I,J,K)), 1D-30)
-      !If (abs(ratio)>dmaxRatio) Then
-      !  dmaxRatio = ratio
-      !  Iwhich = 1
-      !  Imax = I
-      !  Jmax = J
-      !  Kmax = K
-      !End If
-      !
-      !ratio = Pi02(I,J,K)/max(abs(DPc02(I,J,K)), 1D-30)
-      !If (abs(ratio)>dmaxRatio) Then
-      !  dmaxRatio = ratio
-      !  Iwhich = 2
-      !  Imax = I
-      !  Jmax = J
-      !  Kmax = K
-      !End If
-      !
-      !ratio = Pi11(I,J,K)/max(abs(DPc11(I,J,K)), 1D-30)
-      !If (abs(ratio)>dmaxRatio) Then
-      !  dmaxRatio = ratio
-      !  Iwhich = 11
-      !  Imax = I
-      !  Jmax = J
-      !  Kmax = K
-      !End If
-      !
-      !ratio = Pi12(I,J,K)/max(abs(DPc12(I,J,K)), 1D-30)
-      !If (abs(ratio)>dmaxRatio) Then
-      !  dmaxRatio = ratio
-      !  Iwhich = 12
-      !  Imax = I
-      !  Jmax = J
-      !  Kmax = K
-      !End If
-      !
-      !ratio = Pi22(I,J,K)/max(abs(DPc22(I,J,K)), 1D-30)
-      !If (abs(ratio)>dmaxRatio) Then
-      !  dmaxRatio = ratio
-      !  Iwhich = 22
-      !  Imax = I
-      !  Jmax = J
-      !  Kmax = K
-      !End If
-      !
-      !ratio = Pi33(I,J,K)/max(abs(DPc33(I,J,K)), 1D-30)
-      !If (abs(ratio)>dmaxRatio) Then
-      !  dmaxRatio = ratio
-      !  Iwhich = 33
-      !  Imax = I
-      !  Jmax = J
-      !  Kmax = K
-      !End If
-      !
-      !End Do
-      !End Do
-      !End Do
-
-
-!       If (Imax.ne.-1000 .OR. Jmax.ne.-1000) Then
-!        Print*, "dmaxRatio=", dmaxRatio
-!        Print*, "Iwhich=", Iwhich
-!        Print*, "Imax,Jmax", Imax,Jmax
-!        call printPi(id, Imax, Jmax,
-!     &    NXPhy0, NXPhy, NYPhy0, NYPhy, NX0, NX, NY0, NY, NZ0, NZ,
-!     &    Pi00,Pi01,Pi02,Pi33,Pi11,Pi12,Pi22)
-!        Print*, "DPc00=", DPc00(Imax,Jmax,Kmax)
-!        Print*, "DPc01=", DPc01(Imax,Jmax,Kmax)
-!        Print*, "DPc02=", DPc02(Imax,Jmax,Kmax)
-!        Print*, "DPc11=", DPc11(Imax,Jmax,Kmax)
-!        Print*, "DPc12=", DPc12(Imax,Jmax,Kmax)
-!        Print*, "DPc22=", DPc22(Imax,Jmax,Kmax)
-!        Print*, "DPc33=", DPc33(Imax,Jmax,Kmax)
-!      End If
-
-!      Open(3771,FILE='movie/DPc.dat',STATUS='old',ACCESS='APPEND')
-!      Do I=NXPhy0, NXPhy
-!      Do J=NYPhy0, NYPhy
-!      Do K=NZ0, NZ
-!        Write(3771,'(f25.8)',ADVANCE='NO') abs(DPc00(I,J,K))
-!     &    +abs(DPc01(I,J,K)) + abs(DPc02(I,J,K))
-!     &    +abs(DPc11(I,J,K)) + abs(DPc12(I,J,K))
-!     &    +abs(DPc22(I,J,K)) + abs(DPc33(I,J,K))
-!      End Do
-!      End Do
-!        Write(3771,*)
-!      End Do
-!      Close(3771)
-!
-!      I0=13
-!      J0=-77
-!
-!      I=I0-1
-!      J=J0-1
-!      K=NZ0
-!      Print*, "At I=",I, "J=",J
-!      call printPi(id, I, J,
-!     &    NXPhy0, NXPhy, NYPhy0, NYPhy, NX0, NX, NY0, NY, NZ0, NZ,
-!     &    Pi00,Pi01,Pi02,Pi33,Pi11,Pi12,Pi22)
-!      call printDPc(id, I, J, Sd,
-!     &    NXPhy0, NXPhy, NYPhy0, NYPhy, NX0, NX, NY0, NY, NZ0, NZ,
-!     &    DPc00,DPc01,DPc02,DPc33,DPc11,DPc12,DPc22)
-!
-!      I=I0-1
-!      J=J0
-!      K=NZ0
-!      Print*, "At I=",I, "J=",J
-!      call printPi(id, I, J,
-!     &    NXPhy0, NXPhy, NYPhy0, NYPhy, NX0, NX, NY0, NY, NZ0, NZ,
-!     &    Pi00,Pi01,Pi02,Pi33,Pi11,Pi12,Pi22)
-!      call printDPc(id, I, J, Sd,
-!     &    NXPhy0, NXPhy, NYPhy0, NYPhy, NX0, NX, NY0, NY, NZ0, NZ,
-!     &    DPc00,DPc01,DPc02,DPc33,DPc11,DPc12,DPc22)
-!
-!      I=I0-1
-!      J=J0+1
-!      K=NZ0
-!      Print*, "At I=",I, "J=",J
-!      call printPi(id, I, J,
-!     &    NXPhy0, NXPhy, NYPhy0, NYPhy, NX0, NX, NY0, NY, NZ0, NZ,
-!     &    Pi00,Pi01,Pi02,Pi33,Pi11,Pi12,Pi22)
-!      call printDPc(id, I, J, Sd,
-!     &    NXPhy0, NXPhy, NYPhy0, NYPhy, NX0, NX, NY0, NY, NZ0, NZ,
-!     &    DPc00,DPc01,DPc02,DPc33,DPc11,DPc12,DPc22)
-!
-!      I=I0
-!      J=J0-1
-!      K=NZ0
-!      Print*, "At I=",I, "J=",J
-!      call printPi(id, I, J,
-!     &    NXPhy0, NXPhy, NYPhy0, NYPhy, NX0, NX, NY0, NY, NZ0, NZ,
-!     &    Pi00,Pi01,Pi02,Pi33,Pi11,Pi12,Pi22)
-!      call printDPc(id, I, J, Sd,
-!     &    NXPhy0, NXPhy, NYPhy0, NYPhy, NX0, NX, NY0, NY, NZ0, NZ,
-!     &    DPc00,DPc01,DPc02,DPc33,DPc11,DPc12,DPc22)
-!
-!      I=I0
-!      J=J0
-!      K=NZ0
-!      Print*, "At I=",I, "J=",J
-!      call printPi(id, I, J,
-!     &    NXPhy0, NXPhy, NYPhy0, NYPhy, NX0, NX, NY0, NY, NZ0, NZ,
-!     &    Pi00,Pi01,Pi02,Pi33,Pi11,Pi12,Pi22)
-!      call printDPc(id, I, J, Sd,
-!     &    NXPhy0, NXPhy, NYPhy0, NYPhy, NX0, NX, NY0, NY, NZ0, NZ,
-!     &    DPc00,DPc01,DPc02,DPc33,DPc11,DPc12,DPc22)
-!
-!      I=I0
-!      J=J0+1
-!      K=NZ0
-!      Print*, "At I=",I, "J=",J
-!      call printPi(id, I, J,
-!     &    NXPhy0, NXPhy, NYPhy0, NYPhy, NX0, NX, NY0, NY, NZ0, NZ,
-!     &    Pi00,Pi01,Pi02,Pi33,Pi11,Pi12,Pi22)
-!      call printDPc(id, I, J, Sd,
-!     &    NXPhy0, NXPhy, NYPhy0, NYPhy, NX0, NX, NY0, NY, NZ0, NZ,
-!     &    DPc00,DPc01,DPc02,DPc33,DPc11,DPc12,DPc22)
-!
-!      I=I0+1
-!      J=J0-1
-!      K=NZ0
-!      Print*, "At I=",I, "J=",J
-!      call printPi(id, I, J,
-!     &    NXPhy0, NXPhy, NYPhy0, NYPhy, NX0, NX, NY0, NY, NZ0, NZ,
-!     &    Pi00,Pi01,Pi02,Pi33,Pi11,Pi12,Pi22)
-!      call printDPc(id, I, J, Sd,
-!     &    NXPhy0, NXPhy, NYPhy0, NYPhy, NX0, NX, NY0, NY, NZ0, NZ,
-!     &    DPc00,DPc01,DPc02,DPc33,DPc11,DPc12,DPc22)
-!
-!      I=I0+1
-!      J=J0
-!      K=NZ0
-!      Print*, "At I=",I, "J=",J
-!      call printPi(id, I, J,
-!     &    NXPhy0, NXPhy, NYPhy0, NYPhy, NX0, NX, NY0, NY, NZ0, NZ,
-!     &    Pi00,Pi01,Pi02,Pi33,Pi11,Pi12,Pi22)
-!      call printDPc(id, I, J, Sd,
-!     &    NXPhy0, NXPhy, NYPhy0, NYPhy, NX0, NX, NY0, NY, NZ0, NZ,
-!     &    DPc00,DPc01,DPc02,DPc33,DPc11,DPc12,DPc22)
-!
-!      I=I0+1
-!      J=J0+1
-!      K=NZ0
-!      Print*, "At I=",I, "J=",J
-!      call printPi(id, I, J,
-!     &    NXPhy0, NXPhy, NYPhy0, NYPhy, NX0, NX, NY0, NY, NZ0, NZ,
-!     &    Pi00,Pi01,Pi02,Pi33,Pi11,Pi12,Pi22)
-!      call printDPc(id, I, J, Sd,
-!     &    NXPhy0, NXPhy, NYPhy0, NYPhy, NX0, NX, NY0, NY, NZ0, NZ,
-!     &    DPc00,DPc01,DPc02,DPc33,DPc11,DPc12,DPc22)
-
-
-
-
-
-
-
-
-
-
-
-
-!-----------------------------------------------------------------------
-
-! 777   continue
 
        call TriSembdary3(PScT00,PScT01, PScT02,
      &        NX0,NY0,NZ0, NX,NY,NZ, NXPhy0,NYPhy0, NXPhy,NYPhy)
@@ -2925,68 +2625,6 @@ C----------------------------------------------------------------
       return
       end
 
-
-!======================================================================
-      Double Precision Function quadESolver(ee0,DM0,DM,PPI,I,J)
-      ! Root finding by interating quadratic equation formula for the equation
-      ! (M0+cs^2*e+Pi)(M0-e)=M^2
-
-      Implicit None
-
-      double precision :: PEOSL7
-
-      Integer I,J
-      Double Precision ED
-
-      Double Precision ee, ee0, DM0, DM, PPI ! energy density, initial energy density, M0, M, Pi (see 0510014)
-      Double Precision accuracy
-
-      Double Precision ee1, cs2, pp ! energy denstiy from previous interation, p/e, presure
-      ! Note that cs2 is not dp/de, but rather p/e!!!
-
-      Double Precision, Parameter :: zero=1e-30 ! a small number
-      double precision, parameter :: HbarC = M_HBARC
-
-      Integer, Parameter :: maxIter=300 ! maximum number of iterations
-      Integer numIter ! number of iterations
-
-      Double Precision A,B ! intermedia step variables
-
-      ee1 = ee0
-      cs2=PEOSL7(ee0*Hbarc)/dmax1(ee0,zero)/Hbarc ! check dimension?
-      A=DM0*(1-cs2)+PPI
-      B=DM0*(DM0+PPI)-DM*DM
-      ee=2*B/dmax1((sqrt(A*A+4*cs2*B)+A), zero)
-
-      numIter=1
-      accuracy=ee*1e-6 ! relative accuracy: answer should be correct up to e*1e-10
-      If (accuracy < 1e-15) accuracy=1e-15 ! No messing with machines precision (32bit double)
-      !accuracy=1e-10
-      Do While (abs(ee-ee1) > accuracy)
-        ee1 = ee
-        cs2=PEOSL7(ee1*Hbarc)/dmax1(ee1,zero)/Hbarc
-        A=DM0*(1-cs2)+PPi
-        B=DM0*(DM0+PPI)-DM*DM
-        ee=2*B/dmax1((sqrt(A*A+4*cs2*B)+A), zero)
-        numIter=numIter+1
-        If (numIter>maxIter) Then
-          Print *, "quadESolver: too many iterations."
-          Print *, "Number of iterations=", numIter
-          Print *, "I,J=",I,J
-          Print *, "M0,M=",DM0,DM
-          Print *, "ee,ee1=",ee,ee1
-          Print *, "cs2=", cs2
-          !Stop
-          Exit
-        EndIf
-
-      End Do
-
-      quadESolver = ee
-
-      End Function
-
-
 !======================================================================
       Double Precision Function findEdHook(ee)
       ! Root finding by iterating quadratic equation formula for the equation
@@ -3316,64 +2954,8 @@ C----------------------------------------------------------------
       End Subroutine
 !-----------------------------------------------------------------------
 
-      Subroutine checkSigma(u0, u1, u2,
-     &           sigma00, sigma01, sigma02, sigma11, sigma12, sigma22,
-     &           sigma33, trigger)
-      !check the traceless + transversality of the velocity shear tensor
-      Implicit None
 
-      Double Precision u0, u1, u2
-
-      Integer I,J,K
-      Integer trigger
-      Double Precision sigma00, sigma01, sigma02,
-     &                 sigma11, sigma12, sigma22, sigma33
-      Double Precision trace, trans0, trans1, trans2
-
-      Double Precision :: absNumericalzero = 1D-2
-      Double Precision :: relNumericalzero = 1D-2  !Xsi_0 in Zhi's thesis
-
-      trigger = 0
-
-      trace = sigma00 - sigma11 - sigma22 - sigma33
-      trans0 = u0*sigma00 - u1*sigma01 - u2*sigma02
-      trans1 = u0*sigma01 - u1*sigma11 - u2*sigma12
-      trans2 = u0*sigma02 - u1*sigma12 - u2*sigma22
-
-      if(abs(trace) .gt. absNumericalzero) then
-         trigger = 1
-         print*, "velocity shear tensor: violate traceless"
-         print*, "trace = ", trace
-      endif
-      if(abs(trans0) .gt. absNumericalzero) then
-         trigger = 1
-         print*, "velocity shear tensor: violate transversality"
-         print*, "trans0 = ", trans0
-      endif
-      if(abs(trans1) .gt. absNumericalzero) then
-         trigger = 1
-         print*, "velocity shear tensor: violate transversality"
-         print*, "trans1 = ", trans1
-      endif
-      if(abs(trans2) .gt. absNumericalzero) then
-         trigger = 1
-         print*, "velocity shear tensor: violate transversality"
-         print*, "trans2 = ", trans2
-      endif
-
-      if(trigger .eq. 1) then
-         print*, "velocity shear tensor is not right!"
-         print*, u0, u1, u2
-         print*, sigma00, sigma01, sigma02, 0.0d0
-         print*, sigma01, sigma11, sigma12, 0.0d0
-         print*, sigma02, sigma12, sigma22, 0.0d0
-         print*, 0.0d0, 0.0d0, 0.0d0, sigma33
-      endif
-
-      end Subroutine
-
-
-      Subroutine checkBulkPi(failed, II, JJ, Time, Ed, PL,
+      Subroutine checkBulkPi(failed, II, JJ, Time, PL,
      &  NXPhy0, NXPhy, NYPhy0, NYPhy, NX0, NX, NY0, NY, NZ0, NZ,
      &  PPI)
       ! Check the size of Bulk pressure
@@ -3384,15 +2966,13 @@ C----------------------------------------------------------------
       Integer failed, II, JJ ! (II,JJ): where it fails
       Double Precision Time
 
-      Double Precision Ed(NX0:NX,NY0:NY,NZ0:NZ)
       Double Precision PL(NX0:NX,NY0:NY,NZ0:NZ)
-
       Double Precision PPI(NX0:NX, NY0:NY, NZ0:NZ)     !Bulk pressure
 
       Integer I,J,K
       Double Precision :: pressure_scale, bulkPi_scale
       Double Precision :: absNumericalzero = 1D-2
-      Double Precision :: relNumericalzero = 1D-2  !Xsi_0 in Zhi's thesis
+      !Double Precision :: relNumericalzero = 1D-2  !Xsi_0 in Zhi's thesis
 
       Double Precision maxBulkPiRatio
       Common /maxBulkPiRatio/ maxBulkPiRatio
@@ -3425,35 +3005,5 @@ C----------------------------------------------------------------
       End Do
       End Do
       End Do
-
-      End Subroutine
-
-
-      Subroutine printDPc(id, I, J, Sd,
-     &  NXPhy0, NXPhy, NYPhy0, NYPhy, NX0, NX, NY0, NY, NZ0, NZ,
-     &  DPc00,DPc01,DPc02,DPc33,DPc11,DPc12,DPc22)
-      ! Print values of Pi
-
-      Implicit None
-
-      Integer NXPhy0,NXPhy,NYPhy0,NYPhy,NX0,NX,NY0,NY,NZ0,NZ,id,I,J
-
-      Double Precision Sd(NX0:NX, NY0:NY, NZ0:NZ)    !Stress Tensor
-
-      Double Precision DPc00(NX0:NX, NY0:NY, NZ0:NZ)    !Stress Tensor
-      Double Precision DPc01(NX0:NX, NY0:NY, NZ0:NZ)    !Stress Tensor
-      Double Precision DPc02(NX0:NX, NY0:NY, NZ0:NZ)    !Stress Tensor
-      Double Precision DPc33(NX0:NX, NY0:NY, NZ0:NZ)    !Stress Tensor
-      Double Precision DPc11(NX0:NX, NY0:NY, NZ0:NZ)    !Stress Tensor
-      Double Precision DPc12(NX0:NX, NY0:NY, NZ0:NZ)    !Stress Tensor
-      Double Precision DPc22(NX0:NX, NY0:NY, NZ0:NZ)    !Stress Tensor
-
-      Print*, "DPc00,DPc*Sd=", DPc00(I,J,NZ), DPc00(I,J,NZ0)*Sd(I,J,NZ)
-      Print*, "DPc01,DPc*Sd=", DPc01(I,J,NZ), DPc01(I,J,NZ0)*Sd(I,J,NZ)
-      Print*, "DPc02,DPc*Sd=", DPc02(I,J,NZ), DPc02(I,J,NZ0)*Sd(I,J,NZ)
-      Print*, "DPc11,DPc*Sd=", DPc11(I,J,NZ), DPc11(I,J,NZ0)*Sd(I,J,NZ)
-      Print*, "DPc12,DPc*Sd=", DPc12(I,J,NZ), DPc12(I,J,NZ0)*Sd(I,J,NZ)
-      Print*, "DPc22,DPc*Sd=", DPc22(I,J,NZ), DPc22(I,J,NZ0)*Sd(I,J,NZ)
-      Print*, "DPc33,DPc*Sd=", DPc33(I,J,NZ), DPc33(I,J,NZ0)*Sd(I,J,NZ)
 
       End Subroutine

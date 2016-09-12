@@ -5,17 +5,16 @@
 !=======================================================================
 
       Subroutine InitializeAll(NX0,NY0,NZ0,NX,NY,NZ,
-     &  NXPhy0,NYPhy0,NXPhy,NYPhy,T0,DX,DY,DZ,DT,MaxT,NDX,NDY,NDT,
+     &  NXPhy0,NYPhy0,NXPhy,NYPhy,T0,DX,DY,DZ,DT,
      &  TT00,TT01,TT02,ScT00,ScT01,ScT02,Vx,Vy,
      &  Pi00,Pi01,Pi02,Pi33,Pi11,Pi12,Pi22,
      &  PScT00,PScT01,PScT02,PScT33,
      &  PScT11,PScT12,PScT22,etaTtp0,etaTtp,PPI,PISc,XiTtP0,XiTtP,
      &  U0,U1,U2, PU0,PU1,PU2,SxyT,Stotal,StotalBv,StotalSv,
-     &  Ed,PL,Sd,Time,Temp0,Temp,CMu,T00,T01,T02,IAA,CofAA,PNEW,
-     &  TEM0,ATEM0,Rj,EPS0,V10,V20,AEPS0,AV10,AV20,TFREEZ,TFLAG)
+     &  Ed,PL,Sd,Time,Temp0,Temp,T00,T01,T02,IAA,CofAA,PNEW,
+     &  TEM0,ATEM0,Rj,EPS0,V10,V20,AEPS0,AV10,AV20,TFREEZ)
 
       Implicit Double Precision (A-H, O-Z)
-      Dimension X(NX0:NX), Y(NY0:NY), Z(NZ0:NZ)
 
       Dimension TT00(NX0:NX, NY0:NY, NZ0:NZ)
       Dimension ScT00(NX0:NX, NY0:NY, NZ0:NZ)
@@ -31,7 +30,6 @@
       Dimension T00(NX0:NX, NY0:NY, NZ0:NZ)! ideal T00  energy momentum tensor
       Dimension T01(NX0:NX, NY0:NY, NZ0:NZ)! ideal T01
       Dimension T02(NX0:NX, NY0:NY, NZ0:NZ)! ideal T02
-
 
       Dimension Vx(NX0:NX, NY0:NY, NZ0:NZ)
       Dimension Vy(NX0:NX, NY0:NY, NZ0:NZ)
@@ -75,7 +73,6 @@
 
       Dimension Temp0(NX0:NX, NY0:NY, NZ0:NZ) !Local Temperature
       Dimension Temp(NX0:NX, NY0:NY, NZ0:NZ) !Local Temperature
-      Dimension CMu(NX0:NX, NY0:NY, NZ0:NZ) !Local chemical potential
       Dimension IAA(NX0:NX, NY0:NY, NZ0:NZ)
       Dimension CofAA(0:2,NX0:NX, NY0:NY, NZ0:NZ)
 
@@ -85,46 +82,32 @@
       Dimension XiTtP(NX0:NX, NY0:NY, NZ0:NZ)  !extra (Xi T)/tau_Pi terms in full I-S bulk eqn 08/2008
       Dimension XiTtP0(NX0:NX, NY0:NY, NZ0:NZ)  !extra (Xi T)/tau_Pi in last time step
 
-
-      Dimension BEd(NX0:NX, NY0:NY, NZ0:NZ)
-
-      Dimension CC(NX0:NX, NY0:NY, NZ0:NZ) !Check
-
-C ******************** J.Liu changes**********************************
-C output T00, T11 and T22 debug**
-      Dimension TToo(NXPhy0:NXPhy, NYPhy0:NYPhy, NZ0:NZ)  !T00
-      Dimension TTXX(NXPhy0:NXPhy, NYPhy0:NYPhy, NZ0:NZ)  !T11
-      Dimension TTYY(NXPhy0:NXPhy, NYPhy0:NYPhy, NZ0:NZ)  !T22
-C ******************** J.Liu changes end******************************
-
-
 CSHEN==========================================================================
 C======output relaxation time for both shear and bulk viscosity================
       Dimension VRelaxT(NX0:NX, NY0:NY, NZ0:NZ) !viscous coeficient relaxation time
       Dimension VRelaxT0(NX0:NX, NY0:NY, NZ0:NZ) !viscous coeficient relaxation time
 CSHEN==========================================================================
 
-C----------------------------------------------------------------------------------------------
-      DIMENSION EPS0(NX0:NX,NY0:NY),EPS1(NX0:NX,NY0:NY) ! Energy density in previous and current step
-      DIMENSION TEM0(NX0:NX,NY0:NY),TEM1(NX0:NX,NY0:NY) ! Temperature density in previous and current step
+      ! energy density and temperature in previous step
+      DIMENSION EPS0(NX0:NX,NY0:NY)
+      DIMENSION TEM0(NX0:NX,NY0:NY)
 
       DIMENSION V10(NX0:NX,NY0:NY),V20(NX0:NX,NY0:NY)   !velocity in X Y in Previous step
-      DIMENSION V11(NX0:NX,NY0:NY),V21(NX0:NX,NY0:NY)   !velocity in X Y in current step
 
-      DIMENSION AEPS0(NX0:NX, NY0:NY),AEPS1(NX0:NX, NY0:NY) ! Energy density in previous and current step
-      DIMENSION ATEM0(NX0:NX, NY0:NY),ATEM1(NX0:NX, NY0:NY) ! Temperature density in previous and current step
-      DIMENSION AV10(NX0:NX, NY0:NY),AV20(NX0:NX, NY0:NY)   !velocity in X Y in Previous step
-      DIMENSION AV11(NX0:NX, NY0:NY),AV21(NX0:NX, NY0:NY)   !velocity in X Y in current step
+      ! energy density, temperature, velocity in previous step
+      DIMENSION AEPS0(NX0:NX, NY0:NY)
+      DIMENSION ATEM0(NX0:NX, NY0:NY)
+      DIMENSION AV10(NX0:NX, NY0:NY),AV20(NX0:NX, NY0:NY)
 
-      DIMENSION F0Pi00(NX0:NX,NY0:NY),FPi00(NX0:NX,NY0:NY)   !Stress Tensor in previous and current step
-      DIMENSION F0Pi01(NX0:NX,NY0:NY),FPi01(NX0:NX,NY0:NY)   !Stress Tensor in previous and current step
-      DIMENSION F0Pi02(NX0:NX,NY0:NY),FPi02(NX0:NX,NY0:NY)   !Stress Tensor in previous and current step
-      DIMENSION F0Pi11(NX0:NX,NY0:NY),FPi11(NX0:NX,NY0:NY)   !Stress Tensor in previous and current step
-      DIMENSION F0Pi12(NX0:NX,NY0:NY),FPi12(NX0:NX,NY0:NY)   !Stress Tensor in previous and current step
-      DIMENSION F0Pi22(NX0:NX,NY0:NY),FPi22(NX0:NX,NY0:NY)   !Stress Tensor in previous and current step
-      DIMENSION F0Pi33(NX0:NX,NY0:NY),FPi33(NX0:NX,NY0:NY)   !Stress Tensor in previous and current step
+      ! stress tensor in previous step
+      DIMENSION F0Pi00(NX0:NX,NY0:NY)
+      DIMENSION F0Pi01(NX0:NX,NY0:NY)
+      DIMENSION F0Pi02(NX0:NX,NY0:NY)
+      DIMENSION F0Pi11(NX0:NX,NY0:NY)
+      DIMENSION F0Pi12(NX0:NX,NY0:NY)
+      DIMENSION F0Pi22(NX0:NX,NY0:NY)
+      DIMENSION F0Pi33(NX0:NX,NY0:NY)
 
-      INTEGER TFLAG, EINS
       double precision, parameter :: HbarC = M_HBARC
 
 C--------------------------------------------------------------------------------------------------------
@@ -135,7 +118,6 @@ C-------------------------------------------------------------------------------
       common/Edec1/Edec1
 
       Common /Nsm/ Nsm
-      Common /Accu/Accu
 
       Common/R0Aeps/ R0,Aeps
 
@@ -147,23 +129,13 @@ C-------------------------------------------------------------------------------
 
       COMMON /IEin/ IEin     !  type of initialization  entropy/enrgy
 
-      Integer NN ! For initial anisotropy calcualtion
-      Double Precision XX, YY, TotalE, XC, YC, angle, RR
-      Double Precision XN(0:9), YN(0:9), Weight ! For initial anisotropy calcualtion
-      Double Precision XNP(0:9), YNP(0:9), WeightP ! XN' and YN', the one using r^n in the weight
-
       Common /ViscousC / ViscousC,VisBeta, IVisflag ! Related to Shear Viscosity
 
       Double Precision SEOSL7, PEOSL7, TEOSL7
-      Double Precision ss, ddt1, ddt2, ee1, ee2
       External SEOSL7
 
       Integer Initialpitensor
       Common/Initialpi/ Initialpitensor
-
-
-      Accu=3.0                  ! 3pt formula for derivative
-
 
 !------------- Freezeout energy density and temperature -----------------
        ee     = EDEC                    !GeV/fm^3
@@ -281,7 +253,7 @@ C====Input the initial condition from file====
 
 
 !---------- Then convert energy to pressure, entropy, temperature ------
-      call EntropyTemp3 (Ed,PL, Temp,CMu,Sd,
+      call EntropyTemp3 (Ed,PL, Temp,Sd,
      &         NX0,NY0,NZ0, NX,NY,NZ, NXPhy0,NYPhy0, NXPhy,NYPhy)
 
 
@@ -396,7 +368,7 @@ C       End If
      &  Pi00,Pi01,Pi02,Pi33,Pi11,Pi12,Pi22, PScT00,PScT01,PScT02,PScT33,
      &  PScT11,PScT12,PScT22,etaTtp0,etaTtp,  PPI,PISc, XiTtP0,XiTtP,
      &  U0,U1,U2, PU0,PU1,PU2,SxyT, Stotal,StotalBv,StotalSv,
-     &  Ed,PL,Sd,Temp0,Temp,CMu, T00,T01,T02, IAA,CofAA,Time,DX,DY,
+     &  Ed,PL,Sd,Temp0,Temp, T00,T01,T02, IAA,CofAA,Time,DX,DY,
      &  DZ,DT,NXPhy0,NYPhy0,NXPhy,NYPhy,NX0,NX,NY0,NY,NZ0,NZ,PNEW,NNEW)
 
     !EPS0 = 1.0d0
