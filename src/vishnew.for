@@ -79,6 +79,7 @@ C========= Inputting Parameters ===========================================
       ! initialization
       Read(1,*) T0               ! initial time [fm]
       Read(1,*) IEin             ! read initial condition as energy (0) or entropy (1) density
+      Read(1,*) InitialURead     ! read initial flow and viscous terms if not 0
 
       Read(1,*)
 
@@ -117,10 +118,6 @@ C========= Inputting Parameters ===========================================
       Read(1,*) VisBulkNorm      ! normalization for (zeta/s)(T) function
       Read(1,*) IRelaxBulk       ! bulk relaxation time: critical slowing down (0), constant (1), 1.5/(2*pi*T) (2), ?? (3), ?? (4)
       Read(1,*) BulkTau          ! constant bulk relaxation time for IRelaxBulk == 1
-
-      Read(1,*)
-
-      Read(1,*) InitialURead     ! read initial flow profile (currently broken)
 
       Close(1)
 C===========================================================================
@@ -196,8 +193,6 @@ C###############################################################################
 
       Dimension TT02(NX0:NX, NY0:NY, NZ0:NZ)
       Dimension ScT02(NX0:NX, NY0:NY, NZ0:NZ)
-
-      Dimension Rj(NX0:NX, NY0:NY, NZ0:NZ)   ! density
 
       Dimension T00(NX0:NX, NY0:NY, NZ0:NZ)! ideal T00  energy momentum tensor
       Dimension T01(NX0:NX, NY0:NY, NZ0:NZ)! ideal T01
@@ -330,7 +325,7 @@ C-------------------------------------------------------------------------------
      &  PScT11,PScT12,PScT22,etaTtp0,etaTtp,PPI,PISc,XiTtP0,XiTtP,
      &  U0,U1,U2, PU0,PU1,PU2,SxyT,Stotal,StotalBv,StotalSv,
      &  Ed,PL,Sd,Time,Temp0,Temp,T00,T01,T02,IAA,CofAA,PNEW,
-     &  TEM0,ATEM0,Rj,EPS0,V10,V20,AEPS0,AV10,AV20,TFREEZ)
+     &  TEM0,ATEM0,EPS0,V10,V20,AEPS0,AV10,AV20,TFREEZ)
 
       ! write thermodynamic freeze-out quantities to surface file
  901  format (a,f13.10)

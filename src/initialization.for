@@ -1,8 +1,4 @@
-! 02-17-2011: The code "Ed = Ed + 1D-10" added at the end of energy initialization.
-
 #include "defs.h"
-
-!=======================================================================
 
       Subroutine InitializeAll(NX0,NY0,NZ0,NX,NY,NZ,
      &  NXPhy0,NYPhy0,NXPhy,NYPhy,T0,DX,DY,DZ,DT,
@@ -12,7 +8,7 @@
      &  PScT11,PScT12,PScT22,etaTtp0,etaTtp,PPI,PISc,XiTtP0,XiTtP,
      &  U0,U1,U2, PU0,PU1,PU2,SxyT,Stotal,StotalBv,StotalSv,
      &  Ed,PL,Sd,Time,Temp0,Temp,T00,T01,T02,IAA,CofAA,PNEW,
-     &  TEM0,ATEM0,Rj,EPS0,V10,V20,AEPS0,AV10,AV20,TFREEZ)
+     &  TEM0,ATEM0,EPS0,V10,V20,AEPS0,AV10,AV20,TFREEZ)
 
       Implicit Double Precision (A-H, O-Z)
 
@@ -24,8 +20,6 @@
 
       Dimension TT02(NX0:NX, NY0:NY, NZ0:NZ)
       Dimension ScT02(NX0:NX, NY0:NY, NZ0:NZ)
-
-      Dimension Rj(NX0:NX, NY0:NY, NZ0:NZ)   ! density
 
       Dimension T00(NX0:NX, NY0:NY, NZ0:NZ)! ideal T00  energy momentum tensor
       Dimension T01(NX0:NX, NY0:NY, NZ0:NZ)! ideal T01
@@ -117,8 +111,6 @@ C-------------------------------------------------------------------------------
       common/Edec/Edec
       common/Edec1/Edec1
 
-      Common /Nsm/ Nsm
-
       Common/R0Aeps/ R0,Aeps
 
       Integer InitialURead   ! specify if read in more profiles
@@ -129,7 +121,8 @@ C-------------------------------------------------------------------------------
 
       COMMON /IEin/ IEin     !  type of initialization  entropy/enrgy
 
-      Common /ViscousC / ViscousC,VisBeta, IVisflag ! Related to Shear Viscosity
+      Common /ViscousC/ ViscousC, VisHRG, VisMin, VisSlope, VisBeta,
+     &                  IVisflag  ! Related to Shear Viscosity
 
       Double Precision SEOSL7, PEOSL7, TEOSL7
       External SEOSL7
@@ -137,232 +130,125 @@ C-------------------------------------------------------------------------------
       Integer Initialpitensor
       Common/Initialpi/ Initialpitensor
 
-!------------- Freezeout energy density and temperature -----------------
-       ee     = EDEC                    !GeV/fm^3
-       TFREEZ = TEOSL7(ee)              !GeV
+      ! Freezeout energy density and temperature
+      ee     = EDEC       ! GeV/fm^3
+      TFREEZ = TEOSL7(ee) ! GeV
 
-       Time = T0
+      Time = T0
 
-CSHEN===================================================================
-CSHEN=====Using a smaller time step for short initialization time \tau_0
-       if (Time.lt.0.59) then
-            DT = DT_2
-            write(*,*) 'Using a smaller time step for tau<0.6, DT=',DT
-       else
-            DT = DT_1
-       endif
-CSHEN====END============================================================
-
-C !---------------- Four flow velocity initialization---------------------
-      If (InitialURead .eq. 0) then
-        do 2560 K = NZ0,NZ
-        do 2560 I = NXPhy0-3,NXPhy+3
-        do 2560 J = NYPhy0-3,NYPhy+3
-
-          U1(I,J,K)  = 0.0d0
-          U2(I,J,K)  = 0.0d0
-          U0(I,J,K)  = sqrt(1.0+U1(I,J,K)**2+U2(I,J,K)**2)
-
-          PU1(I,J,K) = 0.0d0
-          PU2(I,J,K) = 0.0d0
-          PU0(I,J,K) = sqrt(1.0+PU1(I,J,K)**2+PU2(I,J,K)**2)
-2560   continue
-
+      ! use a smaller time step for short initialization time \tau_0
+      if (Time.lt.0.59) then
+        DT = DT_2
       else
-c---------------- Four flow velocity initialization---------------------
-c----------------changed by J.Liu---------------------------------------------------------
-        tolerance = 1D-10
-        ed_max = 0.0   !
-        u_regulated = 0.D0
-        OPEN(UNIT = 21, FILE = 'Initial/ux_profile_kln.dat',
-     &      STATUS = 'OLD', FORM = 'FORMATTED') ! read from Landau matched profile
-        OPEN(UNIT = 22, FILE = 'Initial/uy_profile_kln.dat',
-     &      STATUS = 'OLD', FORM = 'FORMATTED') ! read from Landau matched profile
+        DT = DT_1
+      endif
 
-c find maximum energy density to do the flow velocity regulation
-C         do 2607 K = NZ0,NZ
-C         do 2607 I = NXPhy0, NXPhy
-C         do 2607 J = NYPhy0, NYPhy
-C           if(Ed(I,J,K) .gt. ed_max) then
-C             ed_max = Ed(I,J,K)
-C c             write(*,*) ed_max, '  ', Ed(I,J,K)
-C           end if
-C 2607    continue
-C         write(*,*) 'Maximum energy density: ',ed_max,
-C      &   'tolerance for energy density: ', tolerance,
-C      &   'regulate u: ', u_regulated
-
-        do 2561 K = NZ0,NZ
-        do 2561 I = NXPhy0,NXPhy
-          read(21,*)  (U1(I,J,K),J=NYPhy0,NYPhy)
-          read(22,*)  (U2(I,J,K),J=NYPhy0,NYPhy)
-
-          do J=NYPhy0, NYPhy
-c Regulate dilute region where energy density is small but u_mu is very large
-c Ed(I,J,K) < Ed_max, dilute region
-!             if ((Ed(I,J,K)/ed_max) .lt. tolerance) then
-!               U1(I,J,K) = u_regulated
-!               U2(I,J,K) = u_regulated
-!             end if
-! Regulation ends
-
-            U0(I,J,K)  = sqrt(1.0+U1(I,J,K)**2+U2(I,J,K)**2)
-            PU1(I,J,K) = U1(I,J,K)
-            PU2(I,J,K) = U2(I,J,K)
-            PU0(I,J,K) = U0(I,J,K)
+      ! read initial energy/entropy density from file
+      if (IEin == 0) then
+        ! energy density
+        open(10, file='ed.dat', status='old')
+        read(10,*) Ed(NXPhy0:NXPhy, NYPhy0:NYPhy, NZ0)
+      else
+        ! entropy density
+        open(10, file='sd.dat', status='old')
+        read(10,*) Sd(NXPhy0:NXPhy, NYPhy0:NYPhy, NZ0)
+        ! convert to energy density via equation of state
+        do I=NXPhy0,NXPhy
+          do J=NYPhy0,NYPhy
+            call invertFunction_binary(
+     &             SEOSL7, 0D0, 3D3, 1d-16, 1D-6,
+     &             Sd(I, J, NZ0), Ed(I,J,NZ0))
           end do
-c          write(211,'(261(D24.14))')  (U1(I,J,NZ0), J=NYPhy0, NYPhy) !add this line for debug
-c          write(212,'(261(D24.14))')  (U2(I,J,NZ0), J=NYPhy0, NYPhy) !add this line for debug
-c
-c          write(210,'(261(D24.14))')  (U0(I,J,NZ0), J=NYPhy0, NYPhy) !add this line for debug
-2561   continue
-          close(21)
-          close(22)
-      Endif  ! InitialURead
+        end do
+      end if  ! IEin
 
-!------------------- Energy initialization -----------------------------
+      close(10)
 
-C====Input the initial condition from file====
-          open(2,file='initial.dat',status='old')
+      ! convert to fm^-4, add small constant (for numerical stability?)
+      Ed = Ed/HbarC + 1d-10
 
-          If (IEin==0) Then  ! read as energy density
-            do 2562 I = NXPhy0,NXPhy
-              read(2,*)  (Ed(I,J,NZ0), J=NYPhy0,NYPhy)
-2562        continue
-            Ed = Ed/HbarC  ! convert to fm^-4
-          Else If (IEin==1) Then  ! read as entropy density
-            Do I = NXPhy0,NXPhy
-              read(2,*)  (Sd(I,J,NZ0), J=NYPhy0,NYPhy)
-            End Do
-            Do I = NXPhy0,NXPhy
-            Do J = NYPhy0,NYPhy
-!              Call invertFunctionD(SEOSL7, 0D0, 315D0, 1D-3, 0D0,
-!     &                        Sd(I,J,NZ0), resultingEd)
-              Call invertFunction_binary(
-     &                 SEOSL7, 0D0, 3D3, 1d-16, 1D-6,
-     &                 Sd(I, J, NZ0), resultingEd)
-              Ed(I,J,NZ0) = resultingEd/HbarC  ! convert to fm^-4
-            End Do
-            End Do
-          End If ! IEin==0
-
-          close(2)
-
-
-      Ed = Ed + 1D-10
-
-
-!---------- Then convert energy to pressure, entropy, temperature ------
+      ! convert energy to pressure, entropy, temperature
       call EntropyTemp3 (Ed,PL, Temp,Sd,
      &         NX0,NY0,NZ0, NX,NY,NZ, NXPhy0,NYPhy0, NXPhy,NYPhy)
 
+      Temp0 = Temp
 
-      do 2571 K = NZ0,NZ
-      do 2571 I = NX0,NX
-      do 2571 J = NY0,NY
-        Temp0(I,J,K)   = Temp(I,J,K)
-        etaTtp0(I,J,K) = (Ed(I,J,K)+PL(I,J,K))*Temp(I,J,K)/(6.0*VisBeta) !extra (eta T)/tau_pi terms in I-S eqn 02/2008
- 2571 continue
+      ! extra (eta T)/tau_pi terms in I-S eqn 02/2008
+      etaTtp0 = (Ed + PL)*Temp / (6.0*VisBeta)
 
+      ! initialize flow velocity
+      if (InitialURead == 0) then
+        ! no initial flow
+        U0 = 1
+        U1 = 0
+        U2 = 0
+      else
+        ! read from files
+        open(21, file='u1.dat', status='old')
+        read(21,*) U1(NXPhy0:NXPhy, NYPhy0:NYPhy, NZ0)
+        close(21)
 
-!--------------- Viscous terms initialization --------------------------
+        open(22, file='u2.dat', status='old')
+        read(22,*) U2(NXPhy0:NXPhy, NYPhy0:NYPhy, NZ0)
+        close(22)
 
-      If (ViscousC>1D-6) Then
+        U0 = sqrt(1 + U1**2 + U2**2)
+      end if  ! InitialURead
 
-        if(Initialpitensor .eq. 1) then
-          call TransportPi6(Pi00,Pi01,Pi02,Pi33, Pi11,Pi12,Pi22,
-     &    PPI,Ed,Sd,PL,Temp,Temp0,U0,U1,U2,PU0,PU1,PU2, DX,DY,DZ,DT,
-     &    NX0,NY0,NZ0, NX,NY,NZ, Time, NXPhy0,NYPhy0, NXPhy,NYPhy,
-     &    VRelaxT,VRelaxT0)
-        else
-          Pi00 = 0.0d0
-          Pi01 = 0.0d0
-          Pi02 = 0.0d0
-          Pi11 = 0.0d0
-          Pi12 = 0.0d0
-          Pi22 = 0.0d0
-          Pi33 = 0.0d0
-        endif
+      PU0 = U0
+      PU1 = U1
+      PU2 = U2
 
-!-------------- Jia changes--------------------------------------------
-C Read in pi_mu nu and overwrite what TransportPi6() gives. Then scale this tensor
-        If(InitialURead .ne. 0) then
-          write(*,*) "Start to read in Pi_mu nu profile"
-            OPEN(200,file='Initial/Pi00_kln.dat',
-     &         status='old', FORM = 'FORMATTED')
-            OPEN(201,file='Initial/Pi01_kln.dat',
-     &         status='old', FORM = 'FORMATTED')
-            OPEN(202,file='Initial/Pi02_kln.dat',
-     &         status='old', FORM = 'FORMATTED')
-            OPEN(233,file='Initial/Pi33_kln.dat',
-     &         status='old', FORM = 'FORMATTED')
-            OPEN(211,file='Initial/Pi11_kln.dat',
-     &         status='old', FORM = 'FORMATTED')
-            OPEN(212,file='Initial/Pi12_kln.dat',
-     &         status='old', FORM = 'FORMATTED')
-            OPEN(222,file='Initial/Pi22_kln.dat',
-     &         status='old', FORM = 'FORMATTED')
-            OPEN(232,file='Initial/BulkPi_kln.dat',
-     &         status='old', FORM = 'FORMATTED')
-            do 206 I = NXPhy0,NXPhy
-              read(200,*)  (Pi00(I,J,NZ0), J=NYPhy0, NYPhy)
-              read(201,*)  (Pi01(I,J,NZ0), J=NYPhy0, NYPhy)
-              read(202,*)  (Pi02(I,J,NZ0), J=NYPhy0, NYPhy)
-              read(233,*)  (Pi33(I,J,NZ0), J=NYPhy0, NYPhy)
-              read(211,*)  (Pi11(I,J,NZ0), J=NYPhy0, NYPhy)
-              read(212,*)  (Pi12(I,J,NZ0), J=NYPhy0, NYPhy)
-              read(222,*)  (Pi22(I,J,NZ0), J=NYPhy0, NYPhy)
-              read(232,*)  (PPI(I,J,NZ0), J=NYPhy0, NYPhy)
-206        continue
-          close(200)
-          close(201)
-          close(202)
-          close(233)
-          close(211)
-          close(212)
-          close(222)
-          close(232)
-        Endif   ! InitalURead
+      ! initialize viscous terms
+      Pi00 = 0
+      Pi01 = 0
+      Pi02 = 0
+      Pi11 = 0
+      Pi12 = 0
+      Pi22 = 0
+      Pi33 = 0
+      PPI = 0
 
+      if (InitialURead /= 0) then
+        ! read from files
+        ! remember to convert to fm^-4
+        open(111, file='pi11.dat', status='old')
+        read(111,*) Pi11(NXPhy0:NXPhy, NYPhy0:NYPhy, NZ0)
+        close(111)
+        Pi11 = Pi11/HbarC
 
-!-------------- changes end--------------------------------------------
-      End If  !ViscousC>1D-6
+        open(112, file='pi12.dat', status='old')
+        read(112,*) Pi12(NXPhy0:NXPhy, NYPhy0:NYPhy, NZ0)
+        close(112)
+        Pi12 = Pi12/HbarC
 
-!CHANGES
-!   ---Zhi-Changes---
-!-------Regulate Pi(mu,nu) before adding it to T tensor
-C       If (ViscousC>1D-6) Then
-C         call regulatePi(Time,NX0,NY0,NZ0,NX,NY,NZ,
-C      &  NXPhy0,NXPhy,NYPhy0,NYPhy,
-C      &  Ed,PL,PPI,
-C      &  Pi00,Pi01,Pi02,Pi11,Pi12,Pi22,Pi33,Vx,Vy)
-C       End If
-!-------End of regulation---------
-!       ---Zhi-End---
+        open(122, file='pi22.dat', status='old')
+        read(122,*) Pi22(NXPhy0:NXPhy, NYPhy0:NYPhy, NZ0)
+        close(122)
+        Pi22 = Pi22/HbarC
 
-!------------- T(mu,nu) initialization ---------------------------------
+        ! compute remaining components of the shear tensor using
+        ! orgthogonality to the flow velocity and tracelessness
+        Pi00 = (U1*U1*Pi11 + U2*U2*Pi22 + 2*U1*U2*Pi12)/(U0*U0)
+        Pi01 = (U1*Pi11 + U2*Pi12)/U0
+        Pi02 = (U1*Pi12 + U2*Pi22)/U0
+        Pi33 = Pi00 - Pi11 - Pi22
 
-      do 2570 K = NZ0,NZ
-      do 2570 I = NXPhy0,NXPhy
-      do 2570 J = NYPhy0,NYPhy
+        ! bulk pressure is the deviation from ideal pressure
+        PPI = Ed/3 - PL
 
-         ee = Ed(i,j,k)*HbarC ! [ee] = GeV/fm^3
-         Cn = 0.0
-         pp = PEOSL7(ee)
-         ee = Ed(i,j,k)
-         pp = pp/HbarC ! [pp] -> fm^(-4)
-         BulkPr = PPI(I,J,K)
-         epU0   = (ee+pp+BulkPr)*U0(i,j,k)
+      else if (Initialpitensor == 1) then
+        ! initialize to Navier-Stokes
+        call TransportPi6(Pi00,Pi01,Pi02,Pi33, Pi11,Pi12,Pi22,
+     &  PPI,Ed,Sd,PL,Temp,Temp0,U0,U1,U2,PU0,PU1,PU2, DX,DY,DZ,DT,
+     &  NX0,NY0,NZ0, NX,NY,NZ, Time, NXPhy0,NYPhy0, NXPhy,NYPhy,
+     &  VRelaxT,VRelaxT0)
+      end if
 
-         TT00(i,j,k) = (epU0*U0(i,j,k)+Pi00(i,j,k)-pp-BulkPr)*Time
-         TT01(i,j,k) = (epU0*U1(i,j,k)+Pi01(i,j,k))*Time
-         TT02(i,j,k) = (epU0*U2(i,j,k)+Pi02(i,j,k))*Time
-         Rj(i,j,k)   = 0.0
-
-
-2570  continue
-
-
+      ! initialize T^\mu\nu
+      TT00 = ((Ed + PL + PPI)*U0*U0 + Pi00 - PL - PPI)*Time
+      TT01 = ((Ed + PL + PPI)*U0*U1 + Pi01)*Time
+      TT02 = ((Ed + PL + PPI)*U0*U2 + Pi02)*Time
 
        call dpSc8(TT00,TT01,TT02,ScT00,ScT01,ScT02,Vx,Vy,
      &  Pi00,Pi01,Pi02,Pi33,Pi11,Pi12,Pi22, PScT00,PScT01,PScT02,PScT33,
@@ -371,7 +257,6 @@ C       End If
      &  Ed,PL,Sd,Temp0,Temp, T00,T01,T02, IAA,CofAA,Time,DX,DY,
      &  DZ,DT,NXPhy0,NYPhy0,NXPhy,NYPhy,NX0,NX,NY0,NY,NZ0,NZ,PNEW,NNEW)
 
-    !EPS0 = 1.0d0
       DO 2600 J = NYPhy0-2,NYPhy+2
       DO 2600 I = NXPhy0-2,NXPhy+2
         EPS0(I,J) = Ed(I,J,NZ0)*HbarC
@@ -379,16 +264,13 @@ C       End If
         V20(I,J)  = U2(I,J,NZ0)/U0(I,J,NZ0)
         TEM0(I,J) = Temp(I,J,NZ0)*HbarC
 
-        If (ViscousC>1D-6) Then
-
-          F0Pi00(I,J) = Pi00(I,J,NZ0)
-          F0Pi01(I,J) = Pi01(I,J,NZ0)
-          F0Pi02(I,J) = Pi02(I,J,NZ0)
-          F0Pi11(I,J) = Pi11(I,J,NZ0)
-          F0Pi12(I,J) = Pi12(I,J,NZ0)
-          F0Pi22(I,J) = Pi22(I,J,NZ0)
-          F0Pi33(I,J) = Pi33(I,J,NZ0)
-        End If
+        F0Pi00(I,J) = Pi00(I,J,NZ0)
+        F0Pi01(I,J) = Pi01(I,J,NZ0)
+        F0Pi02(I,J) = Pi02(I,J,NZ0)
+        F0Pi11(I,J) = Pi11(I,J,NZ0)
+        F0Pi12(I,J) = Pi12(I,J,NZ0)
+        F0Pi22(I,J) = Pi22(I,J,NZ0)
+        F0Pi33(I,J) = Pi33(I,J,NZ0)
 
 2600  CONTINUE
 
@@ -399,6 +281,5 @@ C       End If
                 AV20(I,J)  = U2(I,J,NZ0)/U0(I,J,NZ0)
                 ATEM0(I,J) = Temp(I,J,NZ0)
 2610        CONTINUE
-
 
       End Subroutine

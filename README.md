@@ -50,15 +50,21 @@ Parameters may also be passed on the command line with a `key=value` syntax, e.g
 
 ### Running initial conditions
 
-Place a file `initial.dat` in the `vishnew` folder and run the executable.
+By default (with option `InitialURead = 1`), the initial energy density, flow, and shear viscous tensor must be provided.
+Place the following files in the `vishnew` folder:
 
-The initial file must be a square block-style grid of energy or entropy density, with no other content in the file (comments will not work).
+- `ed.dat` - energy density
+- `u{1,2}.dat` - flow velocity in x and y directions
+- `pi{11,12,22}.dat` - components of the shear tensor (the remaining components are computed internally)
+- The bulk pressure is computed internally as the deviation from ideal pressure, Π = e/3 - p(e).
+
+If `InitialURead = 0`, only the energy density is required.
+Alternatively, set `IEin = 1` and provide the entropy density `sd.dat`.
+
+All files must contain square block-style grids and nothing else (comments will not work).
 The grid size depends on the `LS` (lattice size) parameter: grid size = 2\*LS + 1.
 The grid step is hard-coded to 0.1 fm.
-So e.g. with the default `LS = 130`, the initial condition must be a 261x261 grid from -13 to +13 fm.
-
-If the `IEin` parameter is set to 1, the initial condition will be interpreted as entropy density;
-if `IEin = 0`, it will be interpreted as energy density.
+So e.g. with the default `LS = 130`, the grid is 261x261 from -13 to +13 fm.
 
 During time evolution, the code prints out a line for each timestep
 
