@@ -29,10 +29,10 @@ C   [5] H.Song, Ph.D thesis 2009, arXiv:0908.3656 [nucl-th].
        Integer NX, NY, NZ
        Integer NX0,NY0, NZ0         ! dimension
 
-      double precision :: ViscousC, VisHRG, VisMin, VisSlope, VisBeta
-      Integer :: IVisflag=0          ! Flag for temperature dependent eta/s, 0: constant, 1: temperature dependent, which is defined in function ViscousCTemp(T)
-      Common /ViscousC/ ViscousC, VisHRG, VisMin, VisSlope, VisBeta,
-     &                  IVisflag  ! Related to Shear Viscosity
+      double precision :: ViscousC, VisHRG, VisMin, VisSlope,
+     &                    VisCurv, VisBeta
+      common /ViscousC/ ViscousC, VisHRG, VisMin, VisSlope,
+     &                  VisCurv, VisBeta  ! Related to Shear Viscosity
 
 C *******************************J.Liu changes*******************************
       Integer InitialURead
@@ -80,6 +80,7 @@ C========= Inputting Parameters ===========================================
       Read(1,*) T0               ! initial time [fm]
       Read(1,*) IEin             ! read initial condition as energy (0) or entropy (1) density
       Read(1,*) InitialURead     ! read initial flow and viscous terms if not 0
+      Read(1,*) Initialpitensor  ! initialize shear tensor with zeros (0) or by Navier-Stokes (1)
 
       Read(1,*)
 
@@ -103,12 +104,11 @@ C========= Inputting Parameters ===========================================
       Read(1,*)
 
       ! shear viscosity
-      Read(1,*) ViscousC         ! shear viscosity eta/s
-      Read(1,*) IVisflag         ! flag for temperature-dependent (eta/s)(T)
       Read(1,*) VisHRG           ! constant eta/s below Tc
+      Read(1,*) VisMin           ! eta/s at Tc
       Read(1,*) VisSlope         ! slope of (eta/s)(T) above Tc [GeV^-1]
+      Read(1,*) VisCurv          ! curvature of (eta/s)(T) above Tc (see readme)
       Read(1,*) VisBeta          ! shear relaxation time tau_pi = 6*VisBeta*eta/(sT)
-      Read(1,*) Initialpitensor  ! initialize shear tensor with zeros (0) or by Navier-Stokes (1)
 
       Read(1,*)
 
@@ -130,7 +130,7 @@ C===========================================================================
       Call readInputFromCML2() ! check CML to see if there are any modifications on parameters
 
       ! set minimum shear viscosity for use in ViscousCTemp()
-      VisMin = ViscousC
+      ! VisMin = ViscousC
 
 C ***************************J.Liu changes*******************************
       if(VisBulkNorm < 1e-30) then ! when VisBulkNorm reduces the zeta/s to 0
@@ -300,8 +300,10 @@ C-------------------------------------------------------------------------------
 
       COMMON /IEin/ IEin     !  type of initialization  entropy/energy
 
-      Common /ViscousC/ ViscousC, VisHRG, VisMin, VisSlope, VisBeta,
-     &                  IVisflag  ! Related to Shear Viscosity
+      double precision :: ViscousC, VisHRG, VisMin, VisSlope,
+     &                    VisCurv, VisBeta
+      common /ViscousC/ ViscousC, VisHRG, VisMin, VisSlope,
+     &                  VisCurv, VisBeta  ! Related to Shear Viscosity
       Common /ViscousBulk/ Visbulk,BulkTau,IRelaxBulk,IVisBulkFlag  ! Related to bulk Viscosity
 
       double precision :: VisBulkNorm
@@ -1130,33 +1132,34 @@ C#####################################################
      &  Time,DX,DY,DT,NX0,NY0,NZ0, NX,NY,NZ, NXPhy0,NYPhy0, NXPhy,NYPhy)
 !--------call visous coeficient from from entropy
 !--------bulk viscosity are included
-        Implicit Double Precision (A-H, O-Z)
+      Implicit Double Precision (A-H, O-Z)
 
-       Dimension Ed(NX0:NX, NY0:NY, NZ0:NZ) !energy density
-       Dimension Sd(NX0:NX, NY0:NY, NZ0:NZ) !entropy density
-       Dimension PL(NX0:NX, NY0:NY, NZ0:NZ) !pressure density
-       Dimension Temp(NX0:NX, NY0:NY, NZ0:NZ) !Local Temperature
+      Dimension Ed(NX0:NX, NY0:NY, NZ0:NZ) !energy density
+      Dimension Sd(NX0:NX, NY0:NY, NZ0:NZ) !entropy density
+      Dimension PL(NX0:NX, NY0:NY, NZ0:NZ) !pressure density
+      Dimension Temp(NX0:NX, NY0:NY, NZ0:NZ) !Local Temperature
 
-       Dimension VCoefi(NX0:NX, NY0:NY, NZ0:NZ) !viscous coeficient shear viscosity eta
-       Dimension VCBeta(NX0:NX, NY0:NY, NZ0:NZ) !viscous coeficient Beta2
-       Dimension VRelaxT(NX0:NX, NY0:NY, NZ0:NZ) !viscous coeficient relaxation time
-       Dimension etaTtp(NX0:NX, NY0:NY, NZ0:NZ)  !extra (eta T)/tau_pi terms in I-S eqn 02/2008
+      Dimension VCoefi(NX0:NX, NY0:NY, NZ0:NZ) !viscous coeficient shear viscosity eta
+      Dimension VCBeta(NX0:NX, NY0:NY, NZ0:NZ) !viscous coeficient Beta2
+      Dimension VRelaxT(NX0:NX, NY0:NY, NZ0:NZ) !viscous coeficient relaxation time
+      Dimension etaTtp(NX0:NX, NY0:NY, NZ0:NZ)  !extra (eta T)/tau_pi terms in I-S eqn 02/2008
 
-       Dimension VBulk(NX0:NX, NY0:NY, NZ0:NZ) !viscous coeficient-bulk vicosity \xi
-       Dimension VRelaxT0(NX0:NX, NY0:NY, NZ0:NZ) !viscous coeficient relaxation time \tau_PI
-       Dimension XiTtP(NX0:NX, NY0:NY, NZ0:NZ)  !extra (Xi T)/tau_Pi terms in full I-S bulk eqn 08/2008
+      Dimension VBulk(NX0:NX, NY0:NY, NZ0:NZ) !viscous coeficient-bulk vicosity \xi
+      Dimension VRelaxT0(NX0:NX, NY0:NY, NZ0:NZ) !viscous coeficient relaxation time \tau_PI
+      Dimension XiTtP(NX0:NX, NY0:NY, NZ0:NZ)  !extra (Xi T)/tau_Pi terms in full I-S bulk eqn 08/2008
 
-       Integer :: IVisflag
-       Integer :: IVisBulkFlag
+      Integer :: IVisBulkFlag
 
-       Common /ViscousC/ ViscousC, VisHRG, VisMin, VisSlope, VisBeta,
-     &                   IVisflag  ! Related to Shear Viscosity
-       Common /ViscousBulk/ Visbulk, BulkTau,IRelaxBulk, IVisBulkFlag  ! Related to bulk Viscous Coefficient Xi and beta0
+      double precision :: ViscousC, VisHRG, VisMin, VisSlope,
+     &                    VisCurv, VisBeta
+      common /ViscousC/ ViscousC, VisHRG, VisMin, VisSlope,
+     &                  VisCurv, VisBeta  ! Related to Shear Viscosity
+      Common /ViscousBulk/ Visbulk, BulkTau,IRelaxBulk, IVisBulkFlag  ! Related to bulk Viscous Coefficient Xi and beta0
 
-       Common /Tde/ Tde, Rdec1, Rdec2,TempIni !Decoupling Temperature !decoupling radius
-       Common/R0Aeps/ R0,Aeps
-       Common/R0Bdry/ R0Bdry
-       double precision, parameter :: HbarC = M_HBARC
+      Common /Tde/ Tde, Rdec1, Rdec2,TempIni !Decoupling Temperature !decoupling radius
+      Common/R0Aeps/ R0,Aeps
+      Common/R0Bdry/ R0Bdry
+      double precision, parameter :: HbarC = M_HBARC
 
       double precision :: VisBulkNorm
       Integer ViscousEqsType
@@ -1169,13 +1172,10 @@ C#####################################################
       yy=DY*J
       rr=sqrt(xx**2+yy**2)
       ff=1.0/(Dexp((rr-R0Bdry)/Aeps)+1.0)
-CSHEN==========================================================================
-C=======for temperature dependent \eta/s=======================================
-      if(IVisflag.eq.1) then
-        ViscousC = ViscousCTemp(Temp(i,j,k))      !CSHEN: for temperature dependent \eta/s
-      endif
-CSHEN======end=================================================================
-!------------- for shear pressure -----------
+
+      ! temperature-dependent eta/s
+      ViscousC = ViscousCTemp(Temp(i,j,k))
+
       If (ViscousC.ge.1D-6) then
         VCoefi(i,j,k)=ViscousC*Sd(i,j,k)
         VCBeta(i,j,k)=1.D0/dmax1(Ed(i,j,k)+PL(i,j,k),1e-30)
@@ -1262,20 +1262,23 @@ CSHEN======end=================================================================
 CSHEN======================================================================
 C====eta/s dependent on local temperature==================================
 
-      double precision function ViscousCTemp(TT)
-      Implicit double precision (A-H, O-Z)
+      double precision function ViscousCTemp(T_fm)
+      double precision :: T_fm, T
+
       double precision, parameter :: HbarC = M_HBARC
+      double precision, parameter :: Tc = .154d0
 
-      Common /ViscousC/ ViscousC, VisHRG, VisMin, VisSlope, VisBeta,
-     &                  IVisflag  ! Related to Shear Viscosity
+      double precision :: ViscousC, VisHRG, VisMin, VisSlope,
+     &                    VisCurv, VisBeta
+      common /ViscousC/ ViscousC, VisHRG, VisMin, VisSlope,
+     &                  VisCurv, VisBeta  ! Related to Shear Viscosity
 
-      TT_GeV = TT*HbarC
-      Ttr = 0.154
+      T = T_fm*HbarC
 
-      if(TT_GeV .gt. Ttr) then
-          ViscousCTemp = VisMin + VisSlope*(TT_GeV - Ttr)
+      if(T > Tc) then
+        ViscousCTemp = VisMin + VisSlope*(T - Tc) * (T/Tc)**VisCurv
       else
-          ViscousCTemp = VisHRG
+        ViscousCTemp = VisHRG
       endif
 
       return
@@ -1593,11 +1596,12 @@ C-------------------------------------------
         Dimension IAA(NX0:NX, NY0:NY, NZ0:NZ)
         Dimension CofAA(0:2,NX0:NX, NY0:NY, NZ0:NZ)
 
-       Integer :: IVisflag
        Integer :: IVisBulkFlag
 
-       Common /ViscousC/ ViscousC, VisHRG, VisMin, VisSlope, VisBeta,
-     &                   IVisflag  ! Related to Shear Viscosity
+      double precision :: ViscousC, VisHRG, VisMin, VisSlope,
+     &                    VisCurv, VisBeta
+      common /ViscousC/ ViscousC, VisHRG, VisMin, VisSlope,
+     &                  VisCurv, VisBeta  ! Related to Shear Viscosity
        Common /ViscousBulk/ Visbulk, BulkTau,IRelaxBulk, IVisBulkFlag
 
         DIMENSION PNEW(NNEW)!something related to root finding

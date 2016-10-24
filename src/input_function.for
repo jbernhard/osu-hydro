@@ -37,11 +37,12 @@
       Integer IEin
       Common /IEin/ IEin     !  type of initialization  entropy/enrgy
 
-      Double Precision ViscousC, VisBeta, VisHRG, VisMin, VisSlope,
-     &                 Visbulk, BulkTau, IRelaxBulk
-      Integer IVisflag
-      Common /ViscousC/ ViscousC, VisHRG, VisMin, VisSlope, VisBeta,
-     &                  IVisflag  ! Related to Shear Viscosity
+      double precision :: ViscousC, VisHRG, VisMin, VisSlope,
+     &                    VisCurv, VisBeta
+      common /ViscousC/ ViscousC, VisHRG, VisMin, VisSlope,
+     &                  VisCurv, VisBeta  ! Related to Shear Viscosity
+
+      double precision :: Visbulk, BulkTau, IRelaxBulk
       Integer IVisBulkFlag
       Common /ViscousBulk/ Visbulk, BulkTau, IRelaxBulk, IVisBulkFlag ! Related to bulk Visousity
 
@@ -108,23 +109,26 @@
         If (varName=="e_d") EDec=DResult
 
         If (varName=="t0") T0=DResult ! initial proper time tau_0, in fm/c
-        If (varName=="viscousc") ViscousC=DResult ! variations for shear viscosities/entropy density ratio
-        If (varName=="es") ViscousC=DResult
-        If (varName=="e_s") ViscousC=DResult
-        If (varName=="etas") ViscousC=DResult
-        If (varName=="eta_s") ViscousC=DResult
-        If (varName=="vis") ViscousC=DResult
-        If (varName=="viscousc") ViscousC=DResult
 
         If (varName=="vishrg") VisHRG=DResult
         If (varName=="etashrg") VisHRG=DResult
         If (varName=="etas_hrg") VisHRG=DResult
         If (varName=="eta_s_hrg") VisHRG=DResult
 
+        If (varName=="vismin") VisMin=DResult
+        If (varName=="etasmin") VisMin=DResult
+        If (varName=="etas_min") VisMin=DResult
+        If (varName=="eta_s_min") VisMin=DResult
+
         If (varName=="visslope") VisSlope=DResult
         If (varName=="etasslope") VisSlope=DResult
         If (varName=="etas_slope") VisSlope=DResult
         If (varName=="eta_s_slope") VisSlope=DResult
+
+        If (varName=="viscurv") VisCurv=DResult
+        If (varName=="etascurv") VisCurv=DResult
+        If (varName=="etas_curv") VisCurv=DResult
+        If (varName=="eta_s_curv") VisCurv=DResult
 
         If (varName=="ils") LS=IResult ! Lattice size and R0Boudary
         If (varName=="r0") R0Bdry=DResult
@@ -138,7 +142,6 @@
 
         If (varName=="initialuread") InitialURead=IResult ! read in initial flow velocity profiles
 
-        If (varName=="visflag") IVisflag=IResult ! Flag for temperature dependent eta/s(T)
         If (varName=="initialpitensor") Initialpitensor=IResult ! initialization of pi tensor
 
         If (varName=="visbulknorm") VisBulkNorm=DResult ! VisBulkNorm, use for temperature dependent zeta/s(T)
@@ -256,10 +259,10 @@
       Double Precision VCoefi(NX0:NX, NY0:NY, NZ0:NZ) !viscous coeficient shear viscosity eta
       Double Precision RMin, PiEPRatio, SigmaLargeness, EAndP
 
-      Integer IVisflag
-      Double Precision ViscousC, VisBeta, VisHRG, VisMin, VisSlope
-      Common /ViscousC/ ViscousC, VisHRG, VisMin, VisSlope, VisBeta,
-     &                  IVisflag  ! Related to Shear Viscosity
+      double precision :: ViscousC, VisHRG, VisMin, VisSlope,
+     &                    VisCurv, VisBeta
+      common /ViscousC/ ViscousC, VisHRG, VisMin, VisSlope,
+     &                  VisCurv, VisBeta  ! Related to Shear Viscosity
 
       Double Precision PiRatio ! used to determine R0; within r<R0, Pi/(e+p) < PiRatio
       Common /PiRatio/ PiRatio ! should already be setuped in prepareInputFun function
