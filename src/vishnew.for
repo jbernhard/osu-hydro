@@ -20,48 +20,45 @@ C   [5] H.Song, Ph.D thesis 2009, arXiv:0908.3656 [nucl-th].
 
 #include "defs.h"
 
-       Program Main
+      Program Main
 
-       Implicit Double Precision (A-H, O-Z)
-       Integer LS
-       Integer NXPhy0, NYPhy0
-       Integer NXPhy, NYPhy
-       Integer NX, NY, NZ
-       Integer NX0,NY0, NZ0         ! dimension
+      Implicit Double Precision (A-H, O-Z)
+      Integer LS
+      Integer NXPhy0, NYPhy0
+      Integer NXPhy, NYPhy
+      Integer NX, NY, NZ
+      Integer NX0,NY0, NZ0         ! dimension
 
-      double precision :: ViscousC, VisHRG, VisMin, VisSlope,
-     &                    VisCurv, VisBeta
-      common /ViscousC/ ViscousC, VisHRG, VisMin, VisSlope,
-     &                  VisCurv, VisBeta  ! Related to Shear Viscosity
-
-C *******************************J.Liu changes*******************************
       Integer InitialURead
       Common/LDInitial/ InitialURead  ! IintURead =1 read initial velocity profile
 
       Integer Initialpitensor
       Common/Initialpi/ Initialpitensor
 
-      double precision :: VisBulkNorm
-      Integer ViscousEqsType
-      Common /ViscousEqsControl/ VisBulkNorm, ViscousEqsType
+      double precision :: VisHRG, VisMin, VisSlope, VisCurv, VisBeta
+      common /VisShear/ VisHRG, VisMin, VisSlope, VisCurv, VisBeta
 
-      Integer :: IVisBulkFlag
-      Common /ViscousBulk/ Visbulk, BulkTau,IRelaxBulk, IVisBulkFlag ! Related to bulk Visousity
-C *******************************J.Liu changes end***************************
+      double precision :: VisBulkNorm, BulkTau
+      integer :: IRelaxBulk
+      common /VisBulk/ VisBulkNorm, BulkTau, IRelaxBulk
 
-       Common /LS/ LS
-       Common /R0Bdry/ R0Bdry
+      logical :: VisNonzero, VisBulkNonzero
+      integer :: ViscousEqsType
+      common /VisControl/ VisNonzero, VisBulkNonzero, ViscousEqsType
 
-       COMMON /IEin/ IEin     !  type of initialization  entropy/enrgy
+      Common /LS/ LS
+      Common /R0Bdry/ R0Bdry
 
-       Common/dxdy/ ddx, ddy
-       Common /TT0/ TT0   !T0
+      COMMON /IEin/ IEin     !  type of initialization  entropy/enrgy
 
-       Common /Timestep/ DT_1, DT_2
+      Common/dxdy/ ddx, ddy
+      Common /TT0/ TT0   !T0
 
-       common/Edec/Edec    !decoupling energy density
+      Common /Timestep/ DT_1, DT_2
 
-       Integer MaxT
+      common/Edec/Edec    !decoupling energy density
+
+      Integer MaxT
 
       Common /DXY/ DX,DY
       Integer NDX, NDY, NDT ! used in Freeze-out subroutine
@@ -113,8 +110,6 @@ C========= Inputting Parameters ===========================================
       Read(1,*)
 
       ! bulk viscosity
-      Read(1,*) VisBulk          ! Xi/s = VisBulk * (Xi/s)_min
-      Read(1,*) IVisBulkFlag     ! flag for temperature-dependent (zeta/s)(T)
       Read(1,*) VisBulkNorm      ! normalization for (zeta/s)(T) function
       Read(1,*) IRelaxBulk       ! bulk relaxation time: critical slowing down (0), constant (1), 1.5/(2*pi*T) (2), ?? (3), ?? (4)
       Read(1,*) BulkTau          ! constant bulk relaxation time for IRelaxBulk == 1
@@ -129,14 +124,11 @@ C===========================================================================
 
       Call readInputFromCML2() ! check CML to see if there are any modifications on parameters
 
-      ! set minimum shear viscosity for use in ViscousCTemp()
-      ! VisMin = ViscousC
 
-C ***************************J.Liu changes*******************************
-      if(VisBulkNorm < 1e-30) then ! when VisBulkNorm reduces the zeta/s to 0
-        Visbulk = 0.D0
-      endif
-C ***************************J.Liu changes end***************************
+      ! determine if shear and bulk viscosities are nonzero
+      VisNonzero = (VisHRG > 1d-6) .or. (VisMin > 1d-6)
+     &             .or.(VisSlope > 1d-6)
+      VisBulkNonzero = VisBulkNorm > 1d-6
 
       ddx=dx
       ddy=dy
@@ -300,15 +292,16 @@ C-------------------------------------------------------------------------------
 
       COMMON /IEin/ IEin     !  type of initialization  entropy/energy
 
-      double precision :: ViscousC, VisHRG, VisMin, VisSlope,
-     &                    VisCurv, VisBeta
-      common /ViscousC/ ViscousC, VisHRG, VisMin, VisSlope,
-     &                  VisCurv, VisBeta  ! Related to Shear Viscosity
-      Common /ViscousBulk/ Visbulk,BulkTau,IRelaxBulk,IVisBulkFlag  ! Related to bulk Viscosity
+      double precision :: VisHRG, VisMin, VisSlope, VisCurv, VisBeta
+      common /VisShear/ VisHRG, VisMin, VisSlope, VisCurv, VisBeta
 
-      double precision :: VisBulkNorm
-      Integer ViscousEqsType
-      Common /ViscousEqsControl/ VisBulkNorm, ViscousEqsType
+      double precision :: VisBulkNorm, BulkTau
+      integer :: IRelaxBulk
+      common /VisBulk/ VisBulkNorm, BulkTau, IRelaxBulk
+
+      logical :: VisNonzero, VisBulkNonzero
+      integer :: ViscousEqsType
+      common /VisControl/ VisNonzero, VisBulkNonzero, ViscousEqsType
 
       Double Precision SEOSL7, PEOSL7, TEOSL7
       External SEOSL7
@@ -404,10 +397,9 @@ CSHEN====END====================================================================
 3006    Continue
 
       ! Initialize PiXXRegulated and backup oldTTXX
-      if (ViscousC>1D-6 .or. VisBulk > 1D-6) then
+      if (VisNonzero .or. VisBulkNonzero) then
 
-        !shear
-        If (ViscousC>1D-6) Then
+        If (VisNonzero) Then
           Pi00Regulated = Pi00
           Pi01Regulated = Pi01
           Pi02Regulated = Pi02
@@ -426,8 +418,7 @@ CSHEN====END====================================================================
           Pi33 = 0D0
         endif
 
-        !bulk
-        if(VisBulk > 1D-6) then
+        if (VisBulkNonzero) then
           PPIRegulated = PPI
           iRegulateCounterBulkPi = 0
         else
@@ -444,7 +435,7 @@ CSHEN====END====================================================================
 
         DIFFC = 0.125D0
         !DIFFC = 0D0
-        if(ViscousC > 1D-6) then
+        if (VisNonzero) then
          call UPShasta2 (Pi01,Vx,Vy,PScT01, NX0,NX,NY0,NY,NZ0,NZ, 0,0,  !Pi01
      &            DT,DX,DY, NXPhy0,NYPhy0,  NXPhy,NYPhy,-1,1, DIFFC)
          call UPShasta2 (Pi02,Vx,Vy,PScT02, NX0,NX,NY0,NY,NZ0,NZ, 0,0,
@@ -461,7 +452,7 @@ CSHEN====END====================================================================
      &             DT,DX,DY, NXPhy0,NYPhy0,  NXPhy,NYPhy,1,1, DIFFC)
         endif
 
-        if(VisBulk > 1D-6) then
+        if (VisBulkNonzero) then
           call UPShasta2 (PPI,Vx,Vy,PISc, NX0,NX,NY0,NY,NZ0,NZ, 0,0,
      &             DT,DX,DY, NXPhy0,NYPhy0,  NXPhy,NYPhy,1,1, DIFFC)
         endif
@@ -487,7 +478,7 @@ CSHEN====END====================================================================
         End Do
         End Do
 
-        if(ViscousC > 1D-6) then
+        if (VisNonzero) then
          Do ! pi evolution
            call checkPiAll(iFailed, II, JJ, Time, Vx, Vy, Ed, PL,
      &     NXPhy0, NXPhy, NYPhy0, NYPhy, NX0, NX, NY0, NY, NZ0, NZ,
@@ -504,7 +495,7 @@ CSHEN====END====================================================================
          End Do ! pi evolution
         endif
 
-        if(VisBulk > 1D-6) then
+        if (VisBulkNonzero) then
           Do ! BulkPi evolution
             call checkBulkPi(iFailed, II, JJ, Time, PL,
      &      NXPhy0, NXPhy, NYPhy0, NYPhy, NX0, NX, NY0, NY, NZ0, NZ,
@@ -534,7 +525,7 @@ CSHEN====END====================================================================
      &  Ed,PL,Sd,Temp0,Temp, T00,T01,T02, IAA,CofAA,Time,DX,DY,
      &  DZ,DT,NXPhy0,NYPhy0,NXPhy,NYPhy,NX0,NX,NY0,NY,NZ0,NZ,PNEW,NNEW)  !PNEW NNEW  related to root finding
 
-      End If ! If (ViscousC>1D-6 .or. VisBulk > 1D-6) Then
+      End If  ! VisNonzero .or. VisBulkNonzero
 
 
       ! T(mu,nu) evolution
@@ -586,7 +577,7 @@ C      NDT = 5
             V21(I,J)  = Vy(I,J,NZ0)
             TEM1(I,J) = Temp(I,J,NZ0)*HbarC
 
-            If (ViscousC>1D-6) Then
+            If (VisNonzero) Then
               FPi00(I,J) = Pi00(I,J,NZ0)
               FPi01(I,J) = Pi01(I,J,NZ0)
               FPi02(I,J) = Pi02(I,J,NZ0)
@@ -595,7 +586,7 @@ C      NDT = 5
               FPi22(I,J) = Pi22(I,J,NZ0)
               FPi33(I,J) = Pi33(I,J,NZ0)
             End If
-            if(VisBulk > 1D-6) then
+            if (VisBulkNonzero) then
               FPPI(I,J) = PPI(I,J,NZ0)
             endif
 
@@ -616,7 +607,7 @@ C      NDT = 5
           V20(I,J)  = V21(I,J)
           TEM0(I,J) = TEM1(I,J)
 
-          If (ViscousC>1D-6) Then
+          If (VisNonzero) Then
             F0Pi00(I,J) = Pi00(I,J,NZ0)
             F0Pi01(I,J) = Pi01(I,J,NZ0)
             F0Pi02(I,J) = Pi02(I,J,NZ0)
@@ -625,7 +616,7 @@ C      NDT = 5
             F0Pi22(I,J) = Pi22(I,J,NZ0)
             F0Pi33(I,J) = Pi33(I,J,NZ0)
           End If
-          if(VisBulk > 1D-6) then
+          if (VisBulkNonzero) then
             F0PPI(I,J) = PPI(I,J,NZ0)
           endif
 5400  CONTINUE
@@ -1148,22 +1139,21 @@ C#####################################################
       Dimension VRelaxT0(NX0:NX, NY0:NY, NZ0:NZ) !viscous coeficient relaxation time \tau_PI
       Dimension XiTtP(NX0:NX, NY0:NY, NZ0:NZ)  !extra (Xi T)/tau_Pi terms in full I-S bulk eqn 08/2008
 
-      Integer :: IVisBulkFlag
+      double precision :: VisHRG, VisMin, VisSlope, VisCurv, VisBeta
+      common /VisShear/ VisHRG, VisMin, VisSlope, VisCurv, VisBeta
 
-      double precision :: ViscousC, VisHRG, VisMin, VisSlope,
-     &                    VisCurv, VisBeta
-      common /ViscousC/ ViscousC, VisHRG, VisMin, VisSlope,
-     &                  VisCurv, VisBeta  ! Related to Shear Viscosity
-      Common /ViscousBulk/ Visbulk, BulkTau,IRelaxBulk, IVisBulkFlag  ! Related to bulk Viscous Coefficient Xi and beta0
+      double precision :: VisBulkNorm, BulkTau
+      integer :: IRelaxBulk
+      common /VisBulk/ VisBulkNorm, BulkTau, IRelaxBulk
+
+      logical :: VisNonzero, VisBulkNonzero
+      integer :: ViscousEqsType
+      common /VisControl/ VisNonzero, VisBulkNonzero, ViscousEqsType
 
       Common /Tde/ Tde, Rdec1, Rdec2,TempIni !Decoupling Temperature !decoupling radius
       Common/R0Aeps/ R0,Aeps
       Common/R0Bdry/ R0Bdry
       double precision, parameter :: HbarC = M_HBARC
-
-      double precision :: VisBulkNorm
-      Integer ViscousEqsType
-      Common /ViscousEqsControl/ VisBulkNorm, ViscousEqsType
 
       do 10 k=1,1
       do 10 j=NYPhy0-2,NYPhy+2 ! -2,NYPhy+2
@@ -1173,12 +1163,9 @@ C#####################################################
       rr=sqrt(xx**2+yy**2)
       ff=1.0/(Dexp((rr-R0Bdry)/Aeps)+1.0)
 
-      ! temperature-dependent eta/s
-      ViscousC = ViscousCTemp(Temp(i,j,k))
-
-      If (ViscousC.ge.1D-6) then
-        VCoefi(i,j,k)=ViscousC*Sd(i,j,k)
-        VCBeta(i,j,k)=1.D0/dmax1(Ed(i,j,k)+PL(i,j,k),1e-30)
+      If (VisNonzero) then
+        VCoefi(i,j,k) = ViscousCTemp(Temp(i,j,k))*Sd(i,j,k)
+        VCBeta(i,j,k) = 1.D0/dmax1(Ed(i,j,k)+PL(i,j,k),1e-30)
 
         if(ViscousEqsType .eq. 1) then
           VRelaxT(i,j,k)=1.0
@@ -1215,14 +1202,10 @@ C#####################################################
       end if
 
 !------------ for bulk pressure------------
-      If (VisBulk.ge.1D-6) then
+      If (VisBulkNonzero) then
         delta_cs2 = (1.0/3.0 - getCS2(Ed(i,j,k)*HbarC))**2
 
-        if (IVisBulkFlag .eq. 0) then
-          VBulk(i,j,k) = Visbulk*Sd(i,j,k)
-        else
-          VBulk(i,j,k) = VisBulkNorm * delta_cs2 * Sd(i,j,k)
-        endif
+        VBulk(i,j,k) = VisBulkNorm * delta_cs2 * Sd(i,j,k)
 
         If (IRelaxBulk.eq.0) then
           TTpi=DMax1(0.1d0, 120* VBulk(i,j,k)/DMax1(Sd(i,j,k),0.1d0))
@@ -1268,10 +1251,8 @@ C====eta/s dependent on local temperature==================================
       double precision, parameter :: HbarC = M_HBARC
       double precision, parameter :: Tc = .154d0
 
-      double precision :: ViscousC, VisHRG, VisMin, VisSlope,
-     &                    VisCurv, VisBeta
-      common /ViscousC/ ViscousC, VisHRG, VisMin, VisSlope,
-     &                  VisCurv, VisBeta  ! Related to Shear Viscosity
+      double precision :: VisHRG, VisMin, VisSlope, VisCurv, VisBeta
+      common /VisShear/ VisHRG, VisMin, VisSlope, VisCurv, VisBeta
 
       T = T_fm*HbarC
 
@@ -1596,13 +1577,16 @@ C-------------------------------------------
         Dimension IAA(NX0:NX, NY0:NY, NZ0:NZ)
         Dimension CofAA(0:2,NX0:NX, NY0:NY, NZ0:NZ)
 
-       Integer :: IVisBulkFlag
+      double precision :: VisHRG, VisMin, VisSlope, VisCurv, VisBeta
+      common /VisShear/ VisHRG, VisMin, VisSlope, VisCurv, VisBeta
 
-      double precision :: ViscousC, VisHRG, VisMin, VisSlope,
-     &                    VisCurv, VisBeta
-      common /ViscousC/ ViscousC, VisHRG, VisMin, VisSlope,
-     &                  VisCurv, VisBeta  ! Related to Shear Viscosity
-       Common /ViscousBulk/ Visbulk, BulkTau,IRelaxBulk, IVisBulkFlag
+      double precision :: VisBulkNorm, BulkTau
+      integer :: IRelaxBulk
+      common /VisBulk/ VisBulkNorm, BulkTau, IRelaxBulk
+
+      logical :: VisNonzero, VisBulkNonzero
+      integer :: ViscousEqsType
+      common /VisControl/ VisNonzero, VisBulkNonzero, ViscousEqsType
 
         DIMENSION PNEW(NNEW)!something related to root finding
        Parameter(XC0=1.0d-15, AAC=1.0d-16) !root finding accuracy
@@ -1621,10 +1605,6 @@ C-------------------------------------------
       ! ----- Use in root search -----
       Double Precision :: RSDM0, RSDM, RSPPI !, RSee
       Common /findEdHookData/ RSDM0, RSDM, RSPPI ! M0, M, Pi (see 0510014)
-
-      double precision :: VisBulkNorm
-      Integer ViscousEqsType
-      Common /ViscousEqsControl/ VisBulkNorm, ViscousEqsType
 
       Double precision :: deltaBPiBPi, lambdaBPiSpi ! bulk transport coefficients
       Double precision :: deltaSpiSpi, lambdaSpiBPi, phi7, taupipi ! shear transport coefficients
@@ -1647,7 +1627,7 @@ C-------------------------------------------
 
 !   ---Zhi-Changes---
 !-------Regulate Pi(mu,nu) before adding it to T tensor
-!      If (ViscousC>1D-6) Then
+!      If (VisNonzero) Then
 !        call regulatePi(Time,NX0,NY0,NZ0,NX,NY,NZ,
 !     &  NXPhy0,NXPhy,NYPhy0,NYPhy,
 !     &  Ed,PL,PPI,
@@ -1825,7 +1805,7 @@ C---------------------------------------------------------------
        call TriSembdary3(Bd,PL, Ed,
      &        NX0,NY0,NZ0, NX,NY,NZ, NXPhy0,NYPhy0, NXPhy,NYPhy)
 
-      If (ViscousC>1D-6) Then
+      If (VisNonzero) Then
 
        call TriSembdary3(Pi00,Pi01, Pi02,
      &        NX0,NY0,NZ0, NX,NY,NZ, NXPhy0,NYPhy0, NXPhy,NYPhy)
@@ -1845,7 +1825,7 @@ C-----------------------------------------------------------------
      &               NX0,NY0,NZ0, NX,NY,NZ)
 c------------------------------------------------------------------
 
-      If (ViscousC>1D-6) Then
+      If (VisNonzero) Then
 
        DO 670 K=NZ0,NZ
        DO 670 J=NYPhy0,NYPhy
@@ -1881,7 +1861,7 @@ c------------------------------------------------------------------
       End If
 
 
-      If (ViscousC>1D-6) Then
+      If (VisNonzero) Then
 
        call TriSembdary3(ScT00,ScT01,ScT02,
      &        NX0,NY0,NZ0, NX,NY,NZ,NXPhy0,NYPhy0, NXPhy,NYPhy)
@@ -1929,7 +1909,7 @@ C---------------------------------------------------------------------
      &  Time,DX,DY,DT,NX0,NY0,NZ0, NX,NY,NZ, NXPhy0,NYPhy0, NXPhy,NYPhy)
 C--------------------
 
-      If (ViscousC>1D-6 .or. VisBulk>1D-6) Then
+      If (VisNonzero .or. VisBulkNonzero) Then
         call PiS4U5(PU0,PU1,PU2,PU3,U0,U1,U2,U3, DX,DY,DZ, DT,
      & DPc00,DPc01,DPc02,DPc33, DPc11,DPc22,DPc12, DDU0,DDU1,DDU2,
      & Temp,Temp0,  SiLoc,DLnT,  Time, NXPhy0,NYPhy0,NXPhy,NYPhy,
@@ -1945,7 +1925,7 @@ C--------------------
       End If
 
 
-      If (ViscousC>1D-6) Then
+      If (VisNonzero) Then
 
        DO 700 K=NZ0,NZ
        DO 700 J=NYPhy0,NYPhy
@@ -1987,7 +1967,7 @@ C--------------------
 C--------------------------------------------------------------------------------
 
 
-      If (ViscousC>1D-6) Then
+      If (VisNonzero) Then
 
        call TriSembdary3(PScT00,PScT01, PScT02,
      &        NX0,NY0,NZ0, NX,NY,NZ, NXPhy0,NYPhy0, NXPhy,NYPhy)
@@ -2023,7 +2003,7 @@ C-------------------------------------------------------------------------------
         PT0=VRelaxT0(I,J,K)/U0(I,J,K)
         PS0=VBulk(I,J,K)
 
-        if(ViscousC.ge.0.00001) then
+        if (VisNonzero) then
 
           if(ViscousEqsType .eq. 1) then
           ! old version: shear tensor pressure terms from entropy generation
@@ -2178,7 +2158,7 @@ C-------------------------------------------------------------------------------
           ADLnT = 0.D0
         end if
 
-        if(VisBulk.ge.0.000001) then
+        if (VisBulkNonzero) then
 
           if(ViscousEqsType .eq. 1) then
           ! old version: bulk pressure terms from entropy generation
@@ -2320,13 +2300,13 @@ C-------------------------------------------------------------------------------
             do 222 J=NYPhy0,NYPhy
             do 222 I=NXPhy0,NXPhy
             if(Ed(I-1,J-1,K).ge. Edec1/HbarC)  then
-             if(ViscousC>1D-6) then
+             if (VisNonzero) then
               Dsp1=Dsp1+(Pi00(I,J,K)**2 +Pi11(I,J,K)**2 +Pi22(I,J,K)**2
      &             +Pi33(I,J,K)**2 +2.0*Pi01(I,J,K)**2
      &             +2.0*Pi02(I,J,K)**2 +2.0*Pi12(I,J,K)**2)/
      &                  (2.0*VCoefi(I,J,K)*Temp(I,J,K))
              end if
-             if(Visbulk.ge.0.00001.and.VBulk(I,J,K).ge.0.000001)then
+             if (VisBulkNonzero .and. VBulk(I,J,K).ge.0.000001)then
              Dsp2=Dsp2+(PPI(I,J,K)*PPI(I,J,K))/
      &                    (VBulk(I,J,K)*Temp(I,J,K))
              end if

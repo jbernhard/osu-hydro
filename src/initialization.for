@@ -121,10 +121,8 @@ C-------------------------------------------------------------------------------
 
       COMMON /IEin/ IEin     !  type of initialization  entropy/enrgy
 
-      double precision :: ViscousC, VisHRG, VisMin, VisSlope,
-     &                    VisCurv, VisBeta
-      common /ViscousC/ ViscousC, VisHRG, VisMin, VisSlope,
-     &                  VisCurv, VisBeta  ! Related to Shear Viscosity
+      double precision :: VisHRG, VisMin, VisSlope, VisCurv, VisBeta
+      common /VisShear/ VisHRG, VisMin, VisSlope, VisCurv, VisBeta
 
       Double Precision SEOSL7, PEOSL7, TEOSL7
       External SEOSL7

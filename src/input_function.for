@@ -37,21 +37,19 @@
       Integer IEin
       Common /IEin/ IEin     !  type of initialization  entropy/enrgy
 
-      double precision :: ViscousC, VisHRG, VisMin, VisSlope,
-     &                    VisCurv, VisBeta
-      common /ViscousC/ ViscousC, VisHRG, VisMin, VisSlope,
-     &                  VisCurv, VisBeta  ! Related to Shear Viscosity
-
-      double precision :: Visbulk, BulkTau, IRelaxBulk
-      Integer IVisBulkFlag
-      Common /ViscousBulk/ Visbulk, BulkTau, IRelaxBulk, IVisBulkFlag ! Related to bulk Visousity
-
       Integer Initialpitensor
       Common/Initialpi/ Initialpitensor
 
-      double precision :: VisBulkNorm
-      Integer ViscousEqsType
-      Common /ViscousEqsControl/ VisBulkNorm, ViscousEqsType
+      double precision :: VisHRG, VisMin, VisSlope, VisCurv, VisBeta
+      common /VisShear/ VisHRG, VisMin, VisSlope, VisCurv, VisBeta
+
+      double precision :: VisBulkNorm, BulkTau
+      integer :: IRelaxBulk
+      common /VisBulk/ VisBulkNorm, BulkTau, IRelaxBulk
+
+      logical :: VisNonzero, VisBulkNonzero
+      integer :: ViscousEqsType
+      common /VisControl/ VisNonzero, VisBulkNonzero, ViscousEqsType
 
       Double Precision ITeta, ddx, ddy, TT0
       Common /ITeta/ ITeta
@@ -259,16 +257,16 @@
       Double Precision VCoefi(NX0:NX, NY0:NY, NZ0:NZ) !viscous coeficient shear viscosity eta
       Double Precision RMin, PiEPRatio, SigmaLargeness, EAndP
 
-      double precision :: ViscousC, VisHRG, VisMin, VisSlope,
-     &                    VisCurv, VisBeta
-      common /ViscousC/ ViscousC, VisHRG, VisMin, VisSlope,
-     &                  VisCurv, VisBeta  ! Related to Shear Viscosity
+      double precision :: VisHRG, VisMin, VisSlope, VisCurv, VisBeta
+      common /VisShear/ VisHRG, VisMin, VisSlope, VisCurv, VisBeta
 
       Double Precision PiRatio ! used to determine R0; within r<R0, Pi/(e+p) < PiRatio
       Common /PiRatio/ PiRatio ! should already be setuped in prepareInputFun function
 
       Double Precision D0U0,D0U1,D0U2,D1U0,D1U1,D1U2,D2U0,D2U1,D2U2
       Double Precision CS,DT,DX,DY,DZ,Time,DU0,DU1,DU2
+
+      double precision ViscousCTemp
 
       Integer regMethod
       Common /regMethod/ regMethod
@@ -335,7 +333,8 @@
           SigmaLargeness = 1/7.0*(Abs(DPc00(I,J,K))+
      &      Abs(DPc01(I,J,K))+Abs(DPc02(I,J,K))+Abs(DPc33(I,J,K))+
      &      Abs(DPc11(I,J,K))+Abs(DPc12(I,J,K))+Abs(DPc22(I,J,K)))
-          PiEPRatio=2*ViscousC*Sd(I,J,K)*SigmaLargeness/EAndP
+          PiEPRatio = 2*ViscousCTemp(Temp(I,J,K))*Sd(I,J,K)
+     &                 *SigmaLargeness/EAndP
 
         If (PiEPRatio > PiRatio) Then
           If (sqrt(ddx*ddx*I*I+ddy*ddy*J*J) < RMin) Then
