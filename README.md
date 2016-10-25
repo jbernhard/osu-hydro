@@ -48,6 +48,27 @@ Parameters may also be passed on the command line with a `key=value` syntax, e.g
 
     vishnew Edec=0.30
 
+### Temperature-dependent viscosities
+
+The shear viscosity is parametrized as
+
+    (eta/s)(T) = min + slope*(T - Tc) * (T/Tc)^curvature
+
+for T > Tc = 0.154 GeV, where `min`, `slope`, and `curvature` are input parameters.
+The `min` and `slope` must be non-negative; `curvature` may be negative but probably not below -1, since this would cause decreasing (eta/s)(T).
+
+For T < Tc (HRG phase), eta/s is constant, controlled by a single input parameter.
+
+These parameters may be set in the config file or on the command line with keys `vishrg`, `vismin`, `visslope`, `viscurv`.
+
+The bulk viscosity is parametrized as
+
+    (zeta/s)(T) = norm * (1/3 - c_s^2)^2
+
+where `norm` is a non-negative input parameter and `c_s^2` is the squared speed of sound, computed internally from the EOS.
+
+The norm factor may be set in the config file or on the command line with key `visbulknorm`.
+
 ### Running initial conditions
 
 By default (with option `InitialURead = 1`), the initial energy density, flow, and shear viscous tensor must be provided.
