@@ -59,15 +59,13 @@ The `min` and `slope` must be non-negative; `curvature` may be negative but prob
 
 For T < Tc (HRG phase), eta/s is constant, controlled by a single input parameter.
 
-These parameters may be set in the config file or on the command line with keys `vishrg`, `vismin`, `visslope`, `viscurv`.
+These parameters may be set in the config file or on the command line with keys `etas_hrg`, `etas_min`, `etas_slope`, `etas_curv`.
 
-The bulk viscosity is parametrized as
+The bulk viscosity is parametrized as a Cauchy distribution with its peak at Tc and tunable max and width:
 
-    (zeta/s)(T) = norm * (1/3 - c_s^2)^2
+    (zeta/s)(T) = max / (1 + ((T - Tc)/width)^2)
 
-where `norm` is a non-negative input parameter and `c_s^2` is the squared speed of sound, computed internally from the EOS.
-
-The norm factor may be set in the config file or on the command line with key `visbulknorm`.
+The max and width may be set in the config file or on the command line with keys `zetas_max`, `zetas_width`.
 
 ### Running initial conditions
 

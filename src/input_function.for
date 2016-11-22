@@ -43,9 +43,9 @@
       double precision :: VisHRG, VisMin, VisSlope, VisCurv, VisBeta
       common /VisShear/ VisHRG, VisMin, VisSlope, VisCurv, VisBeta
 
-      double precision :: VisBulkNorm, BulkTau
+      double precision :: VisBulkMax, VisBulkWidth, BulkTau
       integer :: IRelaxBulk
-      common /VisBulk/ VisBulkNorm, BulkTau, IRelaxBulk
+      common /VisBulk/ VisBulkMax, VisBulkWidth, BulkTau, IRelaxBulk
 
       logical :: VisNonzero, VisBulkNonzero
       integer :: ViscousEqsType
@@ -128,6 +128,16 @@
         If (varName=="etas_curv") VisCurv=DResult
         If (varName=="eta_s_curv") VisCurv=DResult
 
+        If (varName=="visbulkmax") VisBulkMax=DResult
+        If (varName=="zetasmax") VisBulkMax=DResult
+        If (varName=="zetas_max") VisBulkMax=DResult
+        If (varName=="zeta_s_max") VisBulkMax=DResult
+
+        If (varName=="visbulkwidth") VisBulkWidth=DResult
+        If (varName=="zetaswidth") VisBulkWidth=DResult
+        If (varName=="zetas_width") VisBulkWidth=DResult
+        If (varName=="zeta_s_width") VisBulkWidth=DResult
+
         If (varName=="ils") LS=IResult ! Lattice size and R0Boudary
         If (varName=="r0") R0Bdry=DResult
         If (varName=="r0bdry") R0Bdry=DResult
@@ -142,7 +152,6 @@
 
         If (varName=="initialpitensor") Initialpitensor=IResult ! initialization of pi tensor
 
-        If (varName=="visbulknorm") VisBulkNorm=DResult ! VisBulkNorm, use for temperature dependent zeta/s(T)
       End Do ! ArgIndex
 
       End Subroutine

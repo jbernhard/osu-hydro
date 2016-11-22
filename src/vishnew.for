@@ -38,9 +38,9 @@ C   [5] H.Song, Ph.D thesis 2009, arXiv:0908.3656 [nucl-th].
       double precision :: VisHRG, VisMin, VisSlope, VisCurv, VisBeta
       common /VisShear/ VisHRG, VisMin, VisSlope, VisCurv, VisBeta
 
-      double precision :: VisBulkNorm, BulkTau
+      double precision :: VisBulkMax, VisBulkWidth, BulkTau
       integer :: IRelaxBulk
-      common /VisBulk/ VisBulkNorm, BulkTau, IRelaxBulk
+      common /VisBulk/ VisBulkMax, VisBulkWidth, BulkTau, IRelaxBulk
 
       logical :: VisNonzero, VisBulkNonzero
       integer :: ViscousEqsType
@@ -110,7 +110,8 @@ C========= Inputting Parameters ===========================================
       Read(1,*)
 
       ! bulk viscosity
-      Read(1,*) VisBulkNorm      ! normalization for (zeta/s)(T) function
+      Read(1,*) VisBulkMax       ! maximum of Cauchy (zeta/s)(T) at Tc
+      Read(1,*) VisBulkWidth     ! width of Cauchy (zeta/s)(T) [GeV]
       Read(1,*) IRelaxBulk       ! bulk relaxation time: critical slowing down (0), constant (1), 1.5/(2*pi*T) (2), ?? (3), ?? (4)
       Read(1,*) BulkTau          ! constant bulk relaxation time for IRelaxBulk == 1
 
@@ -128,7 +129,7 @@ C===========================================================================
       ! determine if shear and bulk viscosities are nonzero
       VisNonzero = (VisHRG > 1d-6) .or. (VisMin > 1d-6)
      &             .or.(VisSlope > 1d-6)
-      VisBulkNonzero = VisBulkNorm > 1d-6
+      VisBulkNonzero = (VisBulkMax > 1d-6) .and. (VisBulkWidth > 1d-6)
 
       ddx=dx
       ddy=dy
@@ -295,9 +296,9 @@ C-------------------------------------------------------------------------------
       double precision :: VisHRG, VisMin, VisSlope, VisCurv, VisBeta
       common /VisShear/ VisHRG, VisMin, VisSlope, VisCurv, VisBeta
 
-      double precision :: VisBulkNorm, BulkTau
+      double precision :: VisBulkMax, VisBulkWidth, BulkTau
       integer :: IRelaxBulk
-      common /VisBulk/ VisBulkNorm, BulkTau, IRelaxBulk
+      common /VisBulk/ VisBulkMax, VisBulkWidth, BulkTau, IRelaxBulk
 
       logical :: VisNonzero, VisBulkNonzero
       integer :: ViscousEqsType
@@ -1142,9 +1143,9 @@ C#####################################################
       double precision :: VisHRG, VisMin, VisSlope, VisCurv, VisBeta
       common /VisShear/ VisHRG, VisMin, VisSlope, VisCurv, VisBeta
 
-      double precision :: VisBulkNorm, BulkTau
+      double precision :: VisBulkMax, VisBulkWidth, BulkTau
       integer :: IRelaxBulk
-      common /VisBulk/ VisBulkNorm, BulkTau, IRelaxBulk
+      common /VisBulk/ VisBulkMax, VisBulkWidth, BulkTau, IRelaxBulk
 
       logical :: VisNonzero, VisBulkNonzero
       integer :: ViscousEqsType
@@ -1164,7 +1165,7 @@ C#####################################################
       ff=1.0/(Dexp((rr-R0Bdry)/Aeps)+1.0)
 
       If (VisNonzero) then
-        VCoefi(i,j,k) = ViscousCTemp(Temp(i,j,k))*Sd(i,j,k)
+        VCoefi(i,j,k) = ViscousCTemp(Temp(i,j,k)*HbarC) * Sd(i,j,k)
         VCBeta(i,j,k) = 1.D0/dmax1(Ed(i,j,k)+PL(i,j,k),1e-30)
 
         if(ViscousEqsType .eq. 1) then
@@ -1203,9 +1204,7 @@ C#####################################################
 
 !------------ for bulk pressure------------
       If (VisBulkNonzero) then
-        delta_cs2 = (1.0/3.0 - getCS2(Ed(i,j,k)*HbarC))**2
-
-        VBulk(i,j,k) = VisBulkNorm * delta_cs2 * Sd(i,j,k)
+        VBulk(i,j,k) = ViscousBulkTemp(Temp(i,j,k)*HbarC) * Sd(i,j,k)
 
         If (IRelaxBulk.eq.0) then
           TTpi=DMax1(0.1d0, 120* VBulk(i,j,k)/DMax1(Sd(i,j,k),0.1d0))
@@ -1219,6 +1218,7 @@ C#####################################################
           VRelaxT0(i,j,k) = 1.0/DMax1(0.1d0, TauPi)
         else if (IRelaxBulk .eq. 4) then
           ! lower bound of bulk relaxation time
+          delta_cs2 = (1.0/3.0 - getCS2(Ed(i,j,k)*HbarC))**2
           Taupi = VBulk(i,j,k)/(14.55*delta_cs2*(Ed(i,j,k)+PL(i,j,k)))
           VRelaxT0(i,j,k) = 1.D0/DMax1(0.1D0, TauPi)
         else
@@ -1245,16 +1245,12 @@ C#####################################################
 CSHEN======================================================================
 C====eta/s dependent on local temperature==================================
 
-      double precision function ViscousCTemp(T_fm)
-      double precision :: T_fm, T
-
-      double precision, parameter :: HbarC = M_HBARC
-      double precision, parameter :: Tc = .154d0
+      double precision function ViscousCTemp(T)
+      double precision :: T
+      double precision, parameter :: Tc = TC_GEV
 
       double precision :: VisHRG, VisMin, VisSlope, VisCurv, VisBeta
       common /VisShear/ VisHRG, VisMin, VisSlope, VisCurv, VisBeta
-
-      T = T_fm*HbarC
 
       if(T > Tc) then
         ViscousCTemp = VisMin + VisSlope*(T - Tc) * (T/Tc)**VisCurv
@@ -1266,6 +1262,21 @@ C====eta/s dependent on local temperature==================================
       end
 
 CSHEN=====end==============================================================
+
+      double precision function ViscousBulkTemp(T)
+      double precision :: T
+      double precision, parameter :: Tc = TC_GEV
+
+      double precision :: VisBulkMax, VisBulkWidth, BulkTau
+      integer :: IRelaxBulk
+      common /VisBulk/ VisBulkMax, VisBulkWidth, BulkTau, IRelaxBulk
+
+      ! Cauchy distribution for zeta/s
+      ViscousBulkTemp = VisBulkMax / (1 + ((T - Tc)/VisBulkWidth)**2)
+
+      return
+      end
+
 
 C---J.Liu------------------------------------------------------------------------
 
@@ -1580,9 +1591,9 @@ C-------------------------------------------
       double precision :: VisHRG, VisMin, VisSlope, VisCurv, VisBeta
       common /VisShear/ VisHRG, VisMin, VisSlope, VisCurv, VisBeta
 
-      double precision :: VisBulkNorm, BulkTau
+      double precision :: VisBulkMax, VisBulkWidth, BulkTau
       integer :: IRelaxBulk
-      common /VisBulk/ VisBulkNorm, BulkTau, IRelaxBulk
+      common /VisBulk/ VisBulkMax, VisBulkWidth, BulkTau, IRelaxBulk
 
       logical :: VisNonzero, VisBulkNonzero
       integer :: ViscousEqsType
