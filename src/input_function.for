@@ -200,9 +200,9 @@
 
       ! convert RHS to numerics:
       If (varName(1:1)=="i" .or. varName(1:1)=="n") Then
-        Read(RHS, fmt='(I5)') IResult
+        Read(RHS, *) IResult
       Else
-        Read(RHS, fmt='(f15.8)') DResult
+        Read(RHS, *) DResult
       EndIf
 
       End Subroutine
