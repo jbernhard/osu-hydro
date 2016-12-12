@@ -4,7 +4,11 @@ import argparse
 from contextlib import contextmanager
 
 import numpy as np
-from scipy.interpolate import CubicSpline, KroghInterpolator
+from scipy.interpolate import KroghInterpolator
+try:
+    from scipy.interpolate import CubicSpline
+except ImportError:
+    from scipy.interpolate import InterpolatedUnivariateSpline as CubicSpline
 
 import frzout
 
