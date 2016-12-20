@@ -23,10 +23,22 @@ I made this version with one task in mind: running hydro as part of an event-by-
 To compile and install, follow the standard CMake sequence:
 
     mkdir build && cd build
-    cmake ..
+    cmake .. [-DCMAKE_INSTALL_PREFIX=<prefix>]
     make install
 
-This will place several files in `<prefix>/vishnew`: the compiled binary `vishnew`, configuration file `vishnew.conf`, and equation of state table `eos.dat`.
+This will place the compiled binary `vishnew` in `<prefix>/bin/` and the configuration file `vishnew.conf` and equation of state table `eos.dat` in `<prefix>/share/vishnew/`.
+
+At runtime, `vishnew` searches for `vishnew.conf` and `eos.dat` in the following locations:
+
+1. The current directory.
+2. User data directory `$XDG_DATA_HOME/vishnew/`, with `$XDG_DATA_HOME` defaulting to `~/.local/share/` if unset.
+3. System directory `/usr/local/share/vishnew/`.
+4. System directory `/usr/share/vishnew/`.
+
+If either of the files cannot be found, the program will exit with an error message.
+
+Thus, `vishnew` may be executed from anywhere provided it can locate the data files.
+However, it always expects the initial condition data files (described below) to be in the current working directory, and it will also write output files in the current directory.
 
 ### Equation of state
 
@@ -70,7 +82,7 @@ The max and width may be set in the config file or on the command line with keys
 ### Running initial conditions
 
 By default (with option `InitialURead = 1`), the initial energy density, flow, and shear viscous tensor must be provided.
-Place the following files in the `vishnew` folder:
+Create the following data files:
 
 - `ed.dat` - energy density
 - `u{1,2}.dat` - flow velocity in x and y directions

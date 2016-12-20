@@ -5,7 +5,8 @@ add_executable(${PROJECT_NAME}
   initialization.for
   input_function.for
   phy_boundary.for
+  util.for
   vishnew.for
 )
 
-install(TARGETS ${PROJECT_NAME} DESTINATION ${PROJECT_NAME})
+install(TARGETS ${PROJECT_NAME} DESTINATION bin)

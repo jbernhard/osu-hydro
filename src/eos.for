@@ -20,8 +20,9 @@
       double precision :: escale, epow, sscale, spow
       common /EOScoeffs/ escale, epow, sscale, spow
 
+      character(len=1000) :: find_data_file
 
-      open(5,FILE='eos.dat',STATUS='OLD')
+      open(5, file=find_data_file('eos.dat'), status='old')
 
       ! read first row, save energy density as EOSe0
       I = 1

@@ -29,7 +29,7 @@ if(WARNINGS)
   set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -Wall -Wextra")
 endif()
 
-install(FILES ${PROJECT_NAME}.conf DESTINATION ${PROJECT_NAME})
+install(FILES ${PROJECT_NAME}.conf DESTINATION share/${PROJECT_NAME})
 
 add_subdirectory(eos)
 add_subdirectory(src)

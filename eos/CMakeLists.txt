@@ -8,4 +8,4 @@ add_custom_command(OUTPUT ${EOSFILE}
   )
 add_custom_target(eos ALL DEPENDS ${EOSFILE})
 
-install(FILES ${EOSFILE} DESTINATION ${PROJECT_NAME})
+install(FILES ${EOSFILE} DESTINATION share/${PROJECT_NAME})
