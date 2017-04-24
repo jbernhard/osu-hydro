@@ -112,11 +112,7 @@ The only output file is the hypersurface data `surface.dat`, beginning with a co
 
 and followed by data columns
 
-    tau x y dsigma^t dsigma^x dsigma^y v_x v_y pi00 pi01 pi02 pi11 pi12 pi22 pi33 PI
+    tau x y dsigma_t dsigma_x dsigma_y v_x v_y pi00 pi01 pi02 pi11 pi12 pi22 pi33 PI
 
 where each row represents a volume element.
 All units are GeV and fm.
-
-**Note**:
-The normal vector `dsigma` is output in contravariant form (index raised).
-Previous versions output the covariant vector (index lowered).
