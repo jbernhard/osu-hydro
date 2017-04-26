@@ -73,11 +73,11 @@ For T < Tc (HRG phase), eta/s is constant, controlled by a single input paramete
 
 These parameters may be set in the config file or on the command line with keys `etas_hrg`, `etas_min`, `etas_slope`, `etas_curv`.
 
-The bulk viscosity is parametrized as a Cauchy distribution with its peak at Tc and tunable max and width:
+The bulk viscosity is parametrized as a Cauchy distribution with tunable peak location, max value, and width:
 
-    (zeta/s)(T) = max / (1 + ((T - Tc)/width)^2)
+    (zeta/s)(T) = max / (1 + ((T - T0)/width)^2)
 
-The max and width may be set in the config file or on the command line with keys `zetas_max`, `zetas_width`.
+The location (temperature T0), max, and width may be set in the config file or on the command line with keys `zetas_t0`, `zetas_max`, `zetas_width`.
 
 ### Running initial conditions
 

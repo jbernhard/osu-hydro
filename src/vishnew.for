@@ -38,9 +38,10 @@ C   [5] H.Song, Ph.D thesis 2009, arXiv:0908.3656 [nucl-th].
       double precision :: VisHRG, VisMin, VisSlope, VisCurv, VisBeta
       common /VisShear/ VisHRG, VisMin, VisSlope, VisCurv, VisBeta
 
-      double precision :: VisBulkMax, VisBulkWidth, BulkTau
+      double precision :: VisBulkT0, VisBulkMax, VisBulkWidth, BulkTau
       integer :: IRelaxBulk
-      common /VisBulk/ VisBulkMax, VisBulkWidth, BulkTau, IRelaxBulk
+      common /VisBulk/ VisBulkT0, VisBulkMax, VisBulkWidth, BulkTau,
+     &                 IRelaxBulk
 
       logical :: VisNonzero, VisBulkNonzero
       integer :: ViscousEqsType
@@ -114,8 +115,9 @@ C   [5] H.Song, Ph.D thesis 2009, arXiv:0908.3656 [nucl-th].
       Read(1,*)
 
       ! bulk viscosity
-      Read(1,*) VisBulkMax       ! maximum of Cauchy (zeta/s)(T) at Tc
-      Read(1,*) VisBulkWidth     ! width of Cauchy (zeta/s)(T) [GeV]
+      Read(1,*) VisBulkT0        ! peak location of Cauchy (zeta/s)(T) [GeV]
+      Read(1,*) VisBulkMax       ! maximum value of zeta/s (at T0)
+      Read(1,*) VisBulkWidth     ! width of (zeta/s)(T) [GeV]
       Read(1,*) IRelaxBulk       ! bulk relaxation time: critical slowing down (0), constant (1), 1.5/(2*pi*T) (2), ?? (3), ?? (4)
       Read(1,*) BulkTau          ! constant bulk relaxation time for IRelaxBulk == 1
 
@@ -288,9 +290,10 @@ C-------------------------------------------------------------------------------
       double precision :: VisHRG, VisMin, VisSlope, VisCurv, VisBeta
       common /VisShear/ VisHRG, VisMin, VisSlope, VisCurv, VisBeta
 
-      double precision :: VisBulkMax, VisBulkWidth, BulkTau
+      double precision :: VisBulkT0, VisBulkMax, VisBulkWidth, BulkTau
       integer :: IRelaxBulk
-      common /VisBulk/ VisBulkMax, VisBulkWidth, BulkTau, IRelaxBulk
+      common /VisBulk/ VisBulkT0, VisBulkMax, VisBulkWidth, BulkTau,
+     &                 IRelaxBulk
 
       logical :: VisNonzero, VisBulkNonzero
       integer :: ViscousEqsType
@@ -1125,9 +1128,10 @@ C#####################################################
       double precision :: VisHRG, VisMin, VisSlope, VisCurv, VisBeta
       common /VisShear/ VisHRG, VisMin, VisSlope, VisCurv, VisBeta
 
-      double precision :: VisBulkMax, VisBulkWidth, BulkTau
+      double precision :: VisBulkT0, VisBulkMax, VisBulkWidth, BulkTau
       integer :: IRelaxBulk
-      common /VisBulk/ VisBulkMax, VisBulkWidth, BulkTau, IRelaxBulk
+      common /VisBulk/ VisBulkT0, VisBulkMax, VisBulkWidth, BulkTau,
+     &                 IRelaxBulk
 
       logical :: VisNonzero, VisBulkNonzero
       integer :: ViscousEqsType
@@ -1247,14 +1251,15 @@ CSHEN=====end==============================================================
 
       double precision function ViscousBulkTemp(T)
       double precision :: T
-      double precision, parameter :: Tc = TC_GEV
 
-      double precision :: VisBulkMax, VisBulkWidth, BulkTau
+      double precision :: VisBulkT0, VisBulkMax, VisBulkWidth, BulkTau
       integer :: IRelaxBulk
-      common /VisBulk/ VisBulkMax, VisBulkWidth, BulkTau, IRelaxBulk
+      common /VisBulk/ VisBulkT0, VisBulkMax, VisBulkWidth, BulkTau,
+     &                 IRelaxBulk
 
       ! Cauchy distribution for zeta/s
-      ViscousBulkTemp = VisBulkMax / (1 + ((T - Tc)/VisBulkWidth)**2)
+      ViscousBulkTemp = VisBulkMax /
+     &                  (1 + ((T - VisBulkT0)/VisBulkWidth)**2)
 
       return
       end
@@ -1573,9 +1578,10 @@ C-------------------------------------------
       double precision :: VisHRG, VisMin, VisSlope, VisCurv, VisBeta
       common /VisShear/ VisHRG, VisMin, VisSlope, VisCurv, VisBeta
 
-      double precision :: VisBulkMax, VisBulkWidth, BulkTau
+      double precision :: VisBulkT0, VisBulkMax, VisBulkWidth, BulkTau
       integer :: IRelaxBulk
-      common /VisBulk/ VisBulkMax, VisBulkWidth, BulkTau, IRelaxBulk
+      common /VisBulk/ VisBulkT0, VisBulkMax, VisBulkWidth, BulkTau,
+     &                 IRelaxBulk
 
       logical :: VisNonzero, VisBulkNonzero
       integer :: ViscousEqsType

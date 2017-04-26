@@ -43,9 +43,10 @@
       double precision :: VisHRG, VisMin, VisSlope, VisCurv, VisBeta
       common /VisShear/ VisHRG, VisMin, VisSlope, VisCurv, VisBeta
 
-      double precision :: VisBulkMax, VisBulkWidth, BulkTau
+      double precision :: VisBulkT0, VisBulkMax, VisBulkWidth, BulkTau
       integer :: IRelaxBulk
-      common /VisBulk/ VisBulkMax, VisBulkWidth, BulkTau, IRelaxBulk
+      common /VisBulk/ VisBulkT0, VisBulkMax, VisBulkWidth, BulkTau,
+     &                 IRelaxBulk
 
       logical :: VisNonzero, VisBulkNonzero
       integer :: ViscousEqsType
@@ -116,6 +117,11 @@
         If (varName=="etascurv") VisCurv=DResult
         If (varName=="etas_curv") VisCurv=DResult
         If (varName=="eta_s_curv") VisCurv=DResult
+
+        If (varName=="visbulkt0") VisBulkT0=DResult
+        If (varName=="zetast0") VisBulkT0=DResult
+        If (varName=="zetas_t0") VisBulkT0=DResult
+        If (varName=="zeta_s_t0") VisBulkT0=DResult
 
         If (varName=="visbulkmax") VisBulkMax=DResult
         If (varName=="zetasmax") VisBulkMax=DResult
