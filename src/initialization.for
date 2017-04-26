@@ -116,7 +116,6 @@ C-------------------------------------------------------------------------------
       Integer InitialURead   ! specify if read in more profiles
       Common/LDInitial/ InitialURead
 
-      Common /Timestep/ DT_1, DT_2
       Double Precision Time
 
       COMMON /IEin/ IEin     !  type of initialization  entropy/enrgy
@@ -135,13 +134,6 @@ C-------------------------------------------------------------------------------
       TFREEZ = TEOSL7(ee) ! GeV
 
       Time = T0
-
-      ! use a smaller time step for short initialization time \tau_0
-      if (Time.lt.0.59) then
-        DT = DT_2
-      else
-        DT = DT_1
-      endif
 
       ! read initial energy/entropy density from file
       if (IEin == 0) then

@@ -51,15 +51,11 @@
       integer :: ViscousEqsType
       common /VisControl/ VisNonzero, VisBulkNonzero, ViscousEqsType
 
-      Double Precision ITeta, ddx, ddy, TT0
-      Common /ITeta/ ITeta
-      Common/dxdy/ ddx, ddy
-      Common /TT0/ TT0   ! T0, or tau_0
+      double precision :: DT
+      common /DT/ DT
 
-      Double Precision DT_1, DT_2 ! DT_1 is the standard time step, DT_2 is used as time step for early time (t<0.6 fm/c)
-      Common /Timestep/ DT_1, DT_2
-      Double Precision DX, DY
-      Common /DXY/ DX, DY
+      double precision :: DX, DY
+      common /DXY/ DX, DY
 
       Double Precision Edec
       Common/Edec/Edec    !decoupling temperature
@@ -67,16 +63,12 @@
       Integer InitialURead
       Common/LDInitial/ InitialURead  ! IintURead =1 read initial velocity profile
 
-      Integer NDX, NDY, NDT
-      Common /NXYTD/ NDX, NDY, NDT
+      Integer NDT, NDX, NDY
+      Common /NDTXY/ NDT, NDX, NDY
 
       Double Precision T0
       Common /T0/ T0
 
-      Double Precision R0Bdry
-      Common /R0Bdry/ R0Bdry
-      Double Precision R0, Aeps
-      Common /R0Aeps/ R0,Aeps
       Integer LS
       Common /LS/ LS
 
@@ -87,8 +79,6 @@
       Integer IResult
       Double Precision DResult
 
-      Aeps = 0.05D0
-
       QNum = iargc ()
 
       Do ArgIndex = 1, QNum
@@ -98,9 +88,8 @@
         If (varName=="iein") IEin=IResult ! 0: initialize by energy density; 1: initialize by entropy density
         If (varName=="iin") IEin=IResult
 
-        If (varName=="dt") dT_1=DResult ! dT, DX, DY
-        If (varName=="dx") dX=DResult
-        If (varName=="dy") dy=DResult
+        If (varName=="dt") DT=DResult
+        If (varName=="dxy") DX=DResult  ! will be copied to DY
 
         If (varName=="edec") EDec=DResult ! decouple energy density, in GeV/fm^3
         If (varName=="e_dec") EDec=DResult
@@ -138,13 +127,11 @@
         If (varName=="zetas_width") VisBulkWidth=DResult
         If (varName=="zeta_s_width") VisBulkWidth=DResult
 
-        If (varName=="ils") LS=IResult ! Lattice size and R0Boudary
-        If (varName=="r0") R0Bdry=DResult
-        If (varName=="r0bdry") R0Bdry=DResult
+        If (varName=="ils") LS=IResult
+        If (varName=="nls") LS=IResult
 
-        If (varName=="ndx") NDX=IResult ! freeze-out cell sizes
-        If (varName=="ndy") NDY=IResult
         If (varName=="ndt") NDT=IResult
+        If (varName=="ndxy") NDX=IResult  ! will be copied to NDY
 
         If (varName=="visbeta") VisBeta=DResult ! VisBeta, used for proper time tau_pi
 
@@ -226,9 +213,6 @@
       Integer NX0,NY0,NZ0,NX,NY,NZ
       Integer NXPhy0,NYPhy0,NXPhy,NYPhy
 
-      Common /dxdy/ ddx, ddy
-      Double Precision ddx, ddy
-
       Double Precision PU0(NX0:NX, NY0:NY, NZ0:NZ) !Four velocity from last time step
       Double Precision PU1(NX0:NX, NY0:NY, NZ0:NZ) !Four velocity
       Double Precision PU2(NX0:NX, NY0:NY, NZ0:NZ) !Four velocity
@@ -279,8 +263,6 @@
 
       Integer regMethod
       Common /regMethod/ regMethod
-
-!      Aeps = 0.5
 
       If (regMethod .eq. 1) Then
         DO 791 K=NZ0,NZ
@@ -333,7 +315,7 @@
      &              +U2(I,J,K)*DU1)+CS*(U1(I,J,K)*U2(I,J,K))
  791    Continue
 
-        RMin = NX*ddx+NY*ddy !---Upper-Bound-R0---
+        RMin = NX*DX+NY*DY !---Upper-Bound-R0---
 
         DO 3007 K=NZ0,NZ !Check for Pi tensor
         DO 3007 J=NYPhy0,NYPhy
@@ -346,15 +328,15 @@
      &                 *SigmaLargeness/EAndP
 
         If (PiEPRatio > PiRatio) Then
-          If (sqrt(ddx*ddx*I*I+ddy*ddy*J*J) < RMin) Then
-            RMin = sqrt(ddx*ddx*I*I+ddy*ddy*J*J)
+          If (sqrt(DX*DX*I*I+DY*DY*J*J) < RMin) Then
+            RMin = sqrt(DX*DX*I*I+DY*DY*J*J)
           EndIf
         EndIf
 
  3007   Continue
         R0 = RMin
       ElseIf (regMethod .eq. 2) Then ! use maximun possible R0
-        R0 = NX*ddx+NY*ddy
+        R0 = NX*DX+NY*DY
       Else  ! use R0=12
         R0 = 12.0
       EndIf ! corresponding to the one on variable "regMethod"
@@ -375,8 +357,8 @@
       Integer NX0,NY0,NZ0,NX,NY,NZ
       Integer I,J,K
 
-      Common /dxdy/ ddx, ddy
-      Double Precision ddx, ddy
+      double precision :: DX, DY
+      common /DXY/ DX, DY
 
       Double Precision Ed(NX0:NX, NY0:NY, NZ0:NZ) !energy density
       Double Precision PL(NX0:NX, NY0:NY, NZ0:NZ) !local pressure
@@ -404,10 +386,8 @@
       Integer regMethod
       Common /regMethod/ regMethod
 
-!      Aeps = 0.4
-
       If (regMethod .eq. 1) Then
-        RMin = NX*ddx+NY*ddy !---Upper-Bound-R0---
+        RMin = NX*DX+NY*DY !---Upper-Bound-R0---
         DO 3007 K=NZ0,NZ !Check for Pi tensor
         DO 3007 J=NY0,NY
         DO 3007 I=NX0,NX
@@ -418,14 +398,14 @@
           PiEPRatio=PiLargeness/EAndP
 
           If (PiEPRatio > PiRatio) Then
-              If (sqrt(ddx*ddx*I*I+ddy*ddy*J*J) < RMin) Then
-                RMin = sqrt(ddx*ddx*I*I+ddy*ddy*J*J)
+              If (sqrt(DX*DX*I*I+DY*DY*J*J) < RMin) Then
+                RMin = sqrt(DX*DX*I*I+DY*DY*J*J)
               EndIf
           EndIf
  3007   Continue
         R0 = RMin
       ElseIf (regMethod .eq. 2) Then ! use maximun possible R0
-        R0 = (NX*ddx+NY*ddy)*2.0
+        R0 = (NX*DX+NY*DY)*2.0
       Else ! use R0=12.0
         R0 = 12.0
       EndIf
@@ -446,9 +426,6 @@
 
       Integer NX0,NY0,NZ0,NX,NY,NZ,NXPhy0,NXPhy,NYPhy0,NYPhy
       Integer I,J,K,II,JJ,regStr
-
-      Common/dxdy/ ddx, ddy ! lattice spacing
-      Double Precision ddx, ddy
 
       Double Precision Time
 
@@ -517,9 +494,6 @@
 
       Integer NX0,NY0,NZ0,NX,NY,NZ,NXPhy0,NXPhy,NYPhy0,NYPhy
       Integer I,J,K,II,JJ,regStr
-
-      Common/dxdy/ ddx, ddy ! lattice spacing
-      Double Precision ddx, ddy
 
       Double Precision Time
 

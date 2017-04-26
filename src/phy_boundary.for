@@ -714,7 +714,10 @@ C####################################################################
      &                        NX0,NY0,NZ0, NX,NY,NZ)
       Implicit Double Precision (A-H, O-Z)
       Dimension CofAA(0:2,NX0:NX, NY0:NY, NZ0:NZ)
-      Common/dxdy/ ddx, ddy
+
+      double precision :: DX, DY
+      common /DXY/ DX, DY
+
       Common /R0Bdry/ R0Bdry
       Double Precision R0Bdry, AepsBdry
 
@@ -727,8 +730,8 @@ C####################################################################
 
        do 300 i=NXPhy0-2,NXPhy+2
        do 300 j=NYPhy0-2,NYPhy+2
-         xx=ddx*I
-         yy=ddy*J
+         xx=DX*I
+         yy=DY*J
          rr=sqrt(xx**2+yy**2)
          ff=1.0/(Dexp((rr-R0Bdry)/AepsBdry)+1.0)
 

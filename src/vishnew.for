@@ -51,21 +51,24 @@ C   [5] H.Song, Ph.D thesis 2009, arXiv:0908.3656 [nucl-th].
 
       COMMON /IEin/ IEin     !  type of initialization  entropy/enrgy
 
-      Common/dxdy/ ddx, ddy
-      Common /TT0/ TT0   !T0
+      double precision :: DT
+      common /DT/ DT
 
-      Common /Timestep/ DT_1, DT_2
+      double precision :: DX, DY
+      common /DXY/ DX, DY
 
       common/Edec/Edec    !decoupling energy density
 
       Integer MaxT
 
-      Common /DXY/ DX,DY
-      Integer NDX, NDY, NDT ! used in Freeze-out subroutine
-      Common /NXYTD/ NDX, NDY, NDT
+      Integer NDT, NDX, NDY
+      Common /NDTXY/ NDT, NDX, NDY
 
       Double Precision T0 ! initial time tau_0
       Common /T0/ T0
+
+      Double Precision R0, Aeps
+      Common /R0Aeps/ R0,Aeps
 
       character(len=1000) :: find_data_file
 
@@ -82,17 +85,17 @@ C   [5] H.Song, Ph.D thesis 2009, arXiv:0908.3656 [nucl-th].
 
       Read(1,*)
 
-      ! basic stuff
-      Read(1,*) DT_1             ! timestep [fm]
-      Read(1,*) LS               ! lattice size in positive direction (total size = 2*LS + 1)
-      Read(1,*) R0Bdry           ! boundary for viscous regulation [fm]
+      ! grid
+      Read(1,*) DT               ! timestep [fm]
+      Read(1,*) DX               ! spatial step [fm]
+      Read(1,*) LS               ! lattice size from origin (total size = 2*LS + 1)
 
       Read(1,*)
 
       ! freeze-out
       Read(1,*) Edec             ! decoupling energy density [GeV/fm^3]
-      Read(1,*) NDX,NDY          ! freeze-out step in x, y directions
       Read(1,*) NDT              ! freeze-out step in tau direction
+      Read(1,*) NDX              ! freeze-out step in x, y directions
 
       Read(1,*)
 
@@ -117,36 +120,26 @@ C   [5] H.Song, Ph.D thesis 2009, arXiv:0908.3656 [nucl-th].
       Read(1,*) BulkTau          ! constant bulk relaxation time for IRelaxBulk == 1
 
       Close(1)
-C===========================================================================
 
-      DX=0.1d0
-      DY=0.1d0
+      ! read parameters from command line
+      Call readInputFromCML2()
 
-!-----------End of reading parameters from file-------------------------
+      ! copy X settings to Y
+      DY = DX
+      NDY = NDX
 
-      Call readInputFromCML2() ! check CML to see if there are any modifications on parameters
-
+      ! radius and width of Fermi function for viscous regulation
+      R0Bdry = LS*DX - 0.5
+      Aeps = 0.05D0
 
       ! determine if shear and bulk viscosities are nonzero
       VisNonzero = (VisHRG > 1d-6) .or. (VisMin > 1d-6)
      &             .or.(VisSlope > 1d-6)
       VisBulkNonzero = (VisBulkMax > 1d-6) .and. (VisBulkWidth > 1d-6)
 
-      ddx=dx
-      ddy=dy
       DZ=0.01d0
 
-
-CSHEN======================================================================
-C====Change to a smaller time step for small \tau_0 case ==================
-      DT_2 = DT_1/10.0
-
-      dT  = DT_1
-CSHEN===END================================================================
-
-      MaxT = int(40.0/DT_1)
-
-      TT0 = T0
+      MaxT = int(40.0/DT)
 
       OPEN(99,FILE='surface.dat',FORM='FORMATTED',STATUS='REPLACE')
 
@@ -290,8 +283,6 @@ C-------------------------------------------------------------------------------
       Common/R0Aeps/ R0,Aeps
       Common /R0Bdry/ R0Bdry
 
-      Common /Timestep/ DT_1, DT_2
-
       COMMON /IEin/ IEin     !  type of initialization  entropy/energy
 
       double precision :: VisHRG, VisMin, VisSlope, VisCurv, VisBeta
@@ -373,15 +364,6 @@ C-------------------------------------------------------------------------------
 
        do 9999 ITime = 1,MaxT
 !***********************  Begin  Time Loop ********************************
-CSHEN===========================================================================
-C======Using a smaller time step for short initialization time \tau_0
-            if (Time .lt. 0.59) then
-                  DT = DT_2
-            else
-                  DT = DT_1
-            endif
-CSHEN====END====================================================================
-
 
 !   ---Zhi-Changes---
         Call determineR0(NX0,NY0,NZ0,NX,NY,NZ,Ed,PL,Sd,
@@ -557,7 +539,7 @@ CSHEN====END====================================================================
       Hc = HbarC
 
 
-      Print '(I3, 2X, F5.2, 2X, F10.5, 2X, F8.5, 2X, I2, 2X, I2)',
+      Print '(I4, 2X, F7.4, 2X, F12.6, 2X, F9.6, 2X, I2, 2X, I2)',
      &      ITime, Time, maxval(Ed)*HBarC, maxval(Temp)*HBarC,
      &      iRegulateCounter, iRegulateCounterBulkPi
 
@@ -1605,8 +1587,8 @@ C-------------------------------------------
         Common/R0Aeps/ R0,Aeps
         Common /R0Bdry/ R0Bdry
 
-       Common/dxdy/ ddx, ddy
-       Common /TT0/ TT0
+      Double Precision T0
+      Common /T0/ T0
 
        double precision, parameter :: HbarC = M_HBARC
 
@@ -2208,7 +2190,7 @@ C-------------------------------------------------------------------------------
      &        + PScT11(i,j,k) + PScT12(i,j,k) + PScT22(i,j,k)
      &        + PScT33(i,j,k)
 
-        If (TIME > TT0) Then
+        If (TIME > T0) Then
         If (isnan(PScTSum)) Then
           Print *, "Invalid PScT terms!"
           Print *, "i,j,k=", i,j,k
@@ -2292,7 +2274,7 @@ C-------------------------------------------------------------------------------
         end do
        end if
 
-         If(Time.lt.TT0+dT) then
+         If(Time.lt.T0+dT) then
             StotalSv=0.0
             StotalBv=0.0
             Stotal=0.0
@@ -2332,7 +2314,7 @@ C-------------------------------------------------------------------------------
 C            Print *, 'time',time,'Stotal', Stotal,StotalSv,StotalBv
 
 
-         If(Time.le.TT0+dT) SxyT=0.0d0
+         If(Time.le.T0+dT) SxyT=0.0d0
 
         call anisotrop10 (Vx,Vy,U0,U1,U2, Ed,PL,Sd, PPI,
      &  Pi00,Pi01,Pi02, Pi33, Pi11,Pi12,Pi22, ScT00,ScT01,ScT02,
