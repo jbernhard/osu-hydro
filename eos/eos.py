@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
+import warnings
 from contextlib import contextmanager
 
 import numpy as np
@@ -91,7 +92,10 @@ class HRGEOS:
 
     """
     def __init__(self, T, **kwargs):
-        self._hrgs = [frzout.HRG(t, **kwargs) for t in T]
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore')
+            self._hrgs = [frzout.HRG(t, **kwargs) for t in T]
+
         self._T4 = T**4 / HBARC**3
 
     def _calc(self, quantity):
