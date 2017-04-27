@@ -42,9 +42,9 @@ However, it always expects the initial condition data files (described below) to
 
 ### Equation of state
 
-The EOS table is generated at build time by the script `eos/generate-eos-table.py`, which connects a hadron resonance gas EOS at low temperature to a lattice EOS (HotQCD, http://inspirehep.net/record/1307761) at high temperature.
+The EOS table is generated at build time by the script `eos/eos.py`, which connects a hadron resonance gas EOS at low temperature to a lattice EOS (HotQCD, http://inspirehep.net/record/1307761) at high temperature.
+See the help output (`eos.py --help`) for more options.
 This depends on [frzout](https://github.com/jbernhard/frzout) to compute the hadron resonance gas part.
-Run `./generate-eos-table.py --plot` to visualize several important thermodynamic quantities.
 
 The EOS table has columns
 

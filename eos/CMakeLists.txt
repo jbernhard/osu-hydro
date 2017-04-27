@@ -1,4 +1,4 @@
-set(EOSGEN "${CMAKE_CURRENT_SOURCE_DIR}/generate-eos-table.py")
+set(EOSGEN "${CMAKE_CURRENT_SOURCE_DIR}/eos.py")
 set(EOSFILE "${CMAKE_CURRENT_BINARY_DIR}/eos.dat")
 
 add_custom_command(OUTPUT ${EOSFILE}
