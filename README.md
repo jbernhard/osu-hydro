@@ -79,6 +79,28 @@ The bulk viscosity is parametrized as a Cauchy distribution with tunable peak lo
 
 The location (temperature T0), max, and width may be set in the config file or on the command line with keys `zetas_t0`, `zetas_max`, `zetas_width`.
 
+### Grid settings
+
+The computational grid is always square and centered at the origin.
+The size may be set in the config file or on the command line by the `nls` parameter.
+`LS` ("lattice size") means the number of cells from the origin to the grid edge, not counting the cell precisely at the origin; the full grid is (2\*LS + 1) × (2\*LS + 1).
+
+The grid cell size is set in the config file or on the command line by the `dxy` parameter.
+Ensure the cell size is small enough to resolve the system geometry.
+For Monte Carlo initial conditions with Gaussian nucleons of width `w`, `dxy = 0.15*w` is a good compromise between computation time and precision.
+
+__Example__: With the default `DXY = 0.1 fm` and `LS = 200`, the grid is 401 × 401 with cells centered at -20.0, -19.9, ..., 0.0, 0.1, ..., 20.0 fm.
+
+__WARNING__:
+_The `vishnew` grid size is defined by the **center** of the outermost grid cell, which is inconsistent with programs that use the cell **edge**, such as [trento](https://github.com/Duke-QCD/trento) and [freestream](https://github.com/Duke-QCD/freestream).
+The two definitions differ by half a cell width.
+For example, the default 401 × 401 grid has its outermost cells centered at ±20.0 fm, and the cells are 0.1 fm wide, so the physical extent of the grid is a half-cell larger: ±20.05 fm.
+To generate a matching grid with `trento`, use options `--grid-max 20.05 --grid-step 0.1`._
+
+The timestep is set in the config file or on the command line by the `dt` parameter.
+The SHASTA algorithm used in `vishnew` requires the timestep to be less than one-half the spatial step.
+However, a smaller timestep around one-quarter to one-fifth the spatial step is a good compromise between computation time and precision.
+
 ### Running initial conditions
 
 By default (with option `InitialURead = 1`), the initial energy density, flow, and shear viscous tensor must be provided.
@@ -92,10 +114,11 @@ Create the following data files:
 If `InitialURead = 0`, only the energy density is required.
 Alternatively, set `IEin = 1` and provide the entropy density `sd.dat`.
 
-All files must contain square block-style grids and nothing else (comments will not work).
-The grid size depends on the `LS` (lattice size) parameter: grid size = 2\*LS + 1.
-The grid step is hard-coded to 0.1 fm.
-So e.g. with the default `LS = 130`, the grid is 261x261 from -13 to +13 fm.
+All files must contain square block-style grids and nothing else (no comments).
+
+__WARNING__:
+_The input data files must have precisely the expected grid, as described above in [grid settings](#grid-settings).
+This is not checked by the code._
 
 During time evolution, the code prints out a line for each timestep
 
