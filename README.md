@@ -43,6 +43,7 @@ However, it always expects the initial condition data files (described below) to
 ### Equation of state
 
 The EOS table is generated at build time by the script `eos/generate-eos-table.py`, which connects a hadron resonance gas EOS at low temperature to a lattice EOS (HotQCD, http://inspirehep.net/record/1307761) at high temperature.
+This depends on [frzout](https://github.com/jbernhard/frzout) to compute the hadron resonance gas part.
 Run `./generate-eos-table.py --plot` to visualize several important thermodynamic quantities.
 
 The EOS table has columns
@@ -56,9 +57,9 @@ It has 100000 rows with evenly-spaced energy density steps, as expected by the `
 
 The config file `vishnew.conf` has brief comments for each parameter.
 Note that the code expects the parameters in a specific order, so __do not change the order of parameters in the config file__.
-Parameters may also be passed on the command line with a `key=value` syntax, e.g.
+Parameters may also be passed on the command line with `key=value` syntax (case-insensitive), e.g.
 
-    vishnew Edec=0.30
+    vishnew edec=0.30
 
 ### Temperature-dependent viscosities
 
@@ -139,3 +140,7 @@ and followed by data columns
 
 where each row represents a volume element.
 All units are GeV and fm.
+
+__Note__:
+The surface normal vectors `dsigma_mu` are output in covariant form, which is standard.
+From [84fc226](https://github.com/jbernhard/vishnew/commit/84fc2261ead02a690b12424e71a44584b91c01e1) (July 2016) until [9995ee1](https://github.com/jbernhard/vishnew/commit/9995ee157c142c3a9fb76eba4a2fe4913d4770a7) (April 2017), they were contravariant (`dsigma^mu`).
