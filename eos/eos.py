@@ -18,7 +18,7 @@ __doc__ = """
 Generate an equation of state (EoS) from the hadron resonance gas EoS (at low
 temperature) and the HotQCD lattice EoS (at high temperature) by connecting
 their trace anomalies near the crossover range.  Print a table with columns
-(e, p, s, T) as required by VISHNew (all units in GeV and fm, as appropriate).
+(e, p, s, T) or write a binary file to be read by VISHNew.
 """
 
 
@@ -265,8 +265,12 @@ def main():
         help='do not account for finite width of resonances'
     )
     parser.add_argument(
-        '--plot', nargs='?', metavar='file', const='<show>', default=False,
+        '--plot', nargs='?', metavar='FILE', const='<show>', default=False,
         help='plot EoS instead of printing table'
+    )
+    parser.add_argument(
+        '--write-bin', metavar='FILE',
+        help='write binary file instead of printing table'
     )
     args = parser.parse_args()
 
@@ -343,10 +347,15 @@ def main():
     p = compute_p_T4(T) * T**4 / HBARC**3
     s = (e + p)/T
 
-    # output table
-    fmt = 4*'{:24.16e}'
-    for row in zip(e, p, s, T):
-        print(fmt.format(*row))
+    if args.write_bin:
+        with open(args.write_bin, 'wb') as f:
+            for x in [e[0], e[-1], p, s, T]:
+                f.write(x.tobytes())
+    else:
+        # output table
+        fmt = 4*'{:24.16e}'
+        for row in zip(e, p, s, T):
+            print(fmt.format(*row))
 
 
 if __name__ == "__main__":

@@ -138,12 +138,12 @@ C-------------------------------------------------------------------------------
       ! read initial energy/entropy density from file
       if (IEin == 0) then
         ! energy density
-        open(10, file='ed.dat', status='old')
-        read(10,*) Ed(NXPhy0:NXPhy, NYPhy0:NYPhy, NZ0)
+        open(10, file='ed.dat', status='old', access='stream')
+        read(10) Ed(NXPhy0:NXPhy, NYPhy0:NYPhy, NZ0)
       else
         ! entropy density
-        open(10, file='sd.dat', status='old')
-        read(10,*) Sd(NXPhy0:NXPhy, NYPhy0:NYPhy, NZ0)
+        open(10, file='sd.dat', status='old', access='stream')
+        read(10) Sd(NXPhy0:NXPhy, NYPhy0:NYPhy, NZ0)
         ! convert to energy density via equation of state
         do I=NXPhy0,NXPhy
           do J=NYPhy0,NYPhy
@@ -176,12 +176,12 @@ C-------------------------------------------------------------------------------
         U2 = 0
       else
         ! read from files
-        open(21, file='u1.dat', status='old')
-        read(21,*) U1(NXPhy0:NXPhy, NYPhy0:NYPhy, NZ0)
+        open(21, file='u1.dat', status='old', access='stream')
+        read(21) U1(NXPhy0:NXPhy, NYPhy0:NYPhy, NZ0)
         close(21)
 
-        open(22, file='u2.dat', status='old')
-        read(22,*) U2(NXPhy0:NXPhy, NYPhy0:NYPhy, NZ0)
+        open(22, file='u2.dat', status='old', access='stream')
+        read(22) U2(NXPhy0:NXPhy, NYPhy0:NYPhy, NZ0)
         close(22)
 
         U0 = sqrt(1 + U1**2 + U2**2)
@@ -204,18 +204,18 @@ C-------------------------------------------------------------------------------
       if (InitialURead /= 0) then
         ! read from files
         ! remember to convert to fm^-4
-        open(111, file='pi11.dat', status='old')
-        read(111,*) Pi11(NXPhy0:NXPhy, NYPhy0:NYPhy, NZ0)
+        open(111, file='pi11.dat', status='old', access='stream')
+        read(111) Pi11(NXPhy0:NXPhy, NYPhy0:NYPhy, NZ0)
         close(111)
         Pi11 = Pi11/HbarC
 
-        open(112, file='pi12.dat', status='old')
-        read(112,*) Pi12(NXPhy0:NXPhy, NYPhy0:NYPhy, NZ0)
+        open(112, file='pi12.dat', status='old', access='stream')
+        read(112) Pi12(NXPhy0:NXPhy, NYPhy0:NYPhy, NZ0)
         close(112)
         Pi12 = Pi12/HbarC
 
-        open(122, file='pi22.dat', status='old')
-        read(122,*) Pi22(NXPhy0:NXPhy, NYPhy0:NYPhy, NZ0)
+        open(122, file='pi22.dat', status='old', access='stream')
+        read(122) Pi22(NXPhy0:NXPhy, NYPhy0:NYPhy, NZ0)
         close(122)
         Pi22 = Pi22/HbarC
 

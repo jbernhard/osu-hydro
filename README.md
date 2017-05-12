@@ -26,7 +26,7 @@ To compile and install, follow the standard CMake sequence:
     cmake .. [-DCMAKE_INSTALL_PREFIX=<prefix>]
     make install
 
-This will place the compiled binary `vishnew` in `<prefix>/bin/` and the configuration file `vishnew.conf` and equation of state table `eos.dat` in `<prefix>/share/vishnew/`.
+This will place the compiled binary `vishnew` in `<prefix>/bin/` and the configuration file `vishnew.conf` and equation of state data `eos.dat` in `<prefix>/share/vishnew/`.
 
 At runtime, `vishnew` searches for `vishnew.conf` and `eos.dat` in the following locations:
 
@@ -42,16 +42,9 @@ However, it always expects the initial condition data files (described below) to
 
 ### Equation of state
 
-The EOS table is generated at build time by the script `eos/eos.py`, which connects a hadron resonance gas EOS at low temperature to a lattice EOS (HotQCD, http://inspirehep.net/record/1307761) at high temperature.
+The EOS is generated at build time by the script `eos/eos.py`, which connects a hadron resonance gas EOS at low temperature to a lattice EOS (HotQCD, http://inspirehep.net/record/1307761) at high temperature.
 See the help output (`eos.py --help`) for more options.
 This depends on [frzout](https://github.com/jbernhard/frzout) to compute the hadron resonance gas part.
-
-The EOS table has columns
-
-    energy_density  pressure  entropy_density  temperature
-
-in natural units of GeV and fm.
-It has 100000 rows with evenly-spaced energy density steps, as expected by the `vishnew` code.
 
 ### Configuration
 
@@ -105,20 +98,21 @@ However, a smaller timestep around one-quarter to one-fifth the spatial step is 
 ### Running initial conditions
 
 By default (with option `InitialURead = 1`), the initial energy density, flow, and shear viscous tensor must be provided.
-Create the following data files:
+Create the following __binary__ data files:
 
 - `ed.dat` - energy density
 - `u{1,2}.dat` - flow velocity in x and y directions
-- `pi{11,12,22}.dat` - components of the shear tensor (the remaining components are computed internally)
+- `pi{11,12,22}.dat` - shear tensor components xx, xy, yy (the remaining components are computed internally)
 - The bulk pressure is computed internally as the deviation from ideal pressure, Π = e/3 - p(e).
 
 If `InitialURead = 0`, only the energy density is required.
 Alternatively, set `IEin = 1` and provide the entropy density `sd.dat`.
 
-All files must contain square block-style grids and nothing else (no comments).
+All files must contain an array of doubles in binary format.
+They can be easily created in Python using [numpy.ndarray.tofile](https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.tofile.html), e.g., if `ed` is a numpy array containing the energy density, then `ed.tofile('ed.dat')` writes it as a binary file.
 
 __WARNING__:
-_The input data files must have precisely the expected grid, as described above in [grid settings](#grid-settings).
+_The input data files must have precisely the expected grid size, as described above in [grid settings](#grid-settings).
 This is not checked by the code._
 
 During time evolution, the code prints out a line for each timestep
@@ -127,20 +121,25 @@ During time evolution, the code prints out a line for each timestep
 
 Evolution stops after the max energy density drops below the configured decoupling energy density.
 
-The only output file is the hypersurface data `surface.dat`, beginning with a commented header containing the thermodynamic freeze-out quantities
+The only output file is the hypersurface data `surface.dat`, a __binary__ file containing an N × 16 array of doubles, where N is the number of freeze-out volume elements and the 16 columns are
 
-    # e = <energy density>
-    # p = <pressure>
-    # s = <entropy density>
-    # T = <temperature>
+Index | Quantity                        | Index | Viscous pressures [GeV/fm<sup>3</sup>]
+------|---------------------------------|-------|---------------------------------------
+0     | τ [fm]                          | 8     | π<sup>tt</sup>
+1     | x [fm]                          | 9     | π<sup>tx</sup>
+2     | y [fm]                          | 10    | π<sup>ty</sup>
+3     | dσ<sub>t</sub> [fm<sup>2</sup>] | 11    | π<sup>xx</sup>
+4     | dσ<sub>x</sub> [fm<sup>2</sup>] | 12    | π<sup>xy</sup>
+5     | dσ<sub>y</sub> [fm<sup>2</sup>] | 13    | π<sup>yy</sup>
+6     | v<sub>x</sub>                   | 14    | π<sup>zz</sup>
+7     | v<sub>y</sub>                   | 15    | Π
 
-and followed by data columns
+The file can be read in Python with
 
-    tau x y dsigma_t dsigma_x dsigma_y v_x v_y pi00 pi01 pi02 pi11 pi12 pi22 pi33 PI
-
-where each row represents a volume element.
-All units are GeV and fm.
+```python
+surface = np.fromfile('surface.dat', dtype='float64').reshape(-1, 16)
+```
 
 __Note__:
-The surface normal vectors `dsigma_mu` are output in covariant form, which is standard.
-From [84fc226](https://github.com/jbernhard/vishnew/commit/84fc2261ead02a690b12424e71a44584b91c01e1) (July 2016) until [9995ee1](https://github.com/jbernhard/vishnew/commit/9995ee157c142c3a9fb76eba4a2fe4913d4770a7) (April 2017), they were contravariant (`dsigma^mu`).
+The surface normal vectors dσ<sub>μ</sub> are output in covariant form, which is standard.
+From [84fc226](https://github.com/jbernhard/vishnew/commit/84fc2261ead02a690b12424e71a44584b91c01e1) (July 2016) until [9995ee1](https://github.com/jbernhard/vishnew/commit/9995ee157c142c3a9fb76eba4a2fe4913d4770a7) (April 2017), they were contravariant (dσ<sup>μ</sup>).

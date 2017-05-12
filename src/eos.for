@@ -3,7 +3,6 @@
       Subroutine InputRegulatedEOS
       Implicit none
 
-      Integer :: I
       double precision :: e0, p0, cs2
 
       double precision :: PEOSdata(EOSDATALENGTH),
@@ -22,17 +21,10 @@
 
       character(len=1000) :: find_data_file
 
-      open(5, file=find_data_file('eos.dat'), status='old')
-
-      ! read first row, save energy density as EOSe0
-      I = 1
-      read(5,*) EOSe0, PEOSdata(I), SEOSdata(I), TEOSdata(I)
-
-      ! read rest of table, save last energy density as EOSEend
-      do I=2,EOSne
-        read(5,*) EOSEend, PEOSdata(I), SEOSdata(I), TEOSdata(I)
-      enddo
-
+      ! read EOS data from binary file
+      open(5, file=find_data_file('eos.dat'), status='old',
+     &     access='stream')
+      read(5) EOSe0, EOSEend, PEOSdata, SEOSdata, TEOSdata
       close(5)
 
       ! save energy density step size

@@ -143,7 +143,7 @@ C   [5] H.Song, Ph.D thesis 2009, arXiv:0908.3656 [nucl-th].
 
       MaxT = int(40.0/DT)
 
-      OPEN(99,FILE='surface.dat',FORM='FORMATTED',STATUS='REPLACE')
+      open(99, file='surface.dat', access='stream', status='replace')
 
       call InputRegulatedEOS
 
@@ -161,7 +161,7 @@ C   [5] H.Song, Ph.D thesis 2009, arXiv:0908.3656 [nucl-th].
       Call Mainpro(NX0,NY0,NZ0,NX,NY,NZ,NXPhy0,NYPhy0,
      &          NXPhy,NYPhy,T0,DX,DY,DZ,DT,MaxT,NDX,NDY,NDT)   ! main program
 
-      Close(99)
+      close(99)
 
       End
 !-----------------------------------------------------------------------
@@ -317,53 +317,6 @@ C-------------------------------------------------------------------------------
      &  U0,U1,U2, PU0,PU1,PU2,SxyT,Stotal,StotalBv,StotalSv,
      &  Ed,PL,Sd,Time,Temp0,Temp,T00,T01,T02,IAA,CofAA,PNEW,
      &  TEM0,ATEM0,EPS0,V10,V20,AEPS0,AV10,AV20,TFREEZ)
-
-      ! write thermodynamic freeze-out quantities to surface file
- 901  format (a,f13.10)
-      write(99,901) '# e = ', Edec
-      write(99,901) '# p = ', PEOSL7(Edec)
-      write(99,901) '# s = ', SEOSL7(Edec)
-      write(99,901) '# T = ', TEOSL7(Edec)
-
-!     ! output fluid cells outside the freeze out surface at initial time
-!     if(Ifreez .ne. 0) then
-!     DA0=(dx*NDX)*(dy*NDY)
-!     DA1=0.0
-!     DA2=0.0
-
-!     DO J = NYPhy0, NYPhy
-!       IF (MOD(J, NDY) .NE. 0) cycle
-!       YY = J * DY
-!     DO I = NXPhy0, NXPHY
-!       IF (MOD(I, NDX) .NE. 0) cycle
-!       XX = I * DX
-!       If(Ed(I,J,1)*HbarC.lt.Edec .and. Ed(I,J,1)*HbarC.ge.Edec0) then
-!         PDec2 = PL(I,J,1)
-
-!         CPi00 = Pi00(I,J,1)
-!         CPi01 = Pi01(I,J,1)
-!         CPi02 = Pi02(I,J,1)
-!         CPi11 = Pi11(I,J,1)
-!         CPi12 = Pi12(I,J,1)
-!         CPi22 = Pi22(I,J,1)
-!         CPi33 = Pi33(I,J,1)
-!         CPPI = PPI(I,J,1)
-
-!         WRITE(99,'(19E20.8E3)')
-!    &      Time, XX, YY,
-!    &      DA0, DA1, DA2,
-!    &      Vx(I,J,1), Vy(I,J,1),
-!    &      Ed(I,J,1)*HbarC, PDec2*HbarC, Temp(I,J,1)*HbarC,
-!    &      CPi00*HbarC, CPi01*HbarC, CPi02*HbarC,
-!    &      CPi11*HbarC, CPi12*HbarC, CPi22*HbarC
-!    &      CPi33*HbarC, CPPI*HbarC
-
-!         EDEC2 = Ed(I,J,1)*HbarC
-!       End If
-!      End Do
-!      End Do
-!      End If  !Ifreez
-
 
        do 9999 ITime = 1,MaxT
 !***********************  Begin  Time Loop ********************************
@@ -682,7 +635,6 @@ C###############################################################################
       double precision :: CPi00, CPi01, CPi02
       double precision :: CPi11, CPi12, CPi22, CPi33
       double precision :: CPPI
-      double precision :: DA0, DA1, DA2
 
 !** Zhi ***
       Integer :: absI, absJ ! abs(I) and abs(J) used in the loop
@@ -758,13 +710,9 @@ C###############################################################################
            CALL P4(I,J,NDX,NDY,NDT,Vmidpoint,F0PPI,FPPI,
      &             NX0,NY0,NX,NY,DTFreeze,DXFreeze,DYFreeze,CPPI)
 
-           DA0  = dSigma(0, iSurf)
-           DA1  = dSigma(1, iSurf)
-           DA2  = dSigma(2, iSurf)
-
-           WRITE(99,'(16ES24.16)')
+           write(99)
      &       Tmid, Xmid, Ymid,
-     &       DA0, DA1, DA2,
+     &       dSigma(:, iSurf),
      &       v1mid, v2mid,
      &       CPi00*HbarC, CPi01*HbarC, CPi02*HbarC,
      &       CPi11*HbarC, CPi12*HbarC, CPi22*HbarC,
