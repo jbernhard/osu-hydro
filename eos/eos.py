@@ -18,7 +18,7 @@ __doc__ = """
 Generate an equation of state (EoS) from the hadron resonance gas EoS (at low
 temperature) and the HotQCD lattice EoS (at high temperature) by connecting
 their trace anomalies near the crossover range.  Print a table with columns
-(e, p, s, T) or write a binary file to be read by VISHNew.
+(e, p, s, T) or write a binary file to be read by osu-hydro.
 """
 
 
@@ -341,7 +341,7 @@ def main():
     e_orig = e_T4 * T**4 / HBARC**3
 
     # compute thermodynamic quantities at evenly-spaced energy density points
-    # as required by vishnew
+    # as required by osu-hydro
     e = np.linspace(e_orig[nextrapts], e_orig[-nextrapts - 1], args.nsteps)
     T = CubicSpline(e_orig, T)(e)
     p = compute_p_T4(T) * T**4 / HBARC**3

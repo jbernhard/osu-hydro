@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.6)
-project(vishnew Fortran)
+project(osu-hydro Fortran)
 
 # default build type: Release
 if(NOT CMAKE_BUILD_TYPE)

@@ -76,7 +76,7 @@ C   [5] H.Song, Ph.D thesis 2009, arXiv:0908.3656 [nucl-th].
       call prepareInputFun() ! this is the initialization function in InputFun.for
 
       ! read parameters from config file
-      open(1, file=find_data_file('vishnew.conf'), status='old')
+      open(1, file=find_data_file('osu-hydro.conf'), status='old')
 
       ! initialization
       Read(1,*) T0               ! initial time [fm]

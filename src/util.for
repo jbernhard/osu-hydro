@@ -17,7 +17,7 @@
         if (file_exists) return
 
         ! path suffix for the remaining candidates
-        suffix = '/vishnew/' // basename
+        suffix = '/osu-hydro/' // basename
 
         ! check user directory: XDG_DATA_HOME or ~/.local/share if unset
         call get_environment_variable('XDG_DATA_HOME', data_home)

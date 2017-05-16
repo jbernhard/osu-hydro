@@ -4,9 +4,9 @@ add_executable(${PROJECT_NAME}
   eos.for
   initialization.for
   input_function.for
+  osu_hydro.for
   phy_boundary.for
   util.for
-  vishnew.for
 )
 
 install(TARGETS ${PROJECT_NAME} DESTINATION bin)
