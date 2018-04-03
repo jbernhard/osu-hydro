@@ -120,8 +120,9 @@ C-------------------------------------------------------------------------------
 
       COMMON /IEin/ IEin     !  type of initialization  entropy/enrgy
 
-      double precision :: VisHRG, VisMin, VisSlope, VisCurv, VisBeta
-      common /VisShear/ VisHRG, VisMin, VisSlope, VisCurv, VisBeta
+      double precision :: VisT0, VisHRG, VisMin, VisSlope, VisCrv,
+     &                    VisBeta
+      common /VisShear/ VisT0, VisHRG, VisMin, VisSlope, VisCrv, VisBeta
 
       Double Precision SEOSL7, PEOSL7, TEOSL7
       External SEOSL7

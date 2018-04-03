@@ -35,8 +35,9 @@ C   [5] H.Song, Ph.D thesis 2009, arXiv:0908.3656 [nucl-th].
       Integer Initialpitensor
       Common/Initialpi/ Initialpitensor
 
-      double precision :: VisHRG, VisMin, VisSlope, VisCurv, VisBeta
-      common /VisShear/ VisHRG, VisMin, VisSlope, VisCurv, VisBeta
+      double precision :: VisT0, VisHRG, VisMin, VisSlope, VisCrv,
+     &                    VisBeta
+      common /VisShear/ VisT0, VisHRG, VisMin, VisSlope, VisCrv, VisBeta
 
       double precision :: VisBulkT0, VisBulkMax, VisBulkWidth, BulkTau
       integer :: IRelaxBulk
@@ -106,10 +107,11 @@ C   [5] H.Song, Ph.D thesis 2009, arXiv:0908.3656 [nucl-th].
       Read(1,*)
 
       ! shear viscosity
-      Read(1,*) VisHRG           ! constant eta/s below Tc
-      Read(1,*) VisMin           ! eta/s at Tc
-      Read(1,*) VisSlope         ! slope of (eta/s)(T) above Tc [GeV^-1]
-      Read(1,*) VisCurv          ! curvature of (eta/s)(T) above Tc (see readme)
+      Read(1,*) VisT0            ! temperature of minimum eta/s [GeV]
+      Read(1,*) VisHRG           ! constant eta/s below T0
+      Read(1,*) VisMin           ! eta/s at T0
+      Read(1,*) VisSlope         ! slope of (eta/s)(T) above T0 [GeV^-1]
+      Read(1,*) VisCrv           ! curvature of (eta/s)(T) above T0 (see readme)
       Read(1,*) VisBeta          ! shear relaxation time tau_pi = 6*VisBeta*eta/(sT)
 
       Read(1,*)
@@ -287,8 +289,9 @@ C-------------------------------------------------------------------------------
 
       COMMON /IEin/ IEin     !  type of initialization  entropy/energy
 
-      double precision :: VisHRG, VisMin, VisSlope, VisCurv, VisBeta
-      common /VisShear/ VisHRG, VisMin, VisSlope, VisCurv, VisBeta
+      double precision :: VisT0, VisHRG, VisMin, VisSlope, VisCrv,
+     &                    VisBeta
+      common /VisShear/ VisT0, VisHRG, VisMin, VisSlope, VisCrv, VisBeta
 
       double precision :: VisBulkT0, VisBulkMax, VisBulkWidth, BulkTau
       integer :: IRelaxBulk
@@ -1073,8 +1076,9 @@ C#####################################################
       Dimension VRelaxT0(NX0:NX, NY0:NY, NZ0:NZ) !viscous coeficient relaxation time \tau_PI
       Dimension XiTtP(NX0:NX, NY0:NY, NZ0:NZ)  !extra (Xi T)/tau_Pi terms in full I-S bulk eqn 08/2008
 
-      double precision :: VisHRG, VisMin, VisSlope, VisCurv, VisBeta
-      common /VisShear/ VisHRG, VisMin, VisSlope, VisCurv, VisBeta
+      double precision :: VisT0, VisHRG, VisMin, VisSlope, VisCrv,
+     &                    VisBeta
+      common /VisShear/ VisT0, VisHRG, VisMin, VisSlope, VisCrv, VisBeta
 
       double precision :: VisBulkT0, VisBulkMax, VisBulkWidth, BulkTau
       integer :: IRelaxBulk
@@ -1181,13 +1185,13 @@ C====eta/s dependent on local temperature==================================
 
       double precision function ViscousCTemp(T)
       double precision :: T
-      double precision, parameter :: Tc = TC_GEV
 
-      double precision :: VisHRG, VisMin, VisSlope, VisCurv, VisBeta
-      common /VisShear/ VisHRG, VisMin, VisSlope, VisCurv, VisBeta
+      double precision :: VisT0, VisHRG, VisMin, VisSlope, VisCrv,
+     &                    VisBeta
+      common /VisShear/ VisT0, VisHRG, VisMin, VisSlope, VisCrv, VisBeta
 
-      if(T > Tc) then
-        ViscousCTemp = VisMin + VisSlope*(T - Tc) * (T/Tc)**VisCurv
+      if (T > VisT0) then
+        ViscousCTemp = VisMin + VisSlope*(T - VisT0) * (T/VisT0)**VisCrv
       else
         ViscousCTemp = VisHRG
       endif
@@ -1523,8 +1527,9 @@ C-------------------------------------------
         Dimension IAA(NX0:NX, NY0:NY, NZ0:NZ)
         Dimension CofAA(0:2,NX0:NX, NY0:NY, NZ0:NZ)
 
-      double precision :: VisHRG, VisMin, VisSlope, VisCurv, VisBeta
-      common /VisShear/ VisHRG, VisMin, VisSlope, VisCurv, VisBeta
+      double precision :: VisT0, VisHRG, VisMin, VisSlope, VisCrv,
+     &                    VisBeta
+      common /VisShear/ VisT0, VisHRG, VisMin, VisSlope, VisCrv, VisBeta
 
       double precision :: VisBulkT0, VisBulkMax, VisBulkWidth, BulkTau
       integer :: IRelaxBulk

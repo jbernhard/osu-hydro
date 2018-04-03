@@ -56,16 +56,18 @@ Parameters may also be passed on the command line with `key=value` syntax (case-
 
 ### Temperature-dependent viscosities
 
-The shear viscosity is parametrized as
+The shear viscosity is parametrized as the modified linear ansatz
 
-    (eta/s)(T) = min + slope*(T - Tc) * (T/Tc)^curvature
+    (eta/s)(T) = min + slope*(T - T0)*(T/T0)^crv
 
-for T > Tc = 0.154 GeV, where `min`, `slope`, and `curvature` are input parameters.
-The `min` and `slope` must be non-negative; `curvature` may be negative but probably not below -1, since this would cause decreasing (eta/s)(T).
+for T > T0, where `T0` is the temperature at which eta/s reaches its minimum value.
+Previously, `T0` was fixed to the HotQCD EoS transition temperature Tc = 0.154 GeV, and that is now its default value.
+The parameter `min` is the minimum value at temperature `T0`, `slope` is the slope above `T0`, and `crv` controls the curvature above `T0`.
+The `min` and `slope` must be non-negative; `crv` may be negative but probably not below -1, since this would cause decreasing (eta/s)(T).
 
-For T < Tc (HRG phase), eta/s is constant, controlled by a single input parameter.
+For T < T0 (HRG phase), eta/s is constant, set by the parameter `etas_hrg`.
 
-These parameters may be set in the config file or on the command line with keys `etas_hrg`, `etas_min`, `etas_slope`, `etas_curv`.
+The eta/s parameters may be set in the config file or on the command line with keys `etas_t0`, `etas_hrg`, `etas_min`, `etas_slope`, `etas_crv`.
 
 The bulk viscosity is parametrized as a Cauchy distribution with tunable peak location, max value, and width:
 

@@ -40,8 +40,9 @@
       Integer Initialpitensor
       Common/Initialpi/ Initialpitensor
 
-      double precision :: VisHRG, VisMin, VisSlope, VisCurv, VisBeta
-      common /VisShear/ VisHRG, VisMin, VisSlope, VisCurv, VisBeta
+      double precision :: VisT0, VisHRG, VisMin, VisSlope, VisCrv,
+     &                    VisBeta
+      common /VisShear/ VisT0, VisHRG, VisMin, VisSlope, VisCrv, VisBeta
 
       double precision :: VisBulkT0, VisBulkMax, VisBulkWidth, BulkTau
       integer :: IRelaxBulk
@@ -98,6 +99,11 @@
 
         If (varName=="t0") T0=DResult ! initial proper time tau_0, in fm/c
 
+        If (varName=="vist0") VisT0=DResult
+        If (varName=="etast0") VisT0=DResult
+        If (varName=="etas_t0") VisT0=DResult
+        If (varName=="eta_s_t0") VisT0=DResult
+
         If (varName=="vishrg") VisHRG=DResult
         If (varName=="etashrg") VisHRG=DResult
         If (varName=="etas_hrg") VisHRG=DResult
@@ -113,10 +119,14 @@
         If (varName=="etas_slope") VisSlope=DResult
         If (varName=="eta_s_slope") VisSlope=DResult
 
-        If (varName=="viscurv") VisCurv=DResult
-        If (varName=="etascurv") VisCurv=DResult
-        If (varName=="etas_curv") VisCurv=DResult
-        If (varName=="eta_s_curv") VisCurv=DResult
+        If (varName=="viscurv") VisCrv=DResult
+        If (varName=="etascurv") VisCrv=DResult
+        If (varName=="etas_curv") VisCrv=DResult
+        If (varName=="eta_s_curv") VisCrv=DResult
+        If (varName=="viscrv") VisCrv=DResult
+        If (varName=="etascrv") VisCrv=DResult
+        If (varName=="etas_crv") VisCrv=DResult
+        If (varName=="eta_s_crv") VisCrv=DResult
 
         If (varName=="visbulkt0") VisBulkT0=DResult
         If (varName=="zetast0") VisBulkT0=DResult
@@ -256,8 +266,9 @@
       Double Precision VCoefi(NX0:NX, NY0:NY, NZ0:NZ) !viscous coeficient shear viscosity eta
       Double Precision RMin, PiEPRatio, SigmaLargeness, EAndP
 
-      double precision :: VisHRG, VisMin, VisSlope, VisCurv, VisBeta
-      common /VisShear/ VisHRG, VisMin, VisSlope, VisCurv, VisBeta
+      double precision :: VisT0, VisHRG, VisMin, VisSlope, VisCrv,
+     &                    VisBeta
+      common /VisShear/ VisT0, VisHRG, VisMin, VisSlope, VisCrv, VisBeta
 
       Double Precision PiRatio ! used to determine R0; within r<R0, Pi/(e+p) < PiRatio
       Common /PiRatio/ PiRatio ! should already be setuped in prepareInputFun function
